@@ -7,17 +7,22 @@
 namespace nj {
 
 using FileDescriptor = int;
+using ProcessID = pid_t;
 
 class Pty {
 
   public: // ASSIGNMENT
     Pty();
+    ~Pty();
 
   public: // EXPORT
-    std::string SlaveName();
+    auto SlaveName() -> std::string;
+    auto ConnectShell() -> void;
 
   private:
-    FileDescriptor masterDescriptor;
+    FileDescriptor deviceDescriptor;
+    FileDescriptor slaveDescriptor;
+    ProcessID shellProcessID;
 };
 
 }; // namespace nj

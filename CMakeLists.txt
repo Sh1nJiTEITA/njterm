@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 4.0.1)
 project(njterm)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # CMAKE ADDS
 include("cmake/find_dep.cmake")
 
@@ -17,6 +18,6 @@ target_link_libraries(njterm PRIVATE njpt)
 # SETTINGS ==================================================
 
 # For LSP server autocomplete
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_BUILD_TYPE Debug)
 # CPP-23 standart
 set_property(TARGET njterm PROPERTY CXX_STANDART 23)
