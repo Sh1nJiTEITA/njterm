@@ -67,7 +67,7 @@ auto Pty::ConnectShell() -> void {
     // clang-format on
 }
 
-auto Pty::ReadMaster(int timeout_sec) -> std::string {
+auto Pty::ReadMaster(int timeout_sec, int timeout_usec) -> std::string {
     std::string content;
     content.reserve(SingleMasterReadBufferSize);
 
@@ -111,6 +111,18 @@ auto Pty::ReadMaster(int timeout_sec) -> std::string {
     // clang-format on
     log::Debug("{}", content);
     return content;
+}
+
+auto Pty::WriteMaster(const std::string &msg) -> void {
+    ssize_t totalWritten = 0;
+    ssize_t dataLen = static_cast<ssize_t>(msg.size());
+
+    while (totalWritten < dataLen) {
+        ssize_t written = write(deviceDescriptor, msg.data() + totalWritten,
+                                dataLen - totalWritten);
+        log::CheckCall(written, "Cant write to master descriptor");
+        totalWritten += written;
+    }
 }
 
 }; // namespace nj

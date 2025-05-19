@@ -56,7 +56,8 @@ class Pty {
      * @param timeout_sec Amount of time to work until process
      * idle for this amount of time
      */
-    auto ReadMaster(int timeout_sec = 1) -> std::string;
+    auto ReadMaster(int timeout_sec = 1, int timeout_usec = 0) -> std::string;
+    auto WriteMaster(const std::string &msg) -> void;
 
   private:
     FileDescriptor deviceDescriptor;
