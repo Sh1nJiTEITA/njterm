@@ -3,8 +3,8 @@
 int main(int argc, char **argv) {
     nj::Pty p;
     p.ConnectShell();
-    p.ReadMaster(0, 50);
+    p.ReadMaster(1, 50);
     p.WriteMaster("ls\n");
-    p.ReadMaster(0, 100);
+    p.ReadMaster(1, 100);
     return 0;
 }

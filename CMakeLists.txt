@@ -8,6 +8,7 @@ include("cmake/find_dep.cmake")
 # TARGETS
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njlog")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njpt")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")
 
 # EXE
 add_executable(njterm ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
