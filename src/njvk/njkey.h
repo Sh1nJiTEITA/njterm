@@ -97,14 +97,14 @@ enum class Key : KeyType {
     B,
     N,
     M,
-    LeftCurlyBrace,
-    RightCurlyBrace,
-    Slash,
-    BackSlash,
-    Colon,
-    Quat,
-    LeftBrace, // <
-    RightBrace // >
+    Slash,      // /
+    BackSlash,  //
+    SemiColon,  // ;
+    Apostrophe, // '
+    Period,     // .
+    Comma,      // ,
+    LeftBrace,  // [
+    RightBrace  // ]
 };
 
 } // namespace win

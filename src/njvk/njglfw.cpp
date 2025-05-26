@@ -37,11 +37,124 @@ auto WindowGLFW::Create() -> void {
     // callback)
 }
 
-auto WindowGLFW::Extent() -> glm::vec2 {}
-auto WindowGLFW::Title() -> std::string {}
-auto WindowGLFW::SetTitle(std::string title) -> void {}
+auto WindowGLFW::Extent() -> glm::vec2 {
+    glm::ivec2 ext;
+    glfwGetFramebufferSize(glfwWindowHandle, &ext.x, &ext.y);
+    return ext;
+}
+
+auto WindowGLFW::Title() -> std::string {
+    return glfwGetWindowTitle(glfwWindowHandle);
+}
+
+auto WindowGLFW::SetTitle(std::string title) -> void {
+    glfwSetWindowTitle(glfwWindowHandle, title.c_str());
+}
+
 auto WindowGLFW::ToInternal(win::KeyType key) -> win::Key {}
-auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {}
+auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
+    // clang-format off
+    switch (key) { 
+	case win::Key::CapsLock: return GLFW_KEY_CAPS_LOCK;
+	case win::Key::Space: return GLFW_KEY_SPACE;
+	case win::Key::Tab: return GLFW_KEY_TAB; 
+	case win::Key::Enter: return GLFW_KEY_ENTER; 
+	case win::Key::Return: return GLFW_KEY_ENTER; 
+	case win::Key::Escape: return GLFW_KEY_ESCAPE; 
+	case win::Key::Backspace: return GLFW_KEY_BACKSPACE;
+	case win::Key::ScrollLock: return GLFW_KEY_SCROLL_LOCK;
+	case win::Key::Delete: return GLFW_KEY_DELETE;
+	case win::Key::Insert: return GLFW_KEY_INSERT;
+	case win::Key::Home: return GLFW_KEY_HOME;
+	case win::Key::End: return GLFW_KEY_END;
+	case win::Key::PgUp: return GLFW_KEY_PAGE_UP;
+	case win::Key::PgDn: return GLFW_KEY_PAGE_DOWN;
+	case win::Key::Up: return GLFW_KEY_UP;
+	case win::Key::Down: return GLFW_KEY_DOWN;
+	case win::Key::Left: return GLFW_KEY_LEFT;
+	case win::Key::Right: return GLFW_KEY_RIGHT;
+	case win::Key::F1: return GLFW_KEY_F1;
+	case win::Key::F2: return GLFW_KEY_F2;
+	case win::Key::F3: return GLFW_KEY_F3;
+	case win::Key::F4: return GLFW_KEY_F4;
+	case win::Key::F5: return GLFW_KEY_F5;
+	case win::Key::F6: return GLFW_KEY_F6;
+	case win::Key::F7: return GLFW_KEY_F7;
+	case win::Key::F8: return GLFW_KEY_F8;
+	case win::Key::F9: return GLFW_KEY_F9;
+	case win::Key::F10: return GLFW_KEY_F10;
+	case win::Key::F11: return GLFW_KEY_F11;
+	case win::Key::F13: return GLFW_KEY_F13;
+	case win::Key::F14: return GLFW_KEY_F14;
+	case win::Key::F15: return GLFW_KEY_F15;
+	case win::Key::F16: return GLFW_KEY_F16;
+	case win::Key::F17: return GLFW_KEY_F17;
+	case win::Key::F18: return GLFW_KEY_F18;
+	case win::Key::F19: return GLFW_KEY_F19;
+	case win::Key::F20: return GLFW_KEY_F20;
+	case win::Key::F21: return GLFW_KEY_F21;
+	case win::Key::F22: return GLFW_KEY_F22;
+	case win::Key::F23: return GLFW_KEY_F23;
+	case win::Key::F24: return GLFW_KEY_F24;
+	case win::Key::LeftWin: return GLFW_KEY_LEFT_SUPER;
+	case win::Key::RightWin: return GLFW_KEY_RIGHT_SUPER;
+	case win::Key::Ctrl: return GLFW_KEY_LEFT_CONTROL;
+	case win::Key::Alt: return GLFW_KEY_LEFT_CONTROL;
+	case win::Key::Shift: return GLFW_KEY_LEFT_SHIFT;
+	case win::Key::LeftCtrl: return GLFW_KEY_LEFT_CONTROL;
+	case win::Key::RightCtrl: return GLFW_KEY_RIGHT_CONTROL;
+	case win::Key::LeftShift: return GLFW_KEY_LEFT_SHIFT;
+	case win::Key::RightShift: return GLFW_KEY_RIGHT_SHIFT;
+	case win::Key::LeftAlt: return GLFW_KEY_LEFT_SHIFT;
+	case win::Key::RightAlt: return GLFW_KEY_RIGHT_ALT;
+	case win::Key::Apps: return GLFW_KEY_MENU; // what is it? :)
+	case win::Key::PrintScreen: return GLFW_KEY_PRINT_SCREEN;
+	case win::Key::Pause: return GLFW_KEY_PAUSE;
+	case win::Key::Break: return GLFW_KEY_PAUSE;
+	case win::Key::Help: return GLFW_KEY_UNKNOWN;
+	case win::Key::Sleep: return GLFW_KEY_UNKNOWN;
+	case win::Key::MouseLeft: return GLFW_MOUSE_BUTTON_LEFT;
+	case win::Key::MouseRight: return GLFW_MOUSE_BUTTON_RIGHT;
+	case win::Key::MouseMiddle: return GLFW_MOUSE_BUTTON_MIDDLE;
+	case win::Key::Q: return GLFW_KEY_Q;
+	case win::Key::W: return GLFW_KEY_W;
+	case win::Key::E: return GLFW_KEY_E;
+	case win::Key::R: return GLFW_KEY_R;
+	case win::Key::T: return GLFW_KEY_T;
+	case win::Key::Y: return GLFW_KEY_Y;
+	case win::Key::U: return GLFW_KEY_U;
+	case win::Key::I: return GLFW_KEY_I;
+	case win::Key::O: return GLFW_KEY_O;
+	case win::Key::P: return GLFW_KEY_P;
+	case win::Key::A: return GLFW_KEY_A;
+	case win::Key::S: return GLFW_KEY_S;
+	case win::Key::D: return GLFW_KEY_D;
+	case win::Key::F: return GLFW_KEY_F;
+	case win::Key::G: return GLFW_KEY_G;
+	case win::Key::H: return GLFW_KEY_H;
+	case win::Key::J: return GLFW_KEY_J;
+	case win::Key::K: return GLFW_KEY_K;
+	case win::Key::L: return GLFW_KEY_L;
+	case win::Key::Z: return GLFW_KEY_Z;
+	case win::Key::X: return GLFW_KEY_X;
+	case win::Key::C: return GLFW_KEY_C;
+	case win::Key::V: return GLFW_KEY_V;
+	case win::Key::B: return GLFW_KEY_B;
+	case win::Key::N: return GLFW_KEY_N;
+	case win::Key::M: return GLFW_KEY_M;
+	case win::Key::Slash: return GLFW_KEY_SLASH;
+	case win::Key::BackSlash: return GLFW_KEY_BACKSLASH;
+	case win::Key::SemiColon: return GLFW_KEY_SEMICOLON;
+	case win::Key::Apostrophe: return GLFW_KEY_APOSTROPHE;
+        case win::Key::Period: return GLFW_KEY_PERIOD;
+        case win::Key::Comma: return GLFW_KEY_COMMA;
+	case win::Key::LeftBrace: return GLFW_KEY_LEFT_BRACKET; // <
+        case win::Key::RightBrace: // > return GLFW_KEY_RIGHT_BRACKET; // <
+    }
+
+}
+
+
 } // namespace glfw
 
 } // namespace nj

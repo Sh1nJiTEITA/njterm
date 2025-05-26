@@ -27,7 +27,6 @@ class KeyControl {
 
 //! FIXME: Supports for now only x11 & wayland
 auto DisplayServer() -> int;
-
 auto IsKeyPressed(const KeyControl &ctl, Key key) -> bool;
 
 } // namespace win
