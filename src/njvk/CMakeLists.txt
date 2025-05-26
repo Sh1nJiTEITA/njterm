@@ -7,5 +7,5 @@ target_include_directories(njvk PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(Vulkan REQUIRED)
 
 target_link_libraries(njvk PRIVATE ${Vulkan_LIBRARY})
-target_link_libraries(njvk PRIVATE njlog)
-
+target_link_libraries(
+  njvk PRIVATE njlog vulkan-memory-allocator::vulkan-memory-allocator)

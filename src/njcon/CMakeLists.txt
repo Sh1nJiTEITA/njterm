@@ -6,8 +6,7 @@ add_library(njcon SHARED ${CMAKE_CURRENT_SOURCE_DIR}/njcon.cpp
 target_include_directories(njcon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 target_link_libraries(njcon PRIVATE njlog)
-target_link_libraries(njcon PRIVATE ${LUA_LIBRARIES})
-target_include_directories(njcon PRIVATE ${LUA_INCLUDE_DIR})
+target_link_libraries(njcon PRIVATE lua::lua)
 
 if(BUILD_TEST_NJCON)
 

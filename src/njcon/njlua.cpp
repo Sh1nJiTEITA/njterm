@@ -1,10 +1,8 @@
+#include "njlua.h"
 #include "njlog.h"
 #include "njlualog.h"
-#include <lauxlib.h>
-#include <lua.h>
-#include <lualib.h>
+
 #include <memory>
-#include <njlua.h>
 #include <string>
 
 namespace nj::lua {

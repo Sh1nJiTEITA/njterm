@@ -1,10 +1,10 @@
 #pragma once
-#include <lauxlib.h>
 #ifndef NJ_LUA_LOG_H
 #define NJ_LUA_LOG_H
 
 #include "njlog.h"
-#include <lua.h>
+
+#include <lua.hpp>
 
 namespace nj::log {
 template <typename... Args>

@@ -2,7 +2,8 @@
 #ifndef NJ_LUA_H
 #define NJ_LUA_H
 
-#include <lua.h>
+#include <lua.hpp>
+
 #include <memory>
 
 namespace nj::lua {
