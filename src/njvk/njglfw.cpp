@@ -51,7 +51,99 @@ auto WindowGLFW::SetTitle(std::string title) -> void {
     glfwSetWindowTitle(glfwWindowHandle, title.c_str());
 }
 
-auto WindowGLFW::ToInternal(win::KeyType key) -> win::Key {}
+auto WindowGLFW::ToInternal(win::KeyType key) -> win::Key {
+    // clang-format off
+    switch (key) { 
+	case GLFW_KEY_CAPS_LOCK: return win::Key::CapsLock;
+	case GLFW_KEY_SPACE: return win::Key::Space;
+	case GLFW_KEY_TAB: return win::Key::Tab; 
+	case GLFW_KEY_ENTER: return win::Key::Enter; 
+	case GLFW_KEY_ESCAPE: return win::Key::Escape; 
+	case GLFW_KEY_BACKSPACE: return win::Key::Backspace;
+	case GLFW_KEY_SCROLL_LOCK: return win::Key::ScrollLock;
+	case GLFW_KEY_DELETE: return win::Key::Delete;
+	case GLFW_KEY_INSERT: return win::Key::Insert;
+	case GLFW_KEY_HOME: return win::Key::Home;
+	case GLFW_KEY_END: return win::Key::End;
+	case GLFW_KEY_PAGE_UP: return win::Key::PgUp;
+	case GLFW_KEY_PAGE_DOWN: return win::Key::PgDn;
+	case GLFW_KEY_UP: return win::Key::Up;
+	case GLFW_KEY_DOWN: return win::Key::Down;
+	case GLFW_KEY_LEFT: return win::Key::Left;
+	case GLFW_KEY_RIGHT: return win::Key::Right;
+	case GLFW_KEY_F1: return win::Key::F1;
+	case GLFW_KEY_F2: return win::Key::F2;
+	case GLFW_KEY_F3: return win::Key::F3;
+	case GLFW_KEY_F4: return win::Key::F4;
+	case GLFW_KEY_F5: return win::Key::F5;
+	case GLFW_KEY_F6: return win::Key::F6;
+	case GLFW_KEY_F7: return win::Key::F7;
+	case GLFW_KEY_F8: return win::Key::F8;
+	case GLFW_KEY_F9: return win::Key::F9;
+	case GLFW_KEY_F10: return win::Key::F10;
+	case GLFW_KEY_F11: return win::Key::F11;
+	case GLFW_KEY_F13: return win::Key::F13;
+	case GLFW_KEY_F14: return win::Key::F14;
+	case GLFW_KEY_F15: return win::Key::F15;
+	case GLFW_KEY_F16: return win::Key::F16;
+	case GLFW_KEY_F17: return win::Key::F17;
+	case GLFW_KEY_F18: return win::Key::F18;
+	case GLFW_KEY_F19: return win::Key::F19;
+	case GLFW_KEY_F20: return win::Key::F20;
+	case GLFW_KEY_F21: return win::Key::F21;
+	case GLFW_KEY_F22: return win::Key::F22;
+	case GLFW_KEY_F23: return win::Key::F23;
+	case GLFW_KEY_F24: return win::Key::F24;
+	case GLFW_KEY_LEFT_SUPER: return win::Key::LeftWin;
+	case GLFW_KEY_RIGHT_SUPER: return win::Key::RightWin;
+	case GLFW_KEY_LEFT_CONTROL: return win::Key::LeftCtrl;
+	case GLFW_KEY_RIGHT_CONTROL: return win::Key::RightCtrl;
+	case GLFW_KEY_LEFT_SHIFT: return win::Key::LeftShift;
+	case GLFW_KEY_RIGHT_SHIFT: return win::Key::RightShift;
+	case GLFW_KEY_RIGHT_ALT: return win::Key::RightAlt;
+	case GLFW_KEY_MENU: return win::Key::Apps; // what is it? :)
+	case GLFW_KEY_PRINT_SCREEN: return win::Key::PrintScreen;
+	case GLFW_KEY_PAUSE: return win::Key::Pause;
+	case GLFW_MOUSE_BUTTON_LEFT: return win::Key::MouseLeft;
+	case GLFW_MOUSE_BUTTON_RIGHT: return win::Key::MouseRight;
+	case GLFW_MOUSE_BUTTON_MIDDLE: return win::Key::MouseMiddle;
+	case GLFW_KEY_Q: return win::Key::Q;
+	case GLFW_KEY_W: return win::Key::W;
+	case GLFW_KEY_E: return win::Key::E;
+	case GLFW_KEY_R: return win::Key::R;
+	case GLFW_KEY_T: return win::Key::T;
+	case GLFW_KEY_Y: return win::Key::Y;
+	case GLFW_KEY_U: return win::Key::U;
+	case GLFW_KEY_I: return win::Key::I;
+	case GLFW_KEY_O: return win::Key::O;
+	case GLFW_KEY_P: return win::Key::P;
+	case GLFW_KEY_A: return win::Key::A;
+	case GLFW_KEY_S: return win::Key::S;
+	case GLFW_KEY_D: return win::Key::D;
+	case GLFW_KEY_F: return win::Key::F;
+	case GLFW_KEY_G: return win::Key::G;
+	case GLFW_KEY_H: return win::Key::H;
+	case GLFW_KEY_J: return win::Key::J;
+	case GLFW_KEY_K: return win::Key::K;
+	case GLFW_KEY_L: return win::Key::L;
+	case GLFW_KEY_Z: return win::Key::Z;
+	case GLFW_KEY_X: return win::Key::X;
+	case GLFW_KEY_C: return win::Key::C;
+	case GLFW_KEY_V: return win::Key::V;
+	case GLFW_KEY_B: return win::Key::B;
+	case GLFW_KEY_N: return win::Key::N;
+	case GLFW_KEY_M: return win::Key::M;
+	case GLFW_KEY_SLASH: return win::Key::Slash;
+	case GLFW_KEY_BACKSLASH: return win::Key::BackSlash;
+	case GLFW_KEY_SEMICOLON: return win::Key::SemiColon;
+	case GLFW_KEY_APOSTROPHE: return win::Key::Apostrophe;
+        case GLFW_KEY_PERIOD: return win::Key::Period;
+        case GLFW_KEY_COMMA: return win::Key::Comma;
+	case GLFW_KEY_LEFT_BRACKET: return win::Key::LeftBrace; // <
+        case GLFW_KEY_RIGHT_BRACKET: return win::Key::RightBrace; // <
+    }
+
+}
 auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
     // clang-format off
     switch (key) { 
@@ -59,7 +151,6 @@ auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
 	case win::Key::Space: return GLFW_KEY_SPACE;
 	case win::Key::Tab: return GLFW_KEY_TAB; 
 	case win::Key::Enter: return GLFW_KEY_ENTER; 
-	case win::Key::Return: return GLFW_KEY_ENTER; 
 	case win::Key::Escape: return GLFW_KEY_ESCAPE; 
 	case win::Key::Backspace: return GLFW_KEY_BACKSPACE;
 	case win::Key::ScrollLock: return GLFW_KEY_SCROLL_LOCK;
@@ -99,7 +190,7 @@ auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
 	case win::Key::LeftWin: return GLFW_KEY_LEFT_SUPER;
 	case win::Key::RightWin: return GLFW_KEY_RIGHT_SUPER;
 	case win::Key::Ctrl: return GLFW_KEY_LEFT_CONTROL;
-	case win::Key::Alt: return GLFW_KEY_LEFT_CONTROL;
+	case win::Key::Alt: return GLFW_KEY_LEFT_ALT;
 	case win::Key::Shift: return GLFW_KEY_LEFT_SHIFT;
 	case win::Key::LeftCtrl: return GLFW_KEY_LEFT_CONTROL;
 	case win::Key::RightCtrl: return GLFW_KEY_RIGHT_CONTROL;
@@ -110,7 +201,6 @@ auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
 	case win::Key::Apps: return GLFW_KEY_MENU; // what is it? :)
 	case win::Key::PrintScreen: return GLFW_KEY_PRINT_SCREEN;
 	case win::Key::Pause: return GLFW_KEY_PAUSE;
-	case win::Key::Break: return GLFW_KEY_PAUSE;
 	case win::Key::Help: return GLFW_KEY_UNKNOWN;
 	case win::Key::Sleep: return GLFW_KEY_UNKNOWN;
 	case win::Key::MouseLeft: return GLFW_MOUSE_BUTTON_LEFT;
@@ -149,9 +239,8 @@ auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
         case win::Key::Period: return GLFW_KEY_PERIOD;
         case win::Key::Comma: return GLFW_KEY_COMMA;
 	case win::Key::LeftBrace: return GLFW_KEY_LEFT_BRACKET; // <
-        case win::Key::RightBrace: // > return GLFW_KEY_RIGHT_BRACKET; // <
+        case win::Key::RightBrace: return GLFW_KEY_RIGHT_BRACKET; // <
     }
-
 }
 
 

@@ -14,7 +14,6 @@ enum class Key : KeyType {
     Space,
     Tab,
     Enter,
-    Return,
     Escape,
     Backspace,
     ScrollLock,
@@ -65,7 +64,6 @@ enum class Key : KeyType {
     Apps, // what is it? :)
     PrintScreen,
     Pause,
-    Break,
     Help,
     Sleep,
     MouseLeft,
