@@ -4,8 +4,6 @@
 
 #include <memory>
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
