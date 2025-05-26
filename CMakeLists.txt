@@ -5,14 +5,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # CMAKE ADDS
 include("cmake/find_dep.cmake")
 
+
+# SETTINGS ==================================================
+option(USE_GLFW "Use GLFW as window impl" ON)
+
+
 # TARGETS
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njlog")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njpt")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njwin")
 
 # EXE
 add_executable(njterm ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 target_link_libraries(njterm PRIVATE njpt)
+target_link_libraries(njterm PRIVATE njvk)
+target_link_libraries(njterm PRIVATE njwin)
 
 # DEPENDECIES
 

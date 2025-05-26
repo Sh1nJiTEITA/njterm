@@ -102,7 +102,8 @@ enum class Key : KeyType {
     Period,     // .
     Comma,      // ,
     LeftBrace,  // [
-    RightBrace  // ]
+    RightBrace, // ]
+    Underfined
 };
 
 } // namespace win

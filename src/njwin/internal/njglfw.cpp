@@ -51,7 +51,7 @@ auto WindowGLFW::SetTitle(std::string title) -> void {
     glfwSetWindowTitle(glfwWindowHandle, title.c_str());
 }
 
-auto WindowGLFW::ToInternal(win::KeyType key) -> win::Key {
+auto KeyControlGLFW::ToInternal(win::KeyType key) -> win::Key {
     // clang-format off
     switch (key) { 
 	case GLFW_KEY_CAPS_LOCK: return win::Key::CapsLock;
@@ -141,10 +141,11 @@ auto WindowGLFW::ToInternal(win::KeyType key) -> win::Key {
         case GLFW_KEY_COMMA: return win::Key::Comma;
 	case GLFW_KEY_LEFT_BRACKET: return win::Key::LeftBrace; // <
         case GLFW_KEY_RIGHT_BRACKET: return win::Key::RightBrace; // <
+	default: return win::Key::Underfined;
     }
-
 }
-auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
+
+auto KeyControlGLFW::ToExternal(win::Key key) -> win::KeyType {
     // clang-format off
     switch (key) { 
 	case win::Key::CapsLock: return GLFW_KEY_CAPS_LOCK;
@@ -240,6 +241,8 @@ auto WindowGLFW::ToExternal(win::Key key) -> win::KeyType {
         case win::Key::Comma: return GLFW_KEY_COMMA;
 	case win::Key::LeftBrace: return GLFW_KEY_LEFT_BRACKET; // <
         case win::Key::RightBrace: return GLFW_KEY_RIGHT_BRACKET; // <
+        case win::Key::Underfined: return GLFW_KEY_UNKNOWN; // <
+	default: return GLFW_KEY_UNKNOWN;
     }
 }
 

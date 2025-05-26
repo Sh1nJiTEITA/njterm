@@ -4,6 +4,7 @@
 
 #include "njkey.h"
 #include <glm/vec2.hpp>
+#include <memory>
 #include <string>
 
 namespace nj {
@@ -20,10 +21,12 @@ class Window {
 
 class KeyControl {
   public:
-    virtual ~KeyControl();
-    virtual auto ToInternal(KeyType key) -> Key;
-    virtual auto ToExternal(Key key) -> KeyType;
+    virtual auto ToInternal(KeyType key) -> Key = 0;
+    virtual auto ToExternal(Key key) -> KeyType = 0;
 };
+
+auto CreateWindow() -> std::unique_ptr<Window>;
+auto CreateKeyControl() -> std::unique_ptr<KeyControl>;
 
 //! FIXME: Supports for now only x11 & wayland
 auto DisplayServer() -> int;

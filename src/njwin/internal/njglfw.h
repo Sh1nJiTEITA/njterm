@@ -8,7 +8,7 @@
 namespace nj {
 namespace glfw {
 
-class WindowGLFW : public win::Window, public win::KeyControl {
+class WindowGLFW : public win::Window {
   public:
     WindowGLFW(std::string title, glm::vec2 init_ext);
     ~WindowGLFW();
@@ -16,13 +16,16 @@ class WindowGLFW : public win::Window, public win::KeyControl {
     virtual auto Extent() -> glm::vec2 override;
     virtual auto Title() -> std::string override;
     virtual auto SetTitle(std::string title) -> void override;
-    virtual auto ToInternal(win::KeyType key) -> win::Key override;
-    virtual auto ToExternal(win::Key key) -> win::KeyType override;
 
   private:
     GLFWwindow *glfwWindowHandle;
     std::string title;
     glm::vec2 extent;
+};
+
+class KeyControlGLFW : public win::KeyControl {
+    virtual auto ToInternal(win::KeyType key) -> win::Key override;
+    virtual auto ToExternal(win::Key key) -> win::KeyType override;
 };
 
 } // namespace glfw
