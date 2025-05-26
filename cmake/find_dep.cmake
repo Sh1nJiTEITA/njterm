@@ -13,3 +13,13 @@ find_package(fmt REQUIRED)
 if(fmt_FOUND)
   message(STATUS "Found fmt lib")
 endif()
+
+find_package(Lua REQUIRED)
+if(lua_FOUND)
+  message(STATUS "Found lua lib")
+endif()
+
+find_package(Catch2 REQUIRED)
+if(Catch2_FOUND)
+  message(STATUS "Found lua lib")
+endif()

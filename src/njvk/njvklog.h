@@ -1,4 +1,4 @@
-#pragma oncg
+#pragma once
 
 #ifndef NJ_VK_LOG_H
 #define NJ_VK_LOG_H
