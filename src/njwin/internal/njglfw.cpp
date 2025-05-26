@@ -33,6 +33,9 @@ WindowGLFW::~WindowGLFW() {
 auto WindowGLFW::Create() -> void {
     glfwWindowHandle =
         glfwCreateWindow(extent.x, extent.y, title.c_str(), nullptr, nullptr);
+
+    nj::log::CheckCall(glfwWindowHandle == nullptr ? 1 : 0,
+                       "Cant create GLFW window");
     // glfwSetFramebufferSizeCallback(glfwWindow, GLFWframebuffersizefun
     // callback)
 }
