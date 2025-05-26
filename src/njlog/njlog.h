@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cstring>
 #ifndef NJ_LOG_H
 #define NJ_LOG_H
 
 #include <chrono>
+#include <cstring>
 #include <fmt/base.h>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
