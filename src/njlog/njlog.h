@@ -81,12 +81,18 @@ template <typename... Args> inline void Fatal(Args &&...args) {
     Log<Level::Fatal>(FmtStyleFatal, std::forward<Args>(args)...);
 }
 
-template <typename... Args> inline auto CheckCall(int status, Args &&...args) {
+template <typename... Args>
+inline auto CheckUnixCall(int status, Args &&...args) {
     if (status == -1) {
         log::Fatal(std::forward<Args>(args)...);
         fmt::print(stderr, "Error info: {}", std::strerror(errno));
         std::exit(EXIT_FAILURE);
     }
+}
+
+template <typename... Args> inline auto FatalExit(Args &&...args) {
+    log::Fatal(std::forward<Args>(args)...);
+    std::exit(EXIT_FAILURE);
 }
 
 } // namespace log

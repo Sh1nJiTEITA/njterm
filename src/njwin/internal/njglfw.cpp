@@ -10,8 +10,8 @@ WindowGLFW::WindowGLFW(std::string title, glm::vec2 init_ext)
     : title{title}, extent{init_ext} {
     glfwInit();
     const auto display_server = win::DisplayServer();
-    log::CheckCall(display_server,
-                   "Cant create GLFW window: Unknown compositor");
+    log::CheckUnixCall(display_server,
+                       "Cant create GLFW window: Unknown compositor");
     // FIXME: Add support for other compositors
     if (display_server) {
         glfwWindowHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
@@ -34,8 +34,8 @@ auto WindowGLFW::Create() -> void {
     glfwWindowHandle =
         glfwCreateWindow(extent.x, extent.y, title.c_str(), nullptr, nullptr);
 
-    nj::log::CheckCall(glfwWindowHandle == nullptr ? 1 : 0,
-                       "Cant create GLFW window");
+    nj::log::CheckUnixCall(glfwWindowHandle == nullptr ? 1 : 0,
+                           "Cant create GLFW window");
     // glfwSetFramebufferSizeCallback(glfwWindow, GLFWframebuffersizefun
     // callback)
 }

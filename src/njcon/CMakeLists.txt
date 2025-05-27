@@ -13,5 +13,6 @@ if(BUILD_TEST_NJCON)
   add_executable(njcon_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/lua_state.cpp)
   target_link_libraries(njcon_tests PUBLIC njcon)
   target_link_libraries(njcon_tests PRIVATE Catch2::Catch2WithMain)
+  target_link_libraries(njcon_tests PRIVATE njlog)
 
 endif()

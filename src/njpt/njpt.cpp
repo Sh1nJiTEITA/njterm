@@ -22,13 +22,13 @@ Pty::Pty() {
     log::Info("Creating pt");
 
     deviceDescriptor = posix_openpt(O_RDWR);
-    log::CheckCall(deviceDescriptor, "Cant create device descriptor");
+    log::CheckUnixCall(deviceDescriptor, "Cant create device descriptor");
 
-    log::CheckCall(grantpt(deviceDescriptor), "Cant grant access to the slave ps");
-    log::CheckCall(unlockpt(deviceDescriptor), "Cant unlock pt device");
+    log::CheckUnixCall(grantpt(deviceDescriptor), "Cant grant access to the slave ps");
+    log::CheckUnixCall(unlockpt(deviceDescriptor), "Cant unlock pt device");
 
     slaveDescriptor = open(SlaveName().c_str(), O_RDWR);
-    log::CheckCall(slaveDescriptor, "Cant open slave file: {}");
+    log::CheckUnixCall(slaveDescriptor, "Cant open slave file: {}");
 
     // clang-format on
 }
@@ -48,20 +48,20 @@ auto Pty::ConnectShell() -> void {
     
     // Create new child process
     shellProcessID = fork();
-    log::CheckCall(shellProcessID, "Cant fork new process for shell");
+    log::CheckUnixCall(shellProcessID, "Cant fork new process for shell");
     // New child process spawns with same content as parent. Here == 0 check
     // is needed to make ONLY child process run shell
     if (shellProcessID == 0) { 
-        log::CheckCall(setsid(), "Cant create session for child process");
-        log::CheckCall(ioctl(slaveDescriptor, TIOCSCTTY, 0), "ioctl TIOCSTTY failed");
+        log::CheckUnixCall(setsid(), "Cant create session for child process");
+        log::CheckUnixCall(ioctl(slaveDescriptor, TIOCSCTTY, 0), "ioctl TIOCSTTY failed");
         
         // Make child process (current) ref all std<...> to slave descriptor
-        log::CheckCall(dup2(slaveDescriptor, STDIN_FILENO), "Cant dup to stdin");
-        log::CheckCall(dup2(slaveDescriptor, STDOUT_FILENO), "Cant dup to stdout");
-        log::CheckCall(dup2(slaveDescriptor, STDERR_FILENO), "Cant dup tp stderr");
+        log::CheckUnixCall(dup2(slaveDescriptor, STDIN_FILENO), "Cant dup to stdin");
+        log::CheckUnixCall(dup2(slaveDescriptor, STDOUT_FILENO), "Cant dup to stdout");
+        log::CheckUnixCall(dup2(slaveDescriptor, STDERR_FILENO), "Cant dup tp stderr");
 
         const char* shell_path = DefaultShell();
-        log::CheckCall(execlp(shell_path, shell_path, nullptr), 
+        log::CheckUnixCall(execlp(shell_path, shell_path, nullptr), 
                        "Cant exec default shell={}"/* , std::string(shell_path) */);
     }
     // clang-format on
@@ -91,7 +91,7 @@ auto Pty::ReadMaster(int timeout_sec, int timeout_usec) -> std::string {
         const int ret = select(deviceDescriptor + 1, &readfds, nullptr, nullptr, &timeout);
         const char* ret_msg = "Cant select (wait) untile master "
                               "descriptor is ready for reading";
-        log::CheckCall(ret, ret_msg);
+        log::CheckUnixCall(ret, ret_msg);
         if (ret == 0) { 
             break;
         }
@@ -120,7 +120,7 @@ auto Pty::WriteMaster(const std::string &msg) -> void {
     while (totalWritten < dataLen) {
         ssize_t written = write(deviceDescriptor, msg.data() + totalWritten,
                                 dataLen - totalWritten);
-        log::CheckCall(written, "Cant write to master descriptor");
+        log::CheckUnixCall(written, "Cant write to master descriptor");
         totalWritten += written;
     }
 }
