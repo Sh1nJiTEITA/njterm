@@ -2,7 +2,7 @@
 #ifndef NJ_CON_H
 #define NJ_CON_H
 
-#include "njlua.h"
+#include "njluastate.h"
 #include <string>
 
 namespace nj::con {

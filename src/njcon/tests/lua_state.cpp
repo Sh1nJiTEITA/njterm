@@ -2,8 +2,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "njlog.h"
-#include "njlua.h"
 #include "njluaexc.h"
+#include "njluastate.h"
+#include "njluavalue.h"
 
 TEST_CASE("Test catch") { REQUIRE(0 == 0); }
 

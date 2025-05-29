@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 4.0.1)
 project(njcon)
 
-add_library(njcon SHARED ${CMAKE_CURRENT_SOURCE_DIR}/njcon.cpp
-                         ${CMAKE_CURRENT_SOURCE_DIR}/njlua.cpp)
+add_library(
+  njcon SHARED
+  ${CMAKE_CURRENT_SOURCE_DIR}/njcon.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/njluastate.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/njluavalue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/njluautils.cpp)
 target_include_directories(njcon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 target_link_libraries(njcon PRIVATE njlog)
