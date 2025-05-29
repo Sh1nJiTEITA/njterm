@@ -54,7 +54,11 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
     t = { 
         a = 10,
         b = 20.9,
-        c = "123"
+        c = "123",
+        d = { 
+            a = 10,
+            b = 30
+        }
     }
     )lua";
     SECTION("TABLE") {
@@ -68,13 +72,8 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         REQUIRE(a.As<float>() == 10.0);
         REQUIRE(a.As<std::string>() == "10");
 
-        // auto items = v.Items();
-        // REQUIRE(items[0].first.As<std::string>() == "a");
-        // REQUIRE(items[0].second.As<int>() == 10);
-        for (auto &[key, val] : v.Items()) {
-            std::string k = key.As<std::string>();
-            std::string vstr = val.As<std::string>();
-            nj::log::Debug("key={} : val={}", k, vstr);
-        }
+        auto d = v.Field("d");
+        REQUIRE(d.Field("a").As<int>() == 10);
+        REQUIRE(d.Field("b").As<int>() == 30);
     }
 }

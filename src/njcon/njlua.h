@@ -131,6 +131,7 @@ class Value {
 
 class State {
   public:
+    State(const char *con, bool loadstd = true);
     State(const std::string &con, bool loadstd = true);
     State(std::string &&con, bool loadstd = true);
 
@@ -138,6 +139,7 @@ class State {
 
     void Exec(const std::string &con);
     void Exec(std::string &&con);
+    void Exec(const char *con);
 
   private:
     LuaStatePtrShared state;

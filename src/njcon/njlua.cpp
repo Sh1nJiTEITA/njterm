@@ -103,6 +103,13 @@ static void LuaStateDeleter(LuaState *state) {
     nj::log::Debug("Deleting Lua state");
 };
 
+State::State(const char *ctx, bool loadstd)
+    : state{LuaStatePtrShared(luaL_newstate(), &LuaStateDeleter)} {
+    nj::log::Debug("Creating new Lua state");
+    luaL_openlibs(state.get());
+    Exec(ctx);
+}
+
 State::State(const std::string &ctx, bool loadstd)
     : state{LuaStatePtrShared(luaL_newstate(), &LuaStateDeleter)} {
 
@@ -133,6 +140,11 @@ void State::Exec(const std::string &ctx) {
 
 void State::Exec(std::string &&ctx) {
     auto res = luaL_dostring(state.get(), ctx.c_str());
+    nj::log::CheckLuaCall(res, state.get(), "Cant execute lua-code (&&)");
+}
+
+void State::Exec(const char *ctx) {
+    auto res = luaL_dostring(state.get(), ctx);
     nj::log::CheckLuaCall(res, state.get(), "Cant execute lua-code (&&)");
 }
 
