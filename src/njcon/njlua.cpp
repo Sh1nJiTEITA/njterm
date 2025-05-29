@@ -1,7 +1,7 @@
 #include "njlua.h"
 #include "njlog.h"
+#include "njluaexc.h"
 #include "njlualog.h"
-
 #include <cerrno>
 #include <lua.h>
 #include <memory>
@@ -93,10 +93,16 @@ int Value::Length() {
     return lua_rawlen(st, -1);
 }
 
-PushLuaValue::PushLuaValue(LuaState *state, int ref) : state{state} {
+PushLuaValue::PushLuaValue(LuaState *state, int ref)
+    : state{state}, isKilled{false} {
     lua_rawgeti(state, LUA_REGISTRYINDEX, ref);
 }
 PushLuaValue::~PushLuaValue() { lua_pop(state, 1); }
+
+void PushLuaValue::kill() {
+    lua_pop(state, 1);
+    isKilled = true;
+}
 
 static void LuaStateDeleter(LuaState *state) {
     lua_close(state);
@@ -124,6 +130,21 @@ State::State(std::string &&con, bool loadstd)
     nj::log::Debug("Creating new Lua state");
     luaL_openlibs(state.get());
     Exec(std::move(con));
+}
+
+Value State::ReturnTable() {
+    if (lua_gettop(state.get()) == 0) {
+        throw exc::NoReturnTable();
+    }
+    if (!lua_istable(state.get(), -1)) {
+        const char *last_name = luaL_typename(state.get(), -1);
+        nj::log::Error("Lua chunk did not return a table, got: ", last_name);
+        lua_pop(state.get(), 1);
+        throw exc::NoReturnTable();
+    }
+    int ref = luaL_ref(state.get(), LUA_REGISTRYINDEX);
+    LuaStatePtrWeak source{state};
+    return Value(std::move(source), ref);
 }
 
 Value State::Global(const char *name) {

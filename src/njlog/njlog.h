@@ -1,5 +1,7 @@
 #pragma once
 
+#include <exception>
+#include <utility>
 #ifndef NJ_LOG_H
 #define NJ_LOG_H
 
@@ -93,6 +95,12 @@ inline auto CheckUnixCall(int status, Args &&...args) {
 template <typename... Args> inline auto FatalExit(Args &&...args) {
     log::Fatal(std::forward<Args>(args)...);
     std::exit(EXIT_FAILURE);
+}
+
+template <typename... Args>
+inline auto FatalThrow(std::exception &&exc, Args &&...args) {
+    log::Fatal(std::forward<Args>(args)...);
+    throw std::forward<std::exception>(exc);
 }
 
 } // namespace log

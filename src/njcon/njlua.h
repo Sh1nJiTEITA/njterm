@@ -1,11 +1,10 @@
 #pragma once
-#include <vector>
 #ifndef NJ_LUA_H
 #define NJ_LUA_H
 
 #include <lua.hpp>
-
 #include <memory>
+#include <vector>
 
 namespace nj::lua {
 
@@ -30,8 +29,10 @@ class PushLuaValue {
   public:
     PushLuaValue(LuaState *state, int ref);
     ~PushLuaValue();
+    void kill();
 
   private:
+    bool isKilled;
     LuaState *state;
 };
 
@@ -135,8 +136,8 @@ class State {
     State(const std::string &con, bool loadstd = true);
     State(std::string &&con, bool loadstd = true);
 
+    Value ReturnTable();
     Value Global(const char *name);
-
     void Exec(const std::string &con);
     void Exec(std::string &&con);
     void Exec(const char *con);

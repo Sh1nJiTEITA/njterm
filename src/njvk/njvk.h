@@ -5,12 +5,6 @@
 #include <memory>
 #include <vulkan/vulkan.hpp>
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
-
 namespace nj {
 namespace ren {
 

@@ -6,8 +6,15 @@ namespace nj::con {
 const char *stdConfigFile = R"lua( 
 
     return { 
-        
-    }
+        vk = { 
+            validation = { 
+                enabled = true, 
+                layers = { 
+                    "VK_LAYER_KHRONOS_validation"
+                }
+            } -- validation
+        } -- vk
+    } -- END
 
 )lua";
 

@@ -3,6 +3,7 @@
 
 #include "njlog.h"
 #include "njlua.h"
+#include "njluaexc.h"
 
 TEST_CASE("Test catch") { REQUIRE(0 == 0); }
 
@@ -75,5 +76,30 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         auto d = v.Field("d");
         REQUIRE(d.Field("a").As<int>() == 10);
         REQUIRE(d.Field("b").As<int>() == 30);
+    }
+
+    const std::string promt3 = R"lua(
+    return { 
+        a = 10,
+        b = 20.9,
+        c = "123",
+        d = { 
+            a = 10,
+            b = 30
+        }
+    }
+    )lua";
+    SECTION("RETURN TABLE") {
+        using namespace nj::lua;
+        State state(promt3);
+        auto v = state.ReturnTable();
+        REQUIRE(v.Field("a").As<int>() == 10);
+
+        try {
+            State state(promt2);
+            auto v = state.ReturnTable();
+        } catch (const exc::NoReturnTable &e) {
+            REQUIRE(true);
+        }
     }
 }
