@@ -1,9 +1,7 @@
 #include "njluavalue.h"
 #include "njlog.h"
 #include "njluaexc.h"
-#include "njlualog.h"
 #include "njluautils.h"
-#include <algorithm>
 #include <iterator>
 #include <lua.h>
 #include <memory>
@@ -28,7 +26,7 @@ Value::Value(LuaStatePtrWeak &&ptr, LuaRef r) noexcept
 Value::Value(const LuaStatePtrWeak &ptr, LuaRef r)
     : ref(MakeLuaValue(ptr, r)), source{ptr} {}
 
-LuaState *Value::rawState() {
+LuaState *Value::RawState() {
     if (auto lock = source.lock()) {
         return lock.get();
     } else {
@@ -39,8 +37,8 @@ LuaState *Value::rawState() {
 
 Value::Type Value::LuaType() {
     // clang-format off
-    const PushLuaValue p(rawState(), *ref);  
-    int type = lua_type(rawState(), -1);
+    const PushLuaValue p(RawState(), *ref);  
+    int type = lua_type(RawState(), -1);
     switch (type) {
     case LUA_TNIL: return Type::Nil;
     case LUA_TBOOLEAN: return Type::Boolean;
@@ -58,7 +56,7 @@ Value::Type Value::LuaType() {
 }
 
 std::string_view Value::LuaTypeStr() {
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     const Type t = LuaType();
     const PushLuaValue p(st, *ref);
     return lua_typename(st, t);
@@ -77,7 +75,7 @@ std::optional<Value> Value::FieldMaybe(std::string_view name) {
         log::Error("Cant get field=\"{}\" from table. Not a table", name);
         return std::nullopt;
     }
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     PushLuaValue p(st, *this->ref);
 
     auto null_str = std::string(name);
@@ -131,7 +129,7 @@ std::vector<Value::Pair> Value::Pairs() {
     if (!Is<Type::Table>()) {
         nj::log::Error("Cant get table keys. Current value is not a table");
     }
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     PushLuaValue p(st, *this->ref);
     LuaStatePtrWeak source{this->source};
     lua_pushnil(st);
@@ -150,7 +148,7 @@ std::vector<Value::IPair> Value::IPairs() {
         nj::log::Error("Cant get table values. Current value is not a table");
         return items;
     }
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     PushLuaValue p(st, *this->ref);
     LuaStatePtrWeak source{this->source};
     int index = 1;
@@ -173,7 +171,7 @@ std::vector<Value> Value::Keys() {
     if (!Is<Type::Table>()) {
         nj::log::Error("Cant get table keys. Current value is not a table");
     }
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     PushLuaValue p(st, *this->ref);
     lua_pushnil(st);
 
@@ -192,7 +190,7 @@ int Value::Length() {
         nj::log::FatalExit("Cant get table length. Current lua object Type={}",
                            LuaTypeStr());
     }
-    LuaState *st = rawState();
+    LuaState *st = RawState();
     const PushLuaValue p(st, *this->ref);
     return lua_rawlen(st, -1);
 }

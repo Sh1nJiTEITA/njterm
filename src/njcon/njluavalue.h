@@ -16,16 +16,16 @@ class Value {
 
   public:
     enum Type : int {
-        Nil = 0,
-        Boolean = 1,
-        LightUserData = 2,
-        Number = 3,
-        String = 4,
-        Table = 5,
-        Function = 6,
-        UserData = 7,
-        Thread = 8,
-        None = -1,
+        Nil = LUA_TNIL,
+        Boolean = LUA_TBOOLEAN,
+        LightUserData = LUA_TLIGHTUSERDATA,
+        Number = LUA_TNUMBER,
+        String = LUA_TSTRING,
+        Table = LUA_TTABLE,
+        Function = LUA_TFUNCTION,
+        UserData = LUA_TUSERDATA,
+        Thread = LUA_TTHREAD,
+        None = LUA_TNONE,
     };
 
     Value() = delete;
@@ -37,16 +37,16 @@ class Value {
     //! @return If stored value is type of input t
     template <typename T> bool Is() {
         using _T = std::decay_t<T>;
-        const PushLuaValue p(rawState(), *ref);
+        const PushLuaValue p(RawState(), *ref);
         bool result = false;
         if constexpr (meta::IsIntOnly<_T>::value) {
-            result = lua_isinteger(rawState(), -1);
+            result = lua_isinteger(RawState(), -1);
         } else if constexpr (meta::IsBool<_T>::value) {
-            result = lua_isboolean(rawState(), -1);
+            result = lua_isboolean(RawState(), -1);
         } else if constexpr (meta::IsReal<_T>::value) {
-            result = lua_isnumber(rawState(), -1);
+            result = lua_isnumber(RawState(), -1);
         } else if constexpr (meta::IsString<_T>::value) {
-            result = lua_isstring(rawState(), -1);
+            result = lua_isstring(RawState(), -1);
         }
         return result;
     }
@@ -54,28 +54,28 @@ class Value {
     //! Returns status of type check. Type checks assigned to Type enum
     //! @return If stored value is type of input t
     template <Type t> bool Is() {
-        const PushLuaValue p(rawState(), *ref);
+        const PushLuaValue p(RawState(), *ref);
         bool result = false;
         if constexpr (t == Type::Nil) {
-            result = lua_isnil(rawState(), -1);
+            result = lua_isnil(RawState(), -1);
         } else if constexpr (t == Type::Boolean) {
-            result = lua_isboolean(rawState(), -1);
+            result = lua_isboolean(RawState(), -1);
         } else if constexpr (t == Type::LightUserData) {
-            result = lua_islightuserdata(rawState(), -1);
+            result = lua_islightuserdata(RawState(), -1);
         } else if constexpr (t == Type::Number) {
-            result = lua_isnumber(rawState(), -1);
+            result = lua_isnumber(RawState(), -1);
         } else if constexpr (t == Type::String) {
-            result = lua_isstring(rawState(), -1);
+            result = lua_isstring(RawState(), -1);
         } else if constexpr (t == Type::Table) {
-            result = lua_istable(rawState(), -1);
+            result = lua_istable(RawState(), -1);
         } else if constexpr (t == Type::Function) {
-            result = lua_isfunction(rawState(), -1);
+            result = lua_isfunction(RawState(), -1);
         } else if constexpr (t == Type::UserData) {
-            result = lua_isuserdata(rawState(), -1);
+            result = lua_isuserdata(RawState(), -1);
         } else if constexpr (t == Type::Thread) {
-            result = lua_isthread(rawState(), -1);
+            result = lua_isthread(RawState(), -1);
         } else if constexpr (t == Type::None) {
-            result = lua_isnone(rawState(), -1);
+            result = lua_isnone(RawState(), -1);
         }
         return result;
     }
@@ -85,16 +85,16 @@ class Value {
     //! @return Copy of converted value
     template <typename T> T As() {
         using _T = std::decay_t<T>;
-        const PushLuaValue p(rawState(), *ref);
+        const PushLuaValue p(RawState(), *ref);
         T result{};
         if constexpr (meta::IsIntOnly<_T>::value) {
-            result = lua_tointeger(rawState(), -1);
+            result = lua_tointeger(RawState(), -1);
         } else if constexpr (meta::IsBool<_T>::value) {
-            result = lua_toboolean(rawState(), -1);
+            result = lua_toboolean(RawState(), -1);
         } else if constexpr (meta::IsReal<_T>::value) {
-            result = lua_tonumber(rawState(), -1);
+            result = lua_tonumber(RawState(), -1);
         } else if constexpr (meta::IsString<_T>::value) {
-            result = lua_tostring(rawState(), -1);
+            result = lua_tostring(RawState(), -1);
         }
         return result;
     }
@@ -153,7 +153,7 @@ class Value {
     int Length();
 
   protected:
-    LuaState *rawState();
+    LuaState *RawState();
 
   private:
     LuaStatePtrWeak source;
