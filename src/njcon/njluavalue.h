@@ -95,6 +95,11 @@ class Value {
             result = lua_tonumber(RawState(), -1);
         } else if constexpr (meta::IsString<_T>::value) {
             result = lua_tostring(RawState(), -1);
+        } else if constexpr (meta::IsVector<_T>::value) {
+            using VecType = meta::VectorElementType<_T>::value_type;
+            for (auto &[i, val] : IPairs()) {
+                result.push_back(val.As<VecType>());
+            }
         }
         return result;
     }

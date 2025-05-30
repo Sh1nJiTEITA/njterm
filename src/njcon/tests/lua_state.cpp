@@ -295,4 +295,35 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         REQUIRE(v.contains("4"));
         REQUIRE(v.contains("5"));
     }
+
+    SECTION("As std::vector") {
+        const std::string promt = R"lua(
+            return {
+                 1,
+                 2,
+                 3,
+                 4,
+                 5,
+            }
+        )lua";
+
+        using namespace nj::lua;
+        State state(promt);
+        auto table = state.ReturnTable();
+        auto vec = table.As<std::vector<int>>();
+
+        REQUIRE(vec.size() == 5);
+
+        for (auto val : vec) {
+            nj::log::Debug("elem={}", val);
+        }
+
+        std::set<int> set{vec.begin(), vec.end()};
+
+        REQUIRE(set.contains(1));
+        REQUIRE(set.contains(2));
+        REQUIRE(set.contains(3));
+        REQUIRE(set.contains(4));
+        REQUIRE(set.contains(5));
+    }
 }

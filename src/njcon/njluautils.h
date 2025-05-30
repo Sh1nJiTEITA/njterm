@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 class lua_State;
 
@@ -20,6 +21,17 @@ template <typename T> using IsInt = std::is_integral<T>;
 template <typename T> using IsReal = std::is_arithmetic<T>;
 template <typename T> using IsIntOnly = And<IsInt<T>, Not<IsBool<T>>>;
 template <typename T> using IsString = std::is_same<T, std::string>;
+
+template <typename T> struct IsVector : std::false_type {};
+template <typename T, typename Alloc>
+struct IsVector<std::vector<T, Alloc>> : std::true_type {};
+
+template <typename T> struct VectorElementType;
+template <typename T, typename Alloc>
+struct VectorElementType<std::vector<T, Alloc>> {
+    using value_type = T;
+};
+
 } // namespace meta
 
 using LuaState = lua_State;

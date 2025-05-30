@@ -13,6 +13,7 @@ class Config {
     Config(const std::string &config_data);
     Config(std::string &&config_data) noexcept;
 
+  public: // export
   private:
     lua::State state;
 };
