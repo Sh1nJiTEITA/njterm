@@ -1,5 +1,6 @@
 #include "njluavalue.h"
 #include "njlog.h"
+#include "njluaexc.h"
 #include "njlualog.h"
 #include "njluautils.h"
 #include <memory>
@@ -58,17 +59,11 @@ const char *Value::LuaTypeStr() {
 }
 
 Value Value::Field(const char *name) {
-    if (!Is<Type::Table>()) {
-        nj::log::FatalExit(
-            "Cant get field from none table lua-object. Current Type={}",
-            LuaTypeStr());
+    auto field = FieldMaybe(name);
+    if (!field.has_value()) {
+        throw exc::NoFieldInTable();
     }
-    LuaState *st = rawState();
-    const PushLuaValue p(st, *ref);
-    lua_getfield(st, -1, name);
-    int ref = luaL_ref(st, LUA_REGISTRYINDEX);
-    LuaStatePtrWeak source = this->source;
-    return Value(std::move(source), ref);
+    return field.value();
 }
 
 std::optional<Value> Value::FieldMaybe(const char *name) {

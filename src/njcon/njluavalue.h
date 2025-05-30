@@ -31,6 +31,9 @@ class Value {
     explicit Value(LuaStatePtrWeak &&ptr, LuaRef ref) noexcept;
     explicit Value(const LuaStatePtrWeak &ptr, LuaRef ref);
 
+    //! Returns status of type check. Type checks assigned to input T.
+    //! @tparam T Type to check stored value for
+    //! @return If stored value is type of input t
     template <typename T> bool Is() {
         using _T = std::decay_t<T>;
         const PushLuaValue p(rawState(), *ref);
@@ -47,6 +50,8 @@ class Value {
         return result;
     }
 
+    //! Returns status of type check. Type checks assigned to Type enum
+    //! @return If stored value is type of input t
     template <Type t> bool Is() {
         const PushLuaValue p(rawState(), *ref);
         bool result = false;
@@ -74,6 +79,9 @@ class Value {
         return result;
     }
 
+    //! Converts stored lua value to type T and returns the copy
+    //! @tparam T Type to convet to
+    //! @return Copy of converted value
     template <typename T> T As() {
         using _T = std::decay_t<T>;
         const PushLuaValue p(rawState(), *ref);
@@ -90,13 +98,34 @@ class Value {
         return result;
     }
 
+  public: // Direct lua-bindings
+    //! Returns type of lua variable stored in this class. For each
+    //! native lua type exists copy inside Type enum
+    //! @return Type of this lua variable
     Type LuaType();
+
+    //! Does the same as LuaType() but returns c-string of type
+    //! @return Lua type in c-string format
     const char *LuaTypeStr();
 
+    //! Returns table field. Only works, if current class stores
+    //! table. If not throw exc::NoFieldInTable() error;
+    //! @param name Name to search for inside table
+    //! @return Value from table
     Value Field(const char *name);
+
+    //! Returns table field. Safe version of field. If current class is
+    //! not a table or field is not present in table it returns empty
+    //! std::optional<Value>
+    //! @param name Name to search for inside table
+    //! @return Potential value from table
     std::optional<Value> FieldMaybe(const char *name);
 
+    //! FIXME: REPAIR
     std::vector<Pair> Items();
+
+    //! Returns length of current table. Works only if class stores table
+    //! @return Length of table
     int Length();
 
   protected:
