@@ -3,9 +3,6 @@
 #define NJ_LUA_STAET_H
 
 #include "njluautils.h"
-#include <lua.hpp>
-#include <memory>
-#include <vector>
 
 namespace nj::lua {
 

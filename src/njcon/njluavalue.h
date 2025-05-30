@@ -3,6 +3,8 @@
 #define NJ_LUA_VALUE_H
 
 #include "njluautils.h"
+#include <lua.hpp>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -25,12 +27,13 @@ class Value {
         None = -1,
     };
 
-    explicit Value(LuaStatePtrWeak &&ptr, int ref);
-    ~Value();
+    Value() = delete;
+    explicit Value(LuaStatePtrWeak &&ptr, LuaRef ref) noexcept;
+    explicit Value(const LuaStatePtrWeak &ptr, LuaRef ref);
 
     template <typename T> bool Is() {
         using _T = std::decay_t<T>;
-        const PushLuaValue p(rawState(), ref);
+        const PushLuaValue p(rawState(), *ref);
         bool result = false;
         if constexpr (meta::IsIntOnly<_T>::value) {
             result = lua_isinteger(rawState(), -1);
@@ -45,7 +48,7 @@ class Value {
     }
 
     template <Type t> bool Is() {
-        const PushLuaValue p(rawState(), ref);
+        const PushLuaValue p(rawState(), *ref);
         bool result = false;
         if constexpr (t == Type::Nil) {
             result = lua_isnil(rawState(), -1);
@@ -73,7 +76,7 @@ class Value {
 
     template <typename T> T As() {
         using _T = std::decay_t<T>;
-        const PushLuaValue p(rawState(), ref);
+        const PushLuaValue p(rawState(), *ref);
         T result{};
         if constexpr (meta::IsIntOnly<_T>::value) {
             result = lua_tointeger(rawState(), -1);
@@ -91,6 +94,8 @@ class Value {
     const char *LuaTypeStr();
 
     Value Field(const char *name);
+    std::optional<Value> FieldMaybe(const char *name);
+
     std::vector<Pair> Items();
     int Length();
 
@@ -99,7 +104,7 @@ class Value {
 
   private:
     LuaStatePtrWeak source;
-    int ref;
+    LuaRefPtrShared ref;
 };
 
 } // namespace nj::lua

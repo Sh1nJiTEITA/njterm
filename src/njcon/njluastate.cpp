@@ -3,11 +3,8 @@
 #include "njluaexc.h"
 #include "njlualog.h"
 #include "njluavalue.h"
-#include <cerrno>
 #include <lua.h>
-#include <memory>
 #include <string>
-#include <vector>
 
 namespace nj::lua {
 
@@ -45,8 +42,7 @@ Value State::ReturnTable() {
     }
     if (!lua_istable(state.get(), -1)) {
         const char *last_name = luaL_typename(state.get(), -1);
-        nj::log::Error("Lua chunk did not return a table, got: ", last_name);
-        lua_pop(state.get(), 1);
+        nj::log::Error("Lua chunk did not return a table, got: {}", last_name);
         throw exc::NoReturnTable();
     }
     int ref = luaL_ref(state.get(), LUA_REGISTRYINDEX);

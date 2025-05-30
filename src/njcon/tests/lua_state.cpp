@@ -5,16 +5,16 @@
 #include "njluaexc.h"
 #include "njluastate.h"
 #include "njluavalue.h"
-
-TEST_CASE("Test catch") { REQUIRE(0 == 0); }
-
+//
+// TEST_CASE("Test catch") { REQUIRE(0 == 0); }
+//
 TEST_CASE("Lua State", "[ctor/dctor]") {
     const std::string promt1 = R"lua(
     A = 10
     B = 10.5
     C = nil
     D = "123"
-    E = { } 
+    E = { }
     F = function () end
 
     )lua";
@@ -27,6 +27,11 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
             REQUIRE(v.As<int>() == 10);
             REQUIRE(v.As<std::string>() == "10");
             REQUIRE(v.LuaType() == Value::Type::Number);
+
+            Value vv = v;
+            REQUIRE(vv.As<int>() == 10);
+            REQUIRE(vv.As<std::string>() == "10");
+            REQUIRE(vv.LuaType() == Value::Type::Number);
         }
         {
             Value v = state.Global("B");
@@ -53,11 +58,11 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
     }
 
     const std::string promt2 = R"lua(
-    t = { 
+    t = {
         a = 10,
         b = 20.9,
         c = "123",
-        d = { 
+        d = {
             a = 10,
             b = 30
         }
@@ -78,13 +83,13 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         REQUIRE(d.Field("a").As<int>() == 10);
         REQUIRE(d.Field("b").As<int>() == 30);
     }
-
+    //
     const std::string promt3 = R"lua(
-    return { 
+    return {
         a = 10,
         b = 20.9,
         c = "123",
-        d = { 
+        d = {
             a = 10,
             b = 30
         }
@@ -95,9 +100,26 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         State state(promt3);
         auto v = state.ReturnTable();
         REQUIRE(v.Field("a").As<int>() == 10);
+        auto f = v.FieldMaybe("a");
+        REQUIRE(f.has_value());
+        REQUIRE(f.value().As<int>() == 10);
+
+        auto f2 = v.FieldMaybe("ddd");
+        REQUIRE(!f2.has_value());
 
         try {
             State state(promt2);
+            auto v = state.ReturnTable();
+        } catch (const exc::NoReturnTable &e) {
+            REQUIRE(true);
+        }
+
+        const std::string promt3_1 = R"lua(
+            return 10;
+        )lua";
+
+        try {
+            State state(promt3_1);
             auto v = state.ReturnTable();
         } catch (const exc::NoReturnTable &e) {
             REQUIRE(true);

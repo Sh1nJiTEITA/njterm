@@ -1,4 +1,5 @@
 #include "njluautils.h"
+#include <lua.hpp>
 
 namespace nj::lua {
 PushLuaValue::PushLuaValue(LuaState *state, int ref)

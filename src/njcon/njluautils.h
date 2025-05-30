@@ -2,10 +2,11 @@
 #ifndef NJ_LUA_UTILS_H
 #define NJ_LUA_UTILS_H
 
-#include <lua.hpp>
 #include <memory>
 #include <string>
 #include <type_traits>
+
+class lua_State;
 
 namespace nj::lua {
 
@@ -24,6 +25,8 @@ template <typename T> using IsString = std::is_same<T, std::string>;
 using LuaState = lua_State;
 using LuaStatePtrShared = std::shared_ptr<LuaState>;
 using LuaStatePtrWeak = std::weak_ptr<LuaState>;
+using LuaRef = int;
+using LuaRefPtrShared = std::shared_ptr<int>;
 
 class PushLuaValue {
   public:
