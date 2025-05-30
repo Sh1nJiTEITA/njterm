@@ -49,7 +49,8 @@ inline const fmt::text_style FmtStyleTime =  fmt::emphasis::italic;
 // clang-format on
 
 template <Level l, typename... Args>
-inline void Log(fmt::text_style style, Args &&...args) {
+inline void Log(fmt::text_style style, fmt::format_string<Args...> str,
+                Args &&...args) {
     const auto bitset = LevelBitSet.load();
     const bool is_level = bitset & static_cast<LevelType>(l);
     if (!is_level) {
@@ -60,46 +61,54 @@ inline void Log(fmt::text_style style, Args &&...args) {
     const auto now = std::chrono::floor<Seconds>(Clock::now());
     fmt::print(stderr, style, LevelString<l>());
     fmt::print(stderr, FmtStyleTime, " [{:%H:%M:%S}] ", now);
-    fmt::println(stderr, std::forward<Args>(args)...);
-}
-
-template <typename... Args> inline void Debug(Args &&...args) {
-    Log<Level::Debug>(FmtStyleDebug, std::forward<Args>(args)...);
-}
-
-template <typename... Args> inline void Info(Args &&...args) {
-    Log<Level::Info>(FmtStyleInfo, std::forward<Args>(args)...);
-}
-
-template <typename... Args> inline void Warn(Args &&...args) {
-    Log<Level::Warn>(FmtStyleWarn, std::forward<Args>(args)...);
-}
-
-template <typename... Args> inline void Error(Args &&...args) {
-    Log<Level::Error>(FmtStyleError, std::forward<Args>(args)...);
-}
-
-template <typename... Args> inline void Fatal(Args &&...args) {
-    Log<Level::Fatal>(FmtStyleFatal, std::forward<Args>(args)...);
+    fmt::println(stderr, str, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline auto CheckUnixCall(int status, Args &&...args) {
+inline void Debug(fmt::format_string<Args...> str, Args &&...args) {
+    Log<Level::Debug>(FmtStyleDebug, str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline void Info(fmt::format_string<Args...> str, Args &&...args) {
+    Log<Level::Info>(FmtStyleInfo, str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline void Warn(fmt::format_string<Args...> str, Args &&...args) {
+    Log<Level::Warn>(FmtStyleWarn, str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline void Error(fmt::format_string<Args...> str, Args &&...args) {
+    Log<Level::Error>(FmtStyleError, str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline void Fatal(fmt::format_string<Args...> str, Args &&...args) {
+    Log<Level::Fatal>(FmtStyleFatal, str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline auto CheckUnixCall(int status, fmt::format_string<Args...> str,
+                          Args &&...args) {
     if (status == -1) {
-        log::Fatal(std::forward<Args>(args)...);
+        log::Fatal(str, std::forward<Args>(args)...);
         fmt::print(stderr, "Error info: {}", std::strerror(errno));
         std::exit(EXIT_FAILURE);
     }
 }
 
-template <typename... Args> inline auto FatalExit(Args &&...args) {
-    log::Fatal(std::forward<Args>(args)...);
+template <typename... Args>
+inline auto FatalExit(fmt::format_string<Args...> str, Args &&...args) {
+    log::Fatal(str, std::forward<Args>(args)...);
     std::exit(EXIT_FAILURE);
 }
 
 template <typename... Args>
-inline auto FatalThrow(std::exception &&exc, Args &&...args) {
-    log::Fatal(std::forward<Args>(args)...);
+inline auto FatalThrow(std::exception &&exc, fmt::format_string<Args...> str,
+                       Args &&...args) {
+    log::Fatal(str, std::forward<Args>(args)...);
     throw std::forward<std::exception>(exc);
 }
 

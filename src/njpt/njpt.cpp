@@ -28,7 +28,7 @@ Pty::Pty() {
     log::CheckUnixCall(unlockpt(deviceDescriptor), "Cant unlock pt device");
 
     slaveDescriptor = open(SlaveName().c_str(), O_RDWR);
-    log::CheckUnixCall(slaveDescriptor, "Cant open slave file: {}");
+    log::CheckUnixCall(slaveDescriptor, "Cant open slave file");
 
     // clang-format on
 }
@@ -62,7 +62,7 @@ auto Pty::ConnectShell() -> void {
 
         const char* shell_path = DefaultShell();
         log::CheckUnixCall(execlp(shell_path, shell_path, nullptr), 
-                       "Cant exec default shell={}"/* , std::string(shell_path) */);
+                       "Cant exec default shell={}", std::string(shell_path));
     }
     // clang-format on
 }
@@ -86,11 +86,13 @@ auto Pty::ReadMaster(int timeout_sec, int timeout_usec) -> std::string {
     // Which are connected to master descriptor
     FD_SET(deviceDescriptor, &readfds);
 
+    constexpr const char *ret_msg = "Cant select (wait) untile master "
+                                    "descriptor is ready for reading";
+
     // clang-format off
     while (true) {
         const int ret = select(deviceDescriptor + 1, &readfds, nullptr, nullptr, &timeout);
-        const char* ret_msg = "Cant select (wait) untile master "
-                              "descriptor is ready for reading";
+        
         log::CheckUnixCall(ret, ret_msg);
         if (ret == 0) { 
             break;

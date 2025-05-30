@@ -83,6 +83,8 @@ std::optional<Value> Value::FieldMaybe(const char *name) {
     return Value(std::move(source), ref);
 }
 
+std::optional<Value> Value::PathMaybe(const char *name) {}
+
 std::vector<Value::Pair> Value::Items() {
     std::vector<Value::Pair> items;
     LuaState *st = rawState();

@@ -8,11 +8,12 @@
 
 namespace nj::log {
 template <typename... Args>
-inline auto CheckLuaCall(int res, lua_State *state, Args &&...args) {
+inline auto CheckLuaCall(int res, lua_State *state,
+                         fmt::format_string<Args...> str, Args &&...args) {
     if (res != LUA_OK) {
         luaL_traceback(state, state, lua_tostring(state, -1), 1);
         const char *traceback = lua_tostring(state, -1);
-        log::Fatal(std::forward<Args>(args)...);
+        log::Fatal(str, std::forward<Args>(args)...);
         fmt::print(stderr, "Lua info: {}", traceback);
         std::exit(EXIT_FAILURE);
     }

@@ -8,9 +8,10 @@
 
 namespace nj::log {
 template <typename... Args>
-inline auto CheckCall(vk::Result res, Args &&...args) {
+inline auto CheckCall(vk::Result res, fmt::format_string<Args...> str,
+                      Args &&...args) {
     if (res != vk::Result::eSuccess) {
-        log::Fatal(std::forward<Args>(args)...);
+        log::Fatal(str, std::forward<Args>(args)...);
         fmt::print(stderr, "Vulkan info: {}", vk::to_string(res));
         fmt::print(stderr, "System info: {}", std::strerror(errno));
         std::exit(EXIT_FAILURE);

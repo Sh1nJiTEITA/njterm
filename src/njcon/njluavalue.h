@@ -121,6 +121,8 @@ class Value {
     //! @return Potential value from table
     std::optional<Value> FieldMaybe(const char *name);
 
+    std::optional<Value> PathMaybe(const char *name);
+
     //! FIXME: REPAIR
     std::vector<Pair> Items();
 
