@@ -12,6 +12,7 @@ namespace nj::lua {
 
 class Value {
     using Pair = std::pair<Value, Value>;
+    using IPair = std::pair<int, Value>;
 
   public:
     enum Type : int {
@@ -121,10 +122,31 @@ class Value {
     //! @return Potential value from table
     std::optional<Value> FieldMaybe(std::string_view name);
 
+    //! Returns table value with specified path.
+    //! Path must be separted with '.' like 'A.B.C' which means: find in table A
+    //! in table B field C
+    //! @param name Path through tables to field
     std::optional<Value> PathMaybe(std::string_view name);
 
-    //! FIXME: REPAIR
-    std::vector<Pair> Items();
+    //! Returns all key-value pairs from the table.
+    //! Each pair is returned as a Value::Pair which consists of key and value.
+    //! Only works if current class stores a table. Otherwise, returns empty
+    //! vector.
+    //! @return Vector of key-value pairs from table
+    std::vector<Pair> Pairs();
+
+    //! Returns all values from array-like part of the table using Lua-style
+    //! indexing (1-based). Values are returned with their integer index as a
+    //! pair (index, value). Iteration stops at first missing (nil) index.
+    //! @return Vector of index-value pairs from table
+    std::vector<IPair> IPairs();
+
+    //! Returns all keys from the table.
+    //! Keys are returned as vector of Value, representing each key in table.
+    //! Only works if current class stores a table. Otherwise, returns empty
+    //! vector.
+    //! @return Vector of keys from table
+    std::vector<Value> Keys();
 
     //! Returns length of current table. Works only if class stores table
     //! @return Length of table

@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <string>
 
 #include "njlog.h"
 #include "njluaexc.h"
@@ -91,7 +92,10 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         c = "123",
         d = {
             a = 10,
-            b = 30
+            b = 30, 
+            d = { 
+                a = 20,
+            }
         }
     }
     )lua";
@@ -124,5 +128,171 @@ TEST_CASE("Lua State", "[ctor/dctor]") {
         } catch (const exc::NoReturnTable &e) {
             REQUIRE(true);
         }
+    }
+    SECTION("PathMaybe") {
+        using namespace nj::lua;
+        State state(promt3);
+        auto table = state.ReturnTable();
+        auto d = table.FieldMaybe("d");
+        REQUIRE(d.has_value());
+        REQUIRE(d.value().Is<Value::Type::Table>());
+
+        auto f = table.PathMaybe("a");
+        REQUIRE(f.has_value());
+        REQUIRE(f.value().As<int>() == 10);
+
+        auto keys = table.Keys();
+        REQUIRE(!keys.empty());
+        // for (auto &key : keys) {
+        //     nj::log::Debug("key=\"{}\"", key.As<std::string>());
+        // }
+
+        auto f2 = table.PathMaybe("d.b");
+        REQUIRE(f2.has_value());
+        REQUIRE(f2.value().As<int>() == 30);
+
+        auto f3 = table.PathMaybe("d.d.a");
+        REQUIRE(f3.has_value());
+        REQUIRE(f3.value().As<int>() == 20);
+    }
+
+    SECTION("Keys") {
+        const std::string promt = R"lua(
+            return {
+                a = 1,
+                b = 2,
+                c = 3,
+                d = 4,
+                e = 5
+            }
+        )lua";
+        using namespace nj::lua;
+        State state(promt);
+        auto table = state.ReturnTable();
+        auto keys = table.Keys();
+        std::set<std::string> k;
+        for (auto key : keys) {
+            k.insert(key.As<std::string>());
+        }
+        REQUIRE(k.size() == 5);
+        REQUIRE(k.contains("a"));
+        REQUIRE(k.contains("b"));
+        REQUIRE(k.contains("c"));
+        REQUIRE(k.contains("d"));
+        REQUIRE(k.contains("e"));
+    }
+
+    SECTION("Pairs") {
+        const std::string promt = R"lua(
+            return {
+                a = 1,
+                b = 2,
+                c = 3,
+                d = 4,
+                e = 5,
+            }
+        )lua";
+
+        using namespace nj::lua;
+        State state(promt);
+        auto table = state.ReturnTable();
+        auto pairs = table.Pairs();
+
+        std::set<std::string> k;
+        std::set<std::string> v;
+        for (auto &[key, val] : pairs) {
+            k.insert(key.As<std::string>());
+            v.insert(val.As<std::string>());
+        }
+        REQUIRE(k.size() == 5);
+        REQUIRE(v.size() == 5);
+
+        REQUIRE(k.contains("a"));
+        REQUIRE(k.contains("b"));
+        REQUIRE(k.contains("c"));
+        REQUIRE(k.contains("d"));
+        REQUIRE(k.contains("e"));
+
+        REQUIRE(v.contains("1"));
+        REQUIRE(v.contains("2"));
+        REQUIRE(v.contains("3"));
+        REQUIRE(v.contains("4"));
+        REQUIRE(v.contains("5"));
+    }
+
+    SECTION("Pairs on array") {
+        const std::string promt = R"lua(
+            return {
+                 1,
+                 2,
+                 3,
+                 4,
+                 5,
+            }
+        )lua";
+
+        using namespace nj::lua;
+        State state(promt);
+        auto table = state.ReturnTable();
+        auto pairs = table.Pairs();
+
+        std::set<std::string> k;
+        std::set<std::string> v;
+        for (auto &[key, val] : pairs) {
+            k.insert(key.As<std::string>());
+            v.insert(val.As<std::string>());
+        }
+        REQUIRE(k.size() == 5);
+        REQUIRE(v.size() == 5);
+
+        REQUIRE(k.contains("1"));
+        REQUIRE(k.contains("2"));
+        REQUIRE(k.contains("3"));
+        REQUIRE(k.contains("4"));
+        REQUIRE(k.contains("5"));
+
+        REQUIRE(v.contains("1"));
+        REQUIRE(v.contains("2"));
+        REQUIRE(v.contains("3"));
+        REQUIRE(v.contains("4"));
+        REQUIRE(v.contains("5"));
+    }
+
+    SECTION("IPairs") {
+        const std::string promt = R"lua(
+            return {
+                 1,
+                 2,
+                 3,
+                 4,
+                 5,
+            }
+        )lua";
+
+        using namespace nj::lua;
+        State state(promt);
+        auto table = state.ReturnTable();
+        auto pairs = table.IPairs();
+
+        std::set<int> k;
+        std::set<std::string> v;
+        for (auto &[i, val] : pairs) {
+            k.insert(i);
+            v.insert(val.As<std::string>());
+        }
+        REQUIRE(k.size() == 5);
+        REQUIRE(v.size() == 5);
+
+        REQUIRE(k.contains(1));
+        REQUIRE(k.contains(2));
+        REQUIRE(k.contains(3));
+        REQUIRE(k.contains(4));
+        REQUIRE(k.contains(5));
+
+        REQUIRE(v.contains("1"));
+        REQUIRE(v.contains("2"));
+        REQUIRE(v.contains("3"));
+        REQUIRE(v.contains("4"));
+        REQUIRE(v.contains("5"));
     }
 }

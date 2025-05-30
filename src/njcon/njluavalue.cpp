@@ -3,7 +3,13 @@
 #include "njluaexc.h"
 #include "njlualog.h"
 #include "njluautils.h"
+#include <algorithm>
+#include <iterator>
+#include <lua.h>
 #include <memory>
+#include <optional>
+#include <ranges>
+#include <string_view>
 
 namespace nj::lua {
 
@@ -68,39 +74,117 @@ Value Value::Field(std::string_view name) {
 
 std::optional<Value> Value::FieldMaybe(std::string_view name) {
     if (!Is<Type::Table>()) {
-        return {};
+        log::Error("Cant get field=\"{}\" from table. Not a table", name);
+        return std::nullopt;
     }
     LuaState *st = rawState();
-    LuaRef ref = LUA_NOREF;
-    const PushLuaValue p(st, *this->ref);
-    lua_getfield(st, -1, name.data());
-    if (lua_isnil(st, -1)) {
-        lua_pop(st, 1);
-        return {};
+    PushLuaValue p(st, *this->ref);
+
+    auto null_str = std::string(name);
+    auto type = lua_getfield(st, -1, null_str.c_str());
+    if (type == LUA_TNIL) {
+        log::Error("Cant get field=\"{}\" from table. "
+                   "Value does not exists",
+                   name);
+        p.kill();
+        return std::nullopt;
     }
-    ref = luaL_ref(st, LUA_REGISTRYINDEX);
+    LuaRef ref = luaL_ref(st, LUA_REGISTRYINDEX);
     LuaStatePtrWeak source = this->source;
     return Value(std::move(source), ref);
 }
 
-std::optional<Value> Value::PathMaybe(std::string_view name) {}
+std::vector<std::string_view>
+SplitWindowBySingleSeparator(std::string_view path, char separator) {
+    std::vector<std::string_view> parts;
+    const auto drop = [&separator](char c) { return c == separator; };
+    const auto split = std::views::split(separator);
+    const auto transform =
+        std::views::transform([](auto &&rng) -> std::string_view {
+            auto it = rng.begin();
+            auto end = rng.end();
+            if (it == end)
+                return {};
+            return std::string_view(&*rng.begin(), std::ranges::distance(rng));
+        });
+    for (auto part : path | split | transform) {
+        parts.push_back(part);
+    }
+    return parts;
+}
 
-std::vector<Value::Pair> Value::Items() {
+std::optional<Value> Value::PathMaybe(std::string_view name) {
+    auto split = SplitWindowBySingleSeparator(name, '.');
+    Value current = *this;
+    for (auto part : split) {
+        auto next = current.FieldMaybe(part);
+        if (!next.has_value()) {
+            return std::nullopt;
+        }
+        current = next.value();
+    }
+    return current;
+}
+
+std::vector<Value::Pair> Value::Pairs() {
     std::vector<Value::Pair> items;
+    if (!Is<Type::Table>()) {
+        nj::log::Error("Cant get table keys. Current value is not a table");
+    }
     LuaState *st = rawState();
-    const PushLuaValue p(st, *this->ref);
+    PushLuaValue p(st, *this->ref);
+    LuaStatePtrWeak source{this->source};
     lua_pushnil(st);
     while (lua_next(st, -2) != 0) {
-
         lua_pushvalue(st, -2);
-        int key = luaL_ref(st, LUA_REGISTRYINDEX);
-        lua_pushvalue(st, -1);
-        int val = luaL_ref(st, LUA_REGISTRYINDEX);
-        items.emplace_back(Value(LuaStatePtrWeak(source), key),
-                           Value(LuaStatePtrWeak(source), val));
-        lua_pop(st, 1);
+        LuaRef key = luaL_ref(st, LUA_REGISTRYINDEX);
+        LuaRef val = luaL_ref(st, LUA_REGISTRYINDEX);
+        items.emplace_back(Value(source, key), Value(source, val));
     }
     return items;
+}
+
+std::vector<Value::IPair> Value::IPairs() {
+    std::vector<Value::IPair> items;
+    if (!Is<Type::Table>()) {
+        nj::log::Error("Cant get table values. Current value is not a table");
+        return items;
+    }
+    LuaState *st = rawState();
+    PushLuaValue p(st, *this->ref);
+    LuaStatePtrWeak source{this->source};
+    int index = 1;
+    while (true) {
+        lua_rawgeti(st, -1, index);
+        if (lua_isnil(st, -1)) {
+            lua_pop(st, 1);
+            break;
+        }
+
+        LuaRef val = luaL_ref(st, LUA_REGISTRYINDEX);
+        items.emplace_back(index, Value(source, val));
+        index++;
+    }
+    return items;
+}
+
+std::vector<Value> Value::Keys() {
+    std::vector<Value> keys;
+    if (!Is<Type::Table>()) {
+        nj::log::Error("Cant get table keys. Current value is not a table");
+    }
+    LuaState *st = rawState();
+    PushLuaValue p(st, *this->ref);
+    lua_pushnil(st);
+
+    while (lua_next(st, -2) != 0) {
+        lua_pushvalue(st, -2);
+        LuaRef ref = luaL_ref(st, LUA_REGISTRYINDEX);
+        LuaStatePtrWeak source{this->source};
+        keys.emplace_back(source, ref);
+        lua_pop(st, 1);
+    }
+    return keys;
 }
 
 int Value::Length() {
