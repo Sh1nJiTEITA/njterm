@@ -10,15 +10,15 @@ class Value;
 
 class State {
   public:
-    State(const char *con, bool loadstd = true);
+    State(std::string_view con, bool loadstd = true);
     State(const std::string &con, bool loadstd = true);
     State(std::string &&con, bool loadstd = true);
 
     Value ReturnTable();
-    Value Global(const char *name);
+    Value Global(std::string_view name);
     void Exec(const std::string &con);
     void Exec(std::string &&con);
-    void Exec(const char *con);
+    void Exec(std::string_view con);
 
   private:
     LuaStatePtrShared state;

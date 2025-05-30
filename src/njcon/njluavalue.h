@@ -106,22 +106,22 @@ class Value {
 
     //! Does the same as LuaType() but returns c-string of type
     //! @return Lua type in c-string format
-    const char *LuaTypeStr();
+    std::string_view LuaTypeStr();
 
     //! Returns table field. Only works, if current class stores
     //! table. If not throw exc::NoFieldInTable() error;
     //! @param name Name to search for inside table
     //! @return Value from table
-    Value Field(const char *name);
+    Value Field(std::string_view name);
 
     //! Returns table field. Safe version of field. If current class is
     //! not a table or field is not present in table it returns empty
     //! std::optional<Value>
     //! @param name Name to search for inside table
     //! @return Potential value from table
-    std::optional<Value> FieldMaybe(const char *name);
+    std::optional<Value> FieldMaybe(std::string_view name);
 
-    std::optional<Value> PathMaybe(const char *name);
+    std::optional<Value> PathMaybe(std::string_view name);
 
     //! FIXME: REPAIR
     std::vector<Pair> Items();

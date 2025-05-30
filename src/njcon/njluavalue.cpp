@@ -51,14 +51,14 @@ Value::Type Value::LuaType() {
     // clang-format on
 }
 
-const char *Value::LuaTypeStr() {
+std::string_view Value::LuaTypeStr() {
     LuaState *st = rawState();
     const Type t = LuaType();
     const PushLuaValue p(st, *ref);
     return lua_typename(st, t);
 }
 
-Value Value::Field(const char *name) {
+Value Value::Field(std::string_view name) {
     auto field = FieldMaybe(name);
     if (!field.has_value()) {
         throw exc::NoFieldInTable();
@@ -66,14 +66,14 @@ Value Value::Field(const char *name) {
     return field.value();
 }
 
-std::optional<Value> Value::FieldMaybe(const char *name) {
+std::optional<Value> Value::FieldMaybe(std::string_view name) {
     if (!Is<Type::Table>()) {
         return {};
     }
     LuaState *st = rawState();
     LuaRef ref = LUA_NOREF;
     const PushLuaValue p(st, *this->ref);
-    lua_getfield(st, -1, name);
+    lua_getfield(st, -1, name.data());
     if (lua_isnil(st, -1)) {
         lua_pop(st, 1);
         return {};
@@ -83,7 +83,7 @@ std::optional<Value> Value::FieldMaybe(const char *name) {
     return Value(std::move(source), ref);
 }
 
-std::optional<Value> Value::PathMaybe(const char *name) {}
+std::optional<Value> Value::PathMaybe(std::string_view name) {}
 
 std::vector<Value::Pair> Value::Items() {
     std::vector<Value::Pair> items;

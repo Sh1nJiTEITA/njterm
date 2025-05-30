@@ -18,7 +18,7 @@ const char *stdConfigFile = R"lua(
 
 )lua";
 
-Config::Config() : state{stdConfigFile} {
+Config::Config() : state{std::string_view(stdConfigFile)} {
     nj::log::Debug("Loading default config");
 }
 Config::Config(const std::string &config_data) : state{config_data} {
