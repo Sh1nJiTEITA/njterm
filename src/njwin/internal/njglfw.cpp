@@ -54,6 +54,14 @@ auto WindowGLFW::SetTitle(std::string title) -> void {
     glfwSetWindowTitle(glfwWindowHandle, title.c_str());
 }
 
+auto WindowGLFW::VulkanExtensions() const -> std::vector<const char *> {
+    uint32_t count = 0;
+    const char **ext;
+    ext = glfwGetRequiredInstanceExtensions(&count);
+    std::vector<const char *> extensions(ext, ext + count);
+    return extensions;
+}
+
 auto KeyControlGLFW::ToInternal(win::KeyType key) -> win::Key {
     // clang-format off
     switch (key) { 

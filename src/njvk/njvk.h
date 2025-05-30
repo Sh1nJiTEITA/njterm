@@ -10,15 +10,17 @@ namespace ren {
 
 class Instance {
 
-    Instance();
+  public:
+    Instance(const std::vector<std::string> &ext);
     ~Instance();
-
-  protected:
-    auto LayerProperties() -> std::vector<vk::LayerProperties>;
 
   private:
     std::unique_ptr<vk::Instance> instance;
 };
+
+auto AvailableLayers() -> std::vector<vk::LayerProperties>;
+auto CheckLayerCompability() -> void;
+auto AppInfo() -> vk::ApplicationInfo;
 
 } // namespace ren
 } // namespace nj

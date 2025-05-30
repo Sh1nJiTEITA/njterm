@@ -37,17 +37,8 @@ State::State(std::string &&con, bool loadstd)
 }
 
 Value State::ReturnTable() {
-    if (lua_gettop(state.get()) == 0) {
-        throw exc::NoReturnTable();
-    }
-    if (!lua_istable(state.get(), -1)) {
-        std::string_view last_name = luaL_typename(state.get(), -1);
-        nj::log::Error("Lua chunk did not return a table, got: {}", last_name);
-        throw exc::NoReturnTable();
-    }
-    int ref = luaL_ref(state.get(), LUA_REGISTRYINDEX);
     LuaStatePtrWeak source{state};
-    return Value(std::move(source), ref);
+    return Value(std::move(source), tableRef);
 }
 
 Value State::Global(std::string_view name) {
@@ -60,16 +51,46 @@ Value State::Global(std::string_view name) {
 void State::Exec(const std::string &ctx) {
     auto res = luaL_dostring(state.get(), ctx.c_str());
     nj::log::CheckLuaCall(res, state.get(), "Cant execute lua-code (const&)");
+    if (lua_gettop(state.get()) != 0 && lua_istable(state.get(), -1)) {
+        tableRef = luaL_ref(state.get(), LUA_REGISTRYINDEX);
+    }
 }
 
 void State::Exec(std::string &&ctx) {
     auto res = luaL_dostring(state.get(), ctx.c_str());
     nj::log::CheckLuaCall(res, state.get(), "Cant execute lua-code (&&)");
+    if (lua_gettop(state.get()) != 0 && lua_istable(state.get(), -1)) {
+        tableRef = luaL_ref(state.get(), LUA_REGISTRYINDEX);
+    }
 }
 
 void State::Exec(std::string_view ctx) {
     auto res = luaL_dostring(state.get(), ctx.data());
     nj::log::CheckLuaCall(res, state.get(), "Cant execute lua-code (&&)");
+    if (lua_gettop(state.get()) != 0 && lua_istable(state.get(), -1)) {
+        tableRef = luaL_ref(state.get(), LUA_REGISTRYINDEX);
+    }
+}
+
+void State::ResetExec(const std::string &con) {
+    state.reset();
+    state = LuaStatePtrShared(luaL_newstate(), &LuaStateDeleter);
+    luaL_openlibs(state.get());
+    Exec(con);
+}
+
+void State::ResetExec(std::string &&con) {
+    state.reset();
+    state = LuaStatePtrShared(luaL_newstate(), &LuaStateDeleter);
+    luaL_openlibs(state.get());
+    Exec(std::move(con));
+}
+
+void State::ResetExec(std::string_view con) {
+    state.reset();
+    state = LuaStatePtrShared(luaL_newstate(), &LuaStateDeleter);
+    luaL_openlibs(state.get());
+    Exec(con);
 }
 
 } // namespace nj::lua

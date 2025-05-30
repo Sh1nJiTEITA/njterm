@@ -70,6 +70,8 @@ Value Value::Field(std::string_view name) {
     return field.value();
 }
 
+Value Value::operator[](std::string_view name) { return Field(name); }
+
 std::optional<Value> Value::FieldMaybe(std::string_view name) {
     if (!Is<Type::Table>()) {
         log::Error("Cant get field=\"{}\" from table. Not a table", name);

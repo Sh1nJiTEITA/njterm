@@ -6,6 +6,7 @@
 #include <glm/vec2.hpp>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace nj {
 namespace win {
@@ -17,6 +18,7 @@ class Window {
     virtual auto Extent() -> glm::vec2 = 0;
     virtual auto Title() -> std::string = 0;
     virtual auto SetTitle(std::string title) -> void = 0;
+    virtual auto VulkanExtensions() const -> std::vector<const char *> = 0;
 };
 
 class KeyControl {

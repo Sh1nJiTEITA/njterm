@@ -19,8 +19,12 @@ class State {
     void Exec(const std::string &con);
     void Exec(std::string &&con);
     void Exec(std::string_view con);
+    void ResetExec(const std::string &con);
+    void ResetExec(std::string &&con);
+    void ResetExec(std::string_view con);
 
   private:
+    LuaRef tableRef;
     LuaStatePtrShared state;
 };
 

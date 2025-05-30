@@ -100,6 +100,11 @@ class Value {
             for (auto &[i, val] : IPairs()) {
                 result.push_back(val.As<VecType>());
             }
+        } else if constexpr (meta::IsSet<_T>::value) {
+            using SetType = meta::SetElementType<_T>::value_type;
+            for (auto &[i, val] : IPairs()) {
+                result.insert(val.As<SetType>());
+            }
         }
         return result;
     }
@@ -119,6 +124,7 @@ class Value {
     //! @param name Name to search for inside table
     //! @return Value from table
     Value Field(std::string_view name);
+    Value operator[](std::string_view name);
 
     //! Returns table field. Safe version of field. If current class is
     //! not a table or field is not present in table it returns empty

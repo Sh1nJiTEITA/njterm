@@ -3,6 +3,7 @@
 #define NJ_LUA_UTILS_H
 
 #include <memory>
+#include <set>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -25,10 +26,18 @@ template <typename T> using IsString = std::is_same<T, std::string>;
 template <typename T> struct IsVector : std::false_type {};
 template <typename T, typename Alloc>
 struct IsVector<std::vector<T, Alloc>> : std::true_type {};
-
 template <typename T> struct VectorElementType;
 template <typename T, typename Alloc>
 struct VectorElementType<std::vector<T, Alloc>> {
+    using value_type = T;
+};
+
+template <typename T> struct IsSet : std::false_type {};
+template <typename T, typename Compare, typename Alloc>
+struct IsSet<std::set<T, Compare, Alloc>> : std::true_type {};
+template <typename T> struct SetElementType;
+template <typename T, typename Compare, typename Alloc>
+struct SetElementType<std::set<T, Compare, Alloc>> {
     using value_type = T;
 };
 

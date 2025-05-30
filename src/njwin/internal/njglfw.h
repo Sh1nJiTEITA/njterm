@@ -16,6 +16,7 @@ class WindowGLFW : public win::Window {
     virtual auto Extent() -> glm::vec2 override;
     virtual auto Title() -> std::string override;
     virtual auto SetTitle(std::string title) -> void override;
+    virtual auto VulkanExtensions() const -> std::vector<const char *> override;
 
   private:
     GLFWwindow *glfwWindowHandle;
