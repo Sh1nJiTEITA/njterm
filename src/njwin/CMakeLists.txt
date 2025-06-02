@@ -23,3 +23,6 @@ target_link_libraries(njwin PRIVATE glfw)
 find_package(glm REQUIRED)
 target_link_libraries(njwin PRIVATE glm::glm)
 target_link_libraries(njwin PRIVATE njlog)
+
+find_package(Vulkan REQUIRED)
+target_link_libraries(njwin PRIVATE ${Vulkan_LIBRARY})

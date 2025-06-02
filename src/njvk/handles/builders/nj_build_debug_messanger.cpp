@@ -1,9 +1,5 @@
 #include "nj_build_debug_messanger.h"
-#include "njlog.h"
 #include "njvklog.h"
-#include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_shared.hpp>
 
 static PFN_vkCreateDebugUtilsMessengerEXT messenger_create_func;
 static PFN_vkDestroyDebugUtilsMessengerEXT messenger_delete_func;
@@ -47,8 +43,8 @@ BDebugMessenger::Handle BDebugMessenger::Build() {
                            "Need to disable validation to work");
     }
     
-    auto raw = inst->createDebugUtilsMessengerEXTUnique(messenger_info);
-    return vk::UniqueDebugUtilsMessengerEXT(std::move(raw));
+    auto raw = inst->createDebugUtilsMessengerEXT(messenger_info);
+    return vk::SharedDebugUtilsMessengerEXT(raw, inst);
     // clang-format off
 }
 

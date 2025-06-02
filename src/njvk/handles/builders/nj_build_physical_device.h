@@ -1,17 +1,16 @@
 #pragma once
-#ifndef NJ_BUILDER_DEBUG_MESSANGER_H
-#define NJ_BUILDER_DEBUG_MESSANGER_H
+#ifndef NJ_PHYSICAL_DEVICE_H
+#define NJ_PHYSICAL_DEVICE_H
 
 #include "handles/nj_builder.h"
 
 namespace nj::build {
 
-//! Creates unique ptr!
-template <> class Builder<vk::DebugUtilsMessengerEXT> {
+template <> class Builder<vk::PhysicalDevice> {
   public:
     Builder(vk::SharedInstance instance);
 
-    using Handle = vk::SharedDebugUtilsMessengerEXT;
+    using Handle = vk::SharedPhysicalDevice;
     Handle Build();
 
   private:

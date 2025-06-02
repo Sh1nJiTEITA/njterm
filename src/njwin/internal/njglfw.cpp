@@ -2,6 +2,7 @@
 #include "njlog.h"
 #include "njwin.h"
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>
 
 namespace nj {
 namespace glfw {
@@ -60,6 +61,13 @@ auto WindowGLFW::VulkanExtensions() const -> std::vector<const char *> {
     ext = glfwGetRequiredInstanceExtensions(&count);
     std::vector<const char *> extensions(ext, ext + count);
     return extensions;
+}
+
+auto WindowGLFW::CreateSurface(vk::SharedInstance inst)
+    -> vk::SharedSurfaceKHR {
+    VkSurfaceKHR surface_;
+    glfwCreateWindowSurface(*inst, glfwWindowHandle, nullptr, &surface_);
+    return vk::SharedSurfaceKHR(surface_, inst);
 }
 
 auto KeyControlGLFW::ToInternal(win::KeyType key) -> win::Key {

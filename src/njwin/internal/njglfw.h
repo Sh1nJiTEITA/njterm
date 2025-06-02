@@ -8,6 +8,7 @@
 namespace nj {
 namespace glfw {
 
+// clang-format off
 class WindowGLFW : public win::Window {
   public:
     WindowGLFW(std::string title, glm::vec2 init_ext);
@@ -17,6 +18,7 @@ class WindowGLFW : public win::Window {
     virtual auto Title() -> std::string override;
     virtual auto SetTitle(std::string title) -> void override;
     virtual auto VulkanExtensions() const -> std::vector<const char *> override;
+    virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR override;
 
   private:
     GLFWwindow *glfwWindowHandle;
@@ -28,6 +30,8 @@ class KeyControlGLFW : public win::KeyControl {
     virtual auto ToInternal(win::KeyType key) -> win::Key override;
     virtual auto ToExternal(win::Key key) -> win::KeyType override;
 };
+
+// clang-format on
 
 } // namespace glfw
 } // namespace nj

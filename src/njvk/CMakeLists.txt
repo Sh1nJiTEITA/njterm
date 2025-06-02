@@ -3,7 +3,8 @@ project(njvk)
 
 set(BUILDERS
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_instance.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_debug_messanger.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_debug_messanger.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_physical_device.cpp")
 
 add_library(
   njvk STATIC

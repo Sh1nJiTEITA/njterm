@@ -7,10 +7,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_shared.hpp>
 
 namespace nj {
 namespace win {
 
+// clang-format off
 class Window {
   public:
     virtual ~Window();
@@ -19,7 +21,9 @@ class Window {
     virtual auto Title() -> std::string = 0;
     virtual auto SetTitle(std::string title) -> void = 0;
     virtual auto VulkanExtensions() const -> std::vector<const char *> = 0;
+    virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR = 0;
 };
+// clang-format on
 
 class KeyControl {
   public:

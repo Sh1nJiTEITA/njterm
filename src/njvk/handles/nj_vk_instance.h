@@ -18,15 +18,6 @@ class Instance {
     std::shared_ptr<vk::Instance> instance;
 };
 
-//! @defgroup InstanceSubFunc Subfunctions for instance creation
-//! @{
-auto AvailableLayers() -> std::vector<vk::LayerProperties>;
-auto AvailableExtensions() -> std::vector<vk::ExtensionProperties>;
-auto AvailableValidationExtensions() -> std::vector<vk::ExtensionProperties>;
-auto CheckVulkanCompability() -> void;
-auto AppInfo() -> vk::ApplicationInfo;
-//! @}
-
 } // namespace nj::ren
 
 #endif
