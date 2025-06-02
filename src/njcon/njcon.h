@@ -40,7 +40,9 @@ auto Load(const std::filesystem::path &path) -> void;
 
 auto Get(std::string_view path) -> lua::Value;
 auto ValidationEnabled() -> bool;
-auto ValidationLayersSet() -> std::set<std::string>;
+auto ValidationLayers() -> std::vector<std::string>;
+auto ValidationExtensions() -> std::vector<std::string>;
+auto ValidationFeatures() -> std::vector<int>;
 
 } // namespace nj::con
 

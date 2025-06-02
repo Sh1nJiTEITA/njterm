@@ -2,6 +2,7 @@
 #include "njlog.h"
 #include "njluavalue.h"
 #include <memory>
+#include <string>
 
 namespace nj::con {
 // DEFAULT CONFIG VALUES
@@ -13,11 +14,18 @@ const char *stdConfigFile = R"lua(
                 enabled = true, 
                 layers = { 
                     "VK_LAYER_KHRONOS_validation"
+                },
+                extensions = { 
+                    "VK_EXT_debug_utils",
+                    "VK_EXT_validation_features"
+                },
+                features = {
+                    3 -- VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT  
                 }
             } -- validation
         }, -- vk
         test = { 
-            field = 1488
+            field = 1488,
         }
     } -- END
 
@@ -89,8 +97,16 @@ auto ValidationEnabled() -> bool {
     return Get("vk.validation.enabled").As<bool>();
 }
 
-auto ValidationLayersSet() -> std::set<std::string> {
-    return Get("vk.validation.layers").As<std::set<std::string>>();
+auto ValidationLayers() -> std::vector<std::string> {
+    return Get("vk.validation.layers").As<std::vector<std::string>>();
+}
+
+auto ValidationExtensions() -> std::vector<std::string> {
+    return Get("vk.validation.extensions").As<std::vector<std::string>>();
+}
+
+auto ValidationFeatures() -> std::vector<int> {
+    return Get("vk.validation.features").As<std::vector<int>>();
 }
 
 } // namespace nj::con
