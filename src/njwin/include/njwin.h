@@ -20,7 +20,7 @@ class Window {
     virtual auto Extent() -> glm::vec2 = 0;
     virtual auto Title() -> std::string = 0;
     virtual auto SetTitle(std::string title) -> void = 0;
-    virtual auto VulkanExtensions() const -> std::vector<const char *> = 0;
+    virtual auto VulkanExtensions() const -> std::vector<std::string> = 0;
     virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR = 0;
 };
 // clang-format on

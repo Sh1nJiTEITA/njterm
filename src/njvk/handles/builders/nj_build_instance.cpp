@@ -11,6 +11,9 @@ using BInstance = Builder<vk::Instance>;
 BInstance::Builder(const std::set<std::string> &inext)
     : inputExtensions{inext} {}
 
+BInstance::Builder(const std::vector<std::string> &inext)
+    : inputExtensions{inext | std::ranges::to<std::set>()} {}
+
 BInstance::Handle BInstance::Build() {
     CheckVulkanCompability();
     auto inst_info = vk::InstanceCreateInfo{};

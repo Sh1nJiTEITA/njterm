@@ -21,7 +21,7 @@ const char *stdConfigFile = R"lua(
                 },
                 features = {
                     3 -- VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT  
-                }
+                },
             } -- validation
         }, -- vk
         test = { 

@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace nj {
+
 namespace ren {} // namespace ren
 } // namespace nj
 #endif

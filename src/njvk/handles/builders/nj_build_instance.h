@@ -13,6 +13,7 @@ namespace nj::build {
 template <> class Builder<vk::Instance> {
   public:
     Builder(const std::set<std::string> &inext);
+    Builder(const std::vector<std::string> &inext);
 
     std::set<std::string> inputExtensions;
 

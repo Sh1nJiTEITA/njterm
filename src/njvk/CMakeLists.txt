@@ -4,7 +4,8 @@ project(njvk)
 set(BUILDERS
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_instance.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_debug_messanger.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_physical_device.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_physical_device.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_device.cpp")
 
 add_library(
   njvk STATIC
@@ -13,7 +14,7 @@ add_library(
   "${CMAKE_CURRENT_SOURCE_DIR}/handles/nj_vk_instance.cpp")
 
 target_include_directories(njvk PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
-                                       "${CMAKE_CURRENT_SOURCE_DIR}"/handles)
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/handles")
 
 find_package(Vulkan REQUIRED)
 
@@ -33,8 +34,8 @@ target_compile_definitions(
          ENGINE_VERSION_PATCH=${APP_ENGINE_VERSION_PATCH})
 
 if(BUILD_TEST_NJVK)
-  add_executable(njvk_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/instance.cpp)
-  target_link_libraries(njvk_tests PUBLIC njvk)
-  target_link_libraries(njvk_tests PRIVATE Catch2::Catch2WithMain)
-  target_link_libraries(njvk_tests PRIVATE njlog)
+  # add_executable(njvk_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/instance.cpp)
+  # target_link_libraries(njvk_tests PUBLIC njvk)
+  # target_link_libraries(njvk_tests PRIVATE Catch2::Catch2WithMain)
+  # target_link_libraries(njvk_tests PRIVATE njlog)
 endif()

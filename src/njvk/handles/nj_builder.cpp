@@ -2,6 +2,7 @@
 #include "njcon.h"
 #include "njvklog.h"
 #include <ranges>
+#include <vulkan/vulkan_core.h>
 
 namespace nj::build {
 
@@ -125,5 +126,81 @@ auto AppInfo() -> vk::ApplicationInfo {
     // clang-format on
     return info;
 }
+
+// clang-format off
+// using OptQueue = std::optional<vk::QueueFamilyProperties>;
+// auto PickFamilyIndex(vk::SharedPhysicalDevice phDevice) -> std::map<vk::QueueFlagBits, OptQueue> 
+// { 
+//     auto q = phDevice->getQueueFamilyProperties();
+//     std::map<vk::QueueFlagBits, OptQueue> res { 
+//         { vk::QueueFlagBits::eCompute,        std::nullopt },
+//         { vk::QueueFlagBits::eGraphics,       std::nullopt },
+//         { vk::QueueFlagBits::eOpticalFlowNV,  std::nullopt },
+//         { vk::QueueFlagBits::eProtected,      std::nullopt },
+//         { vk::QueueFlagBits::eSparseBinding,  std::nullopt },
+//         { vk::QueueFlagBits::eTransfer,       std::nullopt },
+//         { vk::QueueFlagBits::eVideoDecodeKHR, std::nullopt },
+//         { vk::QueueFlagBits::eVideoEncodeKHR, std::nullopt },
+//     };
+//     
+//     
+//
+//
+//
+// }
+
+auto PickFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, vk::QueueFlagBits flag) -> std::optional<size_t> { 
+    const auto hasFlag = [flag](const vk::QueueFamilyProperties& f) {
+        return static_cast<bool>(f.queueFlags & flag);
+    };
+    const auto it = std::ranges::find_if(props, hasFlag);
+    if (it == props.end()) {
+        return std::nullopt;
+    }
+    return std::distance(props.begin(), it);
+}
+
+
+auto PickSurfaceFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, 
+                            vk::SharedPhysicalDevice phDevice, 
+                            vk::SharedSurfaceKHR surface) -> std::optional<size_t> { 
+    for (size_t idx = 0; idx < props.size(); ++idx) { 
+        const bool has_support = phDevice->getSurfaceSupportKHR(idx, *surface);
+        if (has_support) { 
+            return idx;
+        }
+    }
+    return std::nullopt;
+}
+
+
+auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlagBits> { 
+    return { 
+        vk::QueueFlagBits::eGraphics,
+        vk::QueueFlagBits::eTransfer
+    };
+}
+
+auto PhysicalDeviceFeatures() -> vk::PhysicalDeviceFeatures { 
+    return vk::PhysicalDeviceFeatures{}
+        .setVertexPipelineStoresAndAtomics(true)
+        .setFragmentStoresAndAtomics(true)
+        .setIndependentBlend(true)
+    ;
+}
+
+auto PhysicalDeviceShaderFeatures() -> vk::PhysicalDeviceShaderDrawParameterFeatures { 
+    return  vk::PhysicalDeviceShaderDrawParameterFeatures{}
+        .setShaderDrawParameters(true)
+    ;
+}
+
+auto DeviceFeatures() -> std::vector<std::string> { 
+    return { 
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+}
+
+// clang-format on
 
 } // namespace nj::build

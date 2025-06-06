@@ -55,12 +55,13 @@ auto WindowGLFW::SetTitle(std::string title) -> void {
     glfwSetWindowTitle(glfwWindowHandle, title.c_str());
 }
 
-auto WindowGLFW::VulkanExtensions() const -> std::vector<const char *> {
+auto WindowGLFW::VulkanExtensions() const -> std::vector<std::string> {
     uint32_t count = 0;
     const char **ext;
     ext = glfwGetRequiredInstanceExtensions(&count);
     std::vector<const char *> extensions(ext, ext + count);
-    return extensions;
+    std::vector<std::string> res{extensions.begin(), extensions.end()};
+    return res;
 }
 
 auto WindowGLFW::CreateSurface(vk::SharedInstance inst)
