@@ -11,15 +11,27 @@
 
 
 */
+
 int main(int argc, char **argv) {
-    auto win = nj::win::CreateWindow();
+    // clang-format off
+    using namespace nj;
+
+    auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
 
-    auto inst = nj::build::Build<vk::Instance>(win_ext);
-    auto messenger = nj::build::Build<vk::DebugUtilsMessengerEXT>(inst);
-    auto surface = win->CreateSurface(inst);
-    auto physical_device = nj::build::Build<vk::PhysicalDevice>(inst);
-    auto device = nj::build::Build<vk::Device>(inst, physical_device, surface);
+    auto inst = build::Build<ren::Instance>(win_ext);
+    auto messenger = build::Build<vk::DebugUtilsMessengerEXT>(inst->Handle());
+    auto surface = win->CreateSurface(inst->Handle());
+    auto physical_device = build::Build<ren::PhysicalDevice>(inst->Handle());
+    physical_device->UpdateQueueIndices(surface);
+
+    auto device = nj::build::Build<ren::Device>(inst, physical_device, surface);
+    auto swapchain = nj::build::Build<vk::SwapchainKHR>(
+        physical_device, 
+        device,
+        surface,
+        800, 600
+    );
 
     return 0;
 }

@@ -1,8 +1,8 @@
 #pragma once
-#ifndef NJ_BUILDER_DEBUG_MESSANGER_H
-#define NJ_BUILDER_DEBUG_MESSANGER_H
+#ifndef NJ_BUILD_DEBUG_MESSANGER_H
+#define NJ_BUILD_DEBUG_MESSANGER_H
 
-#include "handles/nj_builder.h"
+#include "nj_builder.h"
 
 namespace nj::build {
 

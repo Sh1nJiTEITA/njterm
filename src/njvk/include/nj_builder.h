@@ -42,16 +42,6 @@ auto AppInfo() -> vk::ApplicationInfo;
 //! @defgroup Subfunctions for device creation
 //! @{
 
-//! Searches needed (by flag-bit value) comp queue-family index
-//! @param prop Queue family indices to search among
-//! @param flag Bit to find index for
-auto PickFamilyIndex(const std::vector<vk::QueueFamilyProperties>& prop, vk::QueueFlags flag) -> std::optional<size_t>;
-
-//! Searches queue family index comp with SurfaceKHR a.k.a PRESENT queue
-//! @param phDevice Physical device pointer to check comp
-//! @param surface Surface to check comp with
-auto PickSurfaceFamilyIndex(vk::SharedPhysicalDevice phDevice, vk::SharedSurfaceKHR surface) -> std::optional<size_t>;
-
 //! @ingroup vk-settings
 //! Needed queue families are physical device "items?", smt which can make some work
 //! Each queue can do multiple types of jobs like computing & presenting images 
@@ -60,11 +50,6 @@ auto PickSurfaceFamilyIndex(vk::SharedPhysicalDevice phDevice, vk::SharedSurface
 //!  FIXME: For some reason it returns vec of bits but
 //!  it is BAD DESIGN
 auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlags>;
-
-auto NeededQueueIndices(vk::SharedPhysicalDevice phDevice, vk::SharedSurfaceKHR surface) -> std::map<vk::QueueFlags, size_t>;
-auto IsPresentQueueSeparate(std::map<vk::QueueFlags, size_t> map, 
-                            vk::SharedPhysicalDevice phDevice, 
-                            vk::SharedSurfaceKHR surface) -> bool;
 
 //! @ingroup vk-settings
 //! Physical device features are stored here, not inside config (bad design maybe?)
@@ -94,7 +79,7 @@ auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::Compos
 
 //! Finds minimal image count to render (buffirization)
 //! Default buffering is TRIPLE buffering, but can be changed from config
-auto MinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t;
+auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t;
 
 
 

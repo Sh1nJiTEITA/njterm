@@ -1,7 +1,8 @@
 #include "nj_build_device.h"
-#include "handles/nj_builder.h"
+#include "nj_builder.h"
 #include "njcon.h"
 #include "njlog.h"
+#include <algorithm>
 #include <array>
 #include <ranges>
 #include <set>
@@ -14,7 +15,7 @@ namespace nj::build {
 
 using BDevice = Builder<vk::Device>;
 
-BDevice::Builder(vk::SharedInstance instance, vk::SharedPhysicalDevice phDevice,
+BDevice::Builder(ren::InstanceH instance, ren::PhysicalDeviceH phDevice,
                  vk::SharedSurfaceKHR surface)
     : inst{instance}, phDevice{phDevice}, surface{surface} {}
 
@@ -39,42 +40,27 @@ BDevice::Handle BDevice::Build() {
     //     );
     //     info.setPEnabledLayerNames(layers);
     // }
-    auto res = phDevice->createDevice(info);
+    auto res = phDevice->Handle()->createDevice(info);
     return vk::SharedDevice(res);
 }
 
 
 const std::vector<vk::DeviceQueueCreateInfo> &BDevice::DeviceQueueInfos() { 
-    auto props = phDevice->getQueueFamilyProperties();
-    // NOTE:
-    // HARDCODED FOR NOW 
-    // const auto flags = NeededQueueFamilyTypes();
-    // // Searching for default vulkan queue-incides
-    // std::set<size_t> indices;
-    // log::Info("Searching for queue-family-indices...");
-    // for (auto flag : flags) { 
-    //     const auto index = PickFamilyIndex(props, flag);
-    //     if (!index.has_value()) { 
-    //         nj::log::FatalExit("Cant find queue family index for {}. "
-    //                            "Videocard is not compatible",
-    //                            vk::to_string(flag));
-    //     }
-    //     log::Info("Family with index={} is compatible with queue-type={}", index.value(), vk::to_string(flag));
-    //     indices.insert(index.value());
-    // }
-    
-    std::map<vk::QueueFlags, size_t> indices = NeededQueueIndices(phDevice, surface);
-
-    // Searching now for present KHR queue
-    const auto present_index = PickSurfaceFamilyIndex(phDevice, surface);
-    if (!present_index.has_value()) { 
-        nj::log::FatalExit("Cant find queue family index for KHR present logic. "
-                           "Videocard is not compatible");
+    // WARN: Until this moment phDevice (ren::PhysicalDevice) must be updated
+    // So all needed indices must be already loaded
+    // Default queue types
+    const std::vector<vk::QueueFlags> needed_types = build::NeededQueueFamilyTypes();
+    std::set<size_t> unique_indices; 
+    for (auto q : needed_types) { 
+        const size_t idx = phDevice->QueueIndex(q);
+        unique_indices.insert(idx);
     }
-    indices.insert(present_index.value());
+    // Surface-present index
+    const size_t present_idx = phDevice->PresentQueueIndex();
+    unique_indices.insert(present_idx);
     
     auto& qinfos = h.Handle(std::vector<vk::DeviceQueueCreateInfo>{});
-    for (size_t idx : indices) { 
+    for (size_t idx : unique_indices) { 
         auto qinf = vk::DeviceQueueCreateInfo{}
             .setPQueuePriorities(&h.Handle(1.0f))
             .setQueueCount(1)
@@ -84,6 +70,8 @@ const std::vector<vk::DeviceQueueCreateInfo> &BDevice::DeviceQueueInfos() {
     return qinfos;
 }
 
+// FIXME: Unreadable? For now there are no understance of CORRECT
+// way of using std::ranges/views ... But it seems pretty pleasent
 const std::vector<const char*>& BDevice::DeviceExtensions() { 
     const auto to_cstr_func = [](const std::string& f) { 
         return f.c_str();
@@ -96,5 +84,19 @@ const std::vector<const char*>& BDevice::DeviceExtensions() {
     );
     return device_features;
 }
+
+using SBDevice = Builder<ren::Device>;
+
+SBDevice::Builder(ren::InstanceH instance, ren::PhysicalDeviceH phDevice,
+                 vk::SharedSurfaceKHR surface)
+    : inst{instance}, phDevice{phDevice}, surface{surface} {}
+
+SBDevice::Handle SBDevice::Build() { 
+    auto device = std::make_shared<ren::Device>();
+    device->Handle() = Builder<vk::Device>(inst, phDevice, surface).Build();
+    return device;
+}
+
+
 
 } // namespace nj::build

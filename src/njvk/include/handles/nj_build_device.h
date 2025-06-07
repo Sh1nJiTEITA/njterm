@@ -1,14 +1,18 @@
 #pragma once
-#ifndef NJ_DEVICE_H
-#define NJ_DEVICE_H
+#ifndef NJ_BUILD_DEVICE_H
+#define NJ_BUILD_DEVICE_H
 
-#include "handles/nj_builder.h"
+#include "nj_builder.h"
+#include "nj_device.h"
+#include "nj_instance.h"
+#include "nj_physical_device.h"
+#include <memory>
 
 namespace nj::build {
 
 template <> class Builder<vk::Device> {
   public:
-    Builder(vk::SharedInstance, vk::SharedPhysicalDevice, vk::SharedSurfaceKHR);
+    Builder(ren::InstanceH, ren::PhysicalDeviceH, vk::SharedSurfaceKHR);
 
     using Handle = vk::SharedDevice;
     Handle Build();
@@ -23,8 +27,22 @@ template <> class Builder<vk::Device> {
     const std::vector<const char *> &DeviceExtensions();
 
   private:
-    vk::SharedInstance inst;
-    vk::SharedPhysicalDevice phDevice;
+    ren::InstanceH inst;
+    ren::PhysicalDeviceH phDevice;
+    vk::SharedSurfaceKHR surface;
+    ren::VarHandles h;
+};
+
+template <> class Builder<ren::Device> {
+  public:
+    Builder(ren::InstanceH, ren::PhysicalDeviceH, vk::SharedSurfaceKHR);
+
+    using Handle = std::shared_ptr<ren::Device>;
+    Handle Build();
+
+  private:
+    ren::InstanceH inst;
+    ren::PhysicalDeviceH phDevice;
     vk::SharedSurfaceKHR surface;
     ren::VarHandles h;
 };

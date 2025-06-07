@@ -10,4 +10,12 @@ BPhysicalDevice::Handle BPhysicalDevice::Build() {
                                     inst);
 }
 
+using SBPhysicalDevice = Builder<ren::PhysicalDevice>;
+SBPhysicalDevice::Builder(vk::SharedInstance instance) : inst{instance} {}
+SBPhysicalDevice::Handle SBPhysicalDevice::Build() {
+    auto phDevice = std::make_shared<ren::PhysicalDevice>();
+    phDevice->Handle() = Builder<vk::PhysicalDevice>(inst).Build();
+    return phDevice;
+}
+
 } // namespace nj::build

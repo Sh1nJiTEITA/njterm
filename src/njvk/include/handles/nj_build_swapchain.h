@@ -2,16 +2,16 @@
 #ifndef NJ_BUILD_SWAP_CHAIN_H
 #define NJ_BUILD_SWAP_CHAIN_H
 
-#include "handles/nj_builder.h"
 #include "handles/nj_swapchain.h"
-#include <vulkan/vulkan_shared.hpp>
-#include <vulkan/vulkan_structs.hpp>
+#include "nj_builder.h"
+#include "nj_device.h"
+#include "nj_physical_device.h"
 
 namespace nj::build {
 
 template <> class Builder<vk::SwapchainKHR> {
   public:
-    Builder(vk::SharedPhysicalDevice phDevice, vk::SharedDevice device,
+    Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
             vk::SharedSurfaceKHR surface, uint32_t width, uint32_t height);
 
     using Handle = vk::SharedSwapchainKHR;
@@ -21,22 +21,25 @@ template <> class Builder<vk::SwapchainKHR> {
 
   private:
     vk::Extent2D extent;
-
     vk::SharedSurfaceKHR surface;
-    vk::SharedPhysicalDevice phDevice;
-    vk::SharedDevice device;
+    ren::PhysicalDeviceH phDevice;
+    ren::DeviceH device;
+    ren::VarHandles h;
 };
 
 template <> class Builder<ren::Swapchain> {
   public:
     Builder(vk::SharedPhysicalDevice phDevice, vk::SharedDevice device);
 
-    using Handle = ren::Swapchain;
+    using Handle = ren::SwapchainH;
     Handle Build();
 
   private:
+    vk::Extent2D extent;
+    vk::SharedSurfaceKHR surface;
     vk::SharedPhysicalDevice phDevice;
     vk::SharedDevice device;
+    ren::VarHandles h;
 };
 
 } // namespace nj::build
