@@ -3,6 +3,7 @@
 #include "njvklog.h"
 #include <ranges>
 #include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan_enums.hpp>
 
 namespace nj::build {
 
@@ -149,7 +150,7 @@ auto AppInfo() -> vk::ApplicationInfo {
 //
 // }
 
-auto PickFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, vk::QueueFlagBits flag) -> std::optional<size_t> { 
+auto PickFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, vk::QueueFlags flag) -> std::optional<size_t> { 
     const auto hasFlag = [flag](const vk::QueueFamilyProperties& f) {
         return static_cast<bool>(f.queueFlags & flag);
     };
@@ -161,9 +162,9 @@ auto PickFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, vk::Qu
 }
 
 
-auto PickSurfaceFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props, 
-                            vk::SharedPhysicalDevice phDevice, 
+auto PickSurfaceFamilyIndex(vk::SharedPhysicalDevice phDevice, 
                             vk::SharedSurfaceKHR surface) -> std::optional<size_t> { 
+    const auto props = phDevice->getQueueFamilyProperties();
     for (size_t idx = 0; idx < props.size(); ++idx) { 
         const bool has_support = phDevice->getSurfaceSupportKHR(idx, *surface);
         if (has_support) { 
@@ -174,12 +175,49 @@ auto PickSurfaceFamilyIndex(const std::vector<vk::QueueFamilyProperties>& props,
 }
 
 
-auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlagBits> { 
+auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlags> { 
     return { 
         vk::QueueFlagBits::eGraphics,
         vk::QueueFlagBits::eTransfer
     };
 }
+
+auto NeededQueueIndices(vk::SharedPhysicalDevice phDevice, 
+                        vk::SharedSurfaceKHR surface) -> std::map<vk::QueueFlags, size_t> { 
+    std::vector<vk::QueueFlags> needed = NeededQueueFamilyTypes(); 
+    std::vector<vk::QueueFamilyProperties> props = phDevice->getQueueFamilyProperties();
+    std::map<vk::QueueFlags, size_t> indices;
+    log::Info("Searching for queue-family-indices...");
+    for (auto flag : needed) { 
+        const auto index = PickFamilyIndex(props, flag);
+        if (!index.has_value()) { 
+            nj::log::FatalExit("Cant find queue family index for {}. "
+                               "Videocard is not compatible",
+                               vk::to_string(flag));
+        }
+        log::Info("Family with index={} is compatible with queue-type={}", index.value(), vk::to_string(flag));
+        indices[flag] = index.value();
+    }
+    return indices;
+}
+
+auto IsPresentQueueSeparate(std::map<vk::QueueFlags, size_t> map, 
+                            vk::SharedPhysicalDevice phDevice, 
+                            vk::SharedSurfaceKHR surface) -> bool { 
+
+    const auto present_index = PickSurfaceFamilyIndex(phDevice, surface);
+    if (!present_index.has_value()) { 
+        nj::log::FatalExit("Cant find queue family index for KHR present logic. "
+                           "Videocard is not compatible");
+    }
+    for (auto& [type, idx] : map) { 
+        if (idx == present_index.value()) { 
+            return false;
+        }
+    }
+    return true;
+}
+
 
 auto PhysicalDeviceFeatures() -> vk::PhysicalDeviceFeatures { 
     return vk::PhysicalDeviceFeatures{}
@@ -199,6 +237,21 @@ auto DeviceFeatures() -> std::vector<std::string> {
     return { 
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+}
+
+auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::CompositeAlphaFlagBitsKHR { 
+    using bits = vk::CompositeAlphaFlagBitsKHR;
+    vk::CompositeAlphaFlagsKHR f = surface_cap.supportedCompositeAlpha;
+
+    if      ( f & bits::ePreMultiplied )  return bits::ePreMultiplied;
+    else if ( f & bits::ePostMultiplied ) return bits::ePostMultiplied;
+    else if ( f & bits::eInherit )        return bits::eInherit;
+    else                                  return bits::eOpaque;
+    
+}
+
+auto MinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t {
+    return std::clamp(con::Buffering(), surface_cap.minImageCount, surface_cap.maxImageCount);
 }
 
 // clang-format on

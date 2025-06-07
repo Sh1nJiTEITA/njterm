@@ -5,12 +5,15 @@ set(BUILDERS
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_instance.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_debug_messanger.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_physical_device.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_device.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_device.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/handles/builders/nj_build_swap_chain.cpp")
 
 add_library(
   njvk STATIC
-  ${BUILDERS} "${CMAKE_CURRENT_SOURCE_DIR}/njvk.cpp"
+  ${BUILDERS}
+  "${CMAKE_CURRENT_SOURCE_DIR}/njvk.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/handles/nj_builder.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/handles/nj_swapchain.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/handles/nj_vk_instance.cpp")
 
 target_include_directories(njvk PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -28,7 +31,8 @@ target_compile_definitions(
          APP_VERSION_MAJOR=${APP_VERSION_MAJOR}
          APP_VERSION_MINOR=${APP_VERSION_MINOR}
          APP_VERSION_PATCH=${APP_VERSION_PATCH}
-         ENGINE_NAME="${APP_ENGINE_NAME}"
+         ENGINE_NAME="${APP_ENGINE_NAME}
+    "
          ENGINE_VERSION_MAJOR=${APP_ENGINE_VERSION_MAJOR}
          ENGINE_VERSION_MINOR=${APP_ENGINE_VERSION_MINOR}
          ENGINE_VERSION_PATCH=${APP_ENGINE_VERSION_PATCH})

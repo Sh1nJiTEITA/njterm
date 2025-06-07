@@ -1,6 +1,6 @@
 #pragma once
-#ifndef NJ_PHYSICAL_DEVICE_H
-#define NJ_PHYSICAL_DEVICE_H
+#ifndef NJ_BUILD_PHYSICAL_DEVICE_H
+#define NJ_BUILD_PHYSICAL_DEVICE_H
 
 #include "handles/nj_builder.h"
 

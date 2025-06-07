@@ -22,7 +22,8 @@ const char *stdConfigFile = R"lua(
                 features = {
                     3 -- VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT  
                 },
-            } -- validation
+            }, -- validation
+            buffering = 3,
         }, -- vk
         test = { 
             field = 1488,
@@ -108,5 +109,7 @@ auto ValidationExtensions() -> std::vector<std::string> {
 auto ValidationFeatures() -> std::vector<int> {
     return Get("vk.validation.features").As<std::vector<int>>();
 }
+
+auto Buffering() -> uint32_t { return Get("vk.buffering").As<uint32_t>(); }
 
 } // namespace nj::con

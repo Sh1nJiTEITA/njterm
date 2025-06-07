@@ -48,23 +48,25 @@ const std::vector<vk::DeviceQueueCreateInfo> &BDevice::DeviceQueueInfos() {
     auto props = phDevice->getQueueFamilyProperties();
     // NOTE:
     // HARDCODED FOR NOW 
-    const auto flags = NeededQueueFamilyTypes();
+    // const auto flags = NeededQueueFamilyTypes();
+    // // Searching for default vulkan queue-incides
+    // std::set<size_t> indices;
+    // log::Info("Searching for queue-family-indices...");
+    // for (auto flag : flags) { 
+    //     const auto index = PickFamilyIndex(props, flag);
+    //     if (!index.has_value()) { 
+    //         nj::log::FatalExit("Cant find queue family index for {}. "
+    //                            "Videocard is not compatible",
+    //                            vk::to_string(flag));
+    //     }
+    //     log::Info("Family with index={} is compatible with queue-type={}", index.value(), vk::to_string(flag));
+    //     indices.insert(index.value());
+    // }
     
-    // Searching for default vulkan queue-incides
-    std::set<size_t> indices;
-    log::Info("Searching for queue-family-indices...");
-    for (auto flag : flags) { 
-        const auto index = PickFamilyIndex(props, flag);
-        if (!index.has_value()) { 
-            nj::log::FatalExit("Cant find queue family index for {}. "
-                               "Videocard is not compatible",
-                               vk::to_string(flag));
-        }
-        log::Info("Family with index={} is compatible with queue-type={}", index.value(), vk::to_string(flag));
-        indices.insert(index.value());
-    }
+    std::map<vk::QueueFlags, size_t> indices = NeededQueueIndices(phDevice, surface);
+
     // Searching now for present KHR queue
-    const auto present_index = PickSurfaceFamilyIndex(props, phDevice, surface);
+    const auto present_index = PickSurfaceFamilyIndex(phDevice, surface);
     if (!present_index.has_value()) { 
         nj::log::FatalExit("Cant find queue family index for KHR present logic. "
                            "Videocard is not compatible");
