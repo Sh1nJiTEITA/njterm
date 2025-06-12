@@ -191,7 +191,7 @@ auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::Compos
 }
 
 auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t {
-    return std::clamp(con::Buffering(), surface_cap.minImageCount, surface_cap.maxImageCount);
+    return std::clamp(con::Buffering(), surface_cap.minImageCount + 1, surface_cap.maxImageCount);
 }
 
 // clang-format on

@@ -6,7 +6,9 @@
 #include "handles/nj_build_device.h"
 #include "handles/nj_build_instance.h"
 #include "handles/nj_build_physical_device.h"
+#include "handles/nj_build_render_context.h"
 #include "handles/nj_build_swapchain.h"
+
 #include "nj_builder.h"
 
 #endif

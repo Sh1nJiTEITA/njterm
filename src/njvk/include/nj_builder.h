@@ -12,6 +12,7 @@
 namespace nj::build {
 // clang-format off
 //! FIXME: Add explicit choice of physical device
+
 template <typename T> class Builder {
   public:
     using Handle = vk::SharedHandle<T>;
@@ -23,7 +24,11 @@ template <typename T> class Builder {
 
 template <typename T, typename... Args> decltype(auto) Build(Args &&...args) {
     return Builder<T>(std::forward<Args>(args)...).Build();
-}
+};
+
+
+
+
 
 //! @defgroup vk-settings
 //! Group for redefining vk-constants

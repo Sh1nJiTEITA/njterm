@@ -24,9 +24,9 @@ BSwapchain::Handle BSwapchain::Build() {
     if ( surface_formats.empty() ) { 
         log::FatalExit("Now window (SurfaceKHR) formats available for current device");
     }
-    vk::Format format = ( surface_formats[0].format == vk::Format::eUndefined ) 
-                        ? vk::Format::eB8G8R8A8Unorm 
-                        : surface_formats[0].format;
+    format = ( surface_formats[0].format == vk::Format::eUndefined ) 
+               ? vk::Format::eB8G8R8A8Unorm 
+               : surface_formats[0].format;
 
     vk::SurfaceCapabilitiesKHR surface_cap = phDevice->Handle()->getSurfaceCapabilitiesKHR(*surface);
     if (surface_cap.currentExtent.width == (std::numeric_limits<uint32_t>::max())) { 
@@ -43,7 +43,6 @@ BSwapchain::Handle BSwapchain::Build() {
                                                     : surface_cap.currentTransform;
 
     vk::CompositeAlphaFlagBitsKHR alpha = CompositeAlpha(surface_cap);
-
 
     auto info = vk::SwapchainCreateInfoKHR{}
         .setSurface(*surface)
@@ -79,11 +78,26 @@ BSwapchain::Handle BSwapchain::Build() {
     }
     
     vk::SwapchainKHR swapchain_raw = device->Handle()->createSwapchainKHR(info);
-    return vk::SharedSwapchainKHR(swapchain_raw, device->Handle(), surface);
+    return vk::SharedSwapchainKHR(swapchain_raw, device->Handle(), surface);;
 }
 
-vk::Extent2D BSwapchain::Extent() { 
-    return extent;
+vk::Extent2D BSwapchain::Extent() { return extent; }
+vk::Format BSwapchain::Format() { return format; } 
+
+using SBSwapchain = Builder<ren::Swapchain>;
+
+SBSwapchain::Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+                    vk::SharedSurfaceKHR surface, uint32_t width,
+                    uint32_t height)
+    : phDevice{phDevice}, device{device}, surface{surface},
+      extent{width, height} {}
+
+SBSwapchain::Handle SBSwapchain::Build() {
+    auto builder = Builder<vk::SwapchainKHR>( phDevice, device, surface, extent.width, extent.height );
+    auto swapchain = std::make_shared<ren::Swapchain>( builder.Build(), builder.Extent(), builder.Format() );
+    swapchain->UpdateImages(device);
+    return swapchain;
 }
+
 
 } // namespace nj::build

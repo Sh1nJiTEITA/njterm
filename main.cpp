@@ -1,4 +1,5 @@
 #include "nj_vk_build.h"
+#include "njlog.h"
 #include "njwin.h"
 /*
 
@@ -26,12 +27,17 @@ int main(int argc, char **argv) {
     physical_device->UpdateQueueIndices(surface);
 
     auto device = nj::build::Build<ren::Device>(inst, physical_device, surface);
-    auto swapchain = nj::build::Build<vk::SwapchainKHR>(
+    auto swapchain = nj::build::Build<ren::Swapchain>(
         physical_device, 
         device,
         surface,
         800, 600
     );
+    nj::log::Info("Current swapchain extent: {}, {}", 
+                  swapchain->Extent().width,
+                  swapchain->Extent().height);
+
+    auto context = nj::build::Build<ren::RenderContext>(device, swapchain);
 
     return 0;
 }

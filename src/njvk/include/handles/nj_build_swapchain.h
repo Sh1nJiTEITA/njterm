@@ -18,9 +18,11 @@ template <> class Builder<vk::SwapchainKHR> {
     Handle Build();
 
     vk::Extent2D Extent();
+    vk::Format Format();
 
   private:
     vk::Extent2D extent;
+    vk::Format format;
     vk::SharedSurfaceKHR surface;
     ren::PhysicalDeviceH phDevice;
     ren::DeviceH device;
@@ -29,7 +31,8 @@ template <> class Builder<vk::SwapchainKHR> {
 
 template <> class Builder<ren::Swapchain> {
   public:
-    Builder(vk::SharedPhysicalDevice phDevice, vk::SharedDevice device);
+    Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+            vk::SharedSurfaceKHR surface, uint32_t width, uint32_t height);
 
     using Handle = ren::SwapchainH;
     Handle Build();
@@ -37,8 +40,8 @@ template <> class Builder<ren::Swapchain> {
   private:
     vk::Extent2D extent;
     vk::SharedSurfaceKHR surface;
-    vk::SharedPhysicalDevice phDevice;
-    vk::SharedDevice device;
+    ren::PhysicalDeviceH phDevice;
+    ren::DeviceH device;
     ren::VarHandles h;
 };
 

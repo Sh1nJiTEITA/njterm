@@ -24,6 +24,7 @@ const char *stdConfigFile = R"lua(
                 },
             }, -- validation
             buffering = 3,
+            frames = 2,
         }, -- vk
         test = { 
             field = 1488,
@@ -111,5 +112,7 @@ auto ValidationFeatures() -> std::vector<int> {
 }
 
 auto Buffering() -> uint32_t { return Get("vk.buffering").As<uint32_t>(); }
+
+auto Frames() -> uint32_t { return Get("vk.frames").As<uint32_t>(); }
 
 } // namespace nj::con
