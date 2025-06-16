@@ -5,11 +5,12 @@
 
 namespace nj::ren {
 Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
-                     vk::SharedSurfaceKHR surface, vk::Extent2D ext,
-                     vk::Format format)
-    : extent{ext}, format{format} {
-    handle = build::Build<vk::SwapchainKHR>(phDevice, device, surface,
-                                            ext.width, ext.height);
+                     vk::SharedSurfaceKHR surface, vk::Extent2D ext)
+    : extent{ext} {
+    auto builder = build::Builder<vk::SwapchainKHR>(phDevice, device, surface,
+                                                    ext.width, ext.height);
+    handle = builder.Build();
+    format = builder.Format();
 }
 
 auto Swapchain::Extent() -> vk::Extent2D { return extent; }

@@ -29,21 +29,21 @@ template <> class Builder<vk::SwapchainKHR> {
     ren::VarHandles h;
 };
 
-template <> class Builder<ren::Swapchain> {
-  public:
-    Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
-            vk::SharedSurfaceKHR surface, uint32_t width, uint32_t height);
-
-    using Handle = ren::SwapchainH;
-    Handle Build();
-
-  private:
-    vk::Extent2D extent;
-    vk::SharedSurfaceKHR surface;
-    ren::PhysicalDeviceH phDevice;
-    ren::DeviceH device;
-    ren::VarHandles h;
-};
+// template <> class Builder<ren::Swapchain> {
+//   public:
+//     Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+//             vk::SharedSurfaceKHR surface, uint32_t width, uint32_t height);
+//
+//     using Handle = ren::SwapchainH;
+//     Handle Build();
+//
+//   private:
+//     vk::Extent2D extent;
+//     vk::SharedSurfaceKHR surface;
+//     ren::PhysicalDeviceH phDevice;
+//     ren::DeviceH device;
+//     ren::VarHandles h;
+// };
 
 } // namespace nj::build
 

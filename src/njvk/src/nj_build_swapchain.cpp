@@ -84,20 +84,20 @@ BSwapchain::Handle BSwapchain::Build() {
 vk::Extent2D BSwapchain::Extent() { return extent; }
 vk::Format BSwapchain::Format() { return format; } 
 
-using SBSwapchain = Builder<ren::Swapchain>;
-
-SBSwapchain::Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
-                    vk::SharedSurfaceKHR surface, uint32_t width,
-                    uint32_t height)
-    : phDevice{phDevice}, device{device}, surface{surface},
-      extent{width, height} {}
-
-SBSwapchain::Handle SBSwapchain::Build() {
-    auto builder = Builder<vk::SwapchainKHR>( phDevice, device, surface, extent.width, extent.height );
-    auto swapchain = std::make_shared<ren::Swapchain>( builder.Build(), builder.Extent(), builder.Format() );
-    swapchain->UpdateImages(device);
-    return swapchain;
-}
-
+// using SBSwapchain = Builder<ren::Swapchain>;
+//
+// SBSwapchain::Builder(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+//                     vk::SharedSurfaceKHR surface, uint32_t width,
+//                     uint32_t height)
+//     : phDevice{phDevice}, device{device}, surface{surface},
+//       extent{width, height} {}
+//
+// SBSwapchain::Handle SBSwapchain::Build() {
+//     auto builder = Builder<vk::SwapchainKHR>( phDevice, device, surface, extent.width, extent.height );
+//     auto swapchain = std::make_shared<ren::Swapchain>( builder.Build(), builder.Extent(), builder.Format() );
+//     swapchain->UpdateImages(device);
+//     return swapchain;
+// }
+//
 
 } // namespace nj::build

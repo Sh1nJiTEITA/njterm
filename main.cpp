@@ -28,11 +28,11 @@ int main(int argc, char **argv) {
     physical_device->UpdateQueueIndices(surface);
 
     auto device = std::make_shared<ren::Device>(inst, physical_device, surface);
-    auto swapchain = build::Build<ren::Swapchain>(
+    auto swapchain = std::make_shared<ren::Swapchain>(
         physical_device, 
         device,
         surface,
-        800, 600
+        vk::Extent2D{ 800, 600 } 
     );
     nj::log::Info("Current swapchain extent: {}, {}", 
                   swapchain->Extent().width,
