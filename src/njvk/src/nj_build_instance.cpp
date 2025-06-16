@@ -65,17 +65,4 @@ auto BInstance::FeaturesStruct() -> vk::ValidationFeaturesEXT {
     // clang-format on
 }
 
-using SBInstance = Builder<ren::Instance>;
-
-SBInstance::Builder(const std::set<std::string> &inext)
-    : inputExtensions{inext} {}
-SBInstance::Builder(const std::vector<std::string> &inext)
-    : inputExtensions{inext | std::ranges::to<std::set>()} {}
-
-SBInstance::Handle SBInstance::Build() {
-    auto inst = std::make_shared<ren::Instance>();
-    inst->Handle() = Builder<vk::Instance>(this->inputExtensions).Build();
-    return inst;
-}
-
 } // namespace nj::build

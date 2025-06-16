@@ -33,19 +33,19 @@ template <> class Builder<vk::Device> {
     ren::VarHandles h;
 };
 
-template <> class Builder<ren::Device> {
-  public:
-    Builder(ren::InstanceH, ren::PhysicalDeviceH, vk::SharedSurfaceKHR);
-
-    using Handle = std::shared_ptr<ren::Device>;
-    Handle Build();
-
-  private:
-    ren::InstanceH inst;
-    ren::PhysicalDeviceH phDevice;
-    vk::SharedSurfaceKHR surface;
-    ren::VarHandles h;
-};
+// template <> class Builder<ren::Device> {
+//   public:
+//     Builder(ren::InstanceH, ren::PhysicalDeviceH, vk::SharedSurfaceKHR);
+//
+//     using Handle = std::shared_ptr<ren::Device>;
+//     Handle Build();
+//
+//   private:
+//     ren::InstanceH inst;
+//     ren::PhysicalDeviceH phDevice;
+//     vk::SharedSurfaceKHR surface;
+//     ren::VarHandles h;
+// };
 
 } // namespace nj::build
 

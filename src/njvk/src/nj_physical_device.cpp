@@ -1,10 +1,15 @@
 #include "nj_physical_device.h"
+#include "nj_build_physical_device.h"
 #include "nj_builder.h"
 #include "njlog.h"
 #include <ranges>
 #include <set>
 
 namespace nj::ren {
+
+PhysicalDevice::PhysicalDevice(ren::InstanceH instance) {
+    handle = build::Build<vk::PhysicalDevice>(instance->Handle());
+}
 
 auto PhysicalDevice::UpdateQueueProperties() -> void {
     if (queueProperties.empty()) {

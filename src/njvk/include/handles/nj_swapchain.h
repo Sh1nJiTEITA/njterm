@@ -10,7 +10,8 @@ namespace nj::ren {
 
 class Swapchain : public VulkanObject<vk::SwapchainKHR> {
   public:
-    Swapchain(vk::SharedSwapchainKHR swapchain, vk::Extent2D ext,
+    Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+              vk::SharedSurfaceKHR surface, vk::Extent2D ext,
               vk::Format format);
     //! Current swapchain extent (simular to window size)
     auto Extent() -> vk::Extent2D;

@@ -85,18 +85,18 @@ const std::vector<const char*>& BDevice::DeviceExtensions() {
     return device_features;
 }
 
-using SBDevice = Builder<ren::Device>;
-
-SBDevice::Builder(ren::InstanceH instance, ren::PhysicalDeviceH phDevice,
-                 vk::SharedSurfaceKHR surface)
-    : inst{instance}, phDevice{phDevice}, surface{surface} {}
-
-SBDevice::Handle SBDevice::Build() { 
-    auto device = std::make_shared<ren::Device>();
-    device->Handle() = Builder<vk::Device>(inst, phDevice, surface).Build();
-    return device;
-}
-
+// using SBDevice = Builder<ren::Device>;
+//
+// SBDevice::Builder(ren::InstanceH instance, ren::PhysicalDeviceH phDevice,
+//                  vk::SharedSurfaceKHR surface)
+//     : inst{instance}, phDevice{phDevice}, surface{surface} {}
+//
+// SBDevice::Handle SBDevice::Build() { 
+//     auto device = std::make_shared<ren::Device>();
+//     device->Handle() = Builder<vk::Device>(inst, phDevice, surface).Build();
+//     return device;
+// }
+//
 
 
 } // namespace nj::build

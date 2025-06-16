@@ -3,6 +3,7 @@
 #define NJ_PHYSICAL_DEVICE_H
 
 #include "nj_handle.h"
+#include "nj_instance.h"
 #include <map>
 #include <memory>
 #include <optional>
@@ -12,7 +13,7 @@ namespace nj::ren {
 // clang-format off
 class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
   public:
-    PhysicalDevice() = default;
+    PhysicalDevice(ren::InstanceH instance);
 
     //! Updates inner queue properties if inner storage is empty
     //! Assuming that getting queue properties is not cheap operation

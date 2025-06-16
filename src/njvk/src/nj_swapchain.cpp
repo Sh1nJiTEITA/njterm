@@ -1,13 +1,15 @@
 #include "nj_swapchain.h"
+#include "nj_build_swapchain.h"
 #include "njlog.h"
-#include <iterator>
 #include <vulkan/vulkan_shared.hpp>
 
 namespace nj::ren {
-Swapchain::Swapchain(vk::SharedSwapchainKHR swapchain, vk::Extent2D ext,
+Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
+                     vk::SharedSurfaceKHR surface, vk::Extent2D ext,
                      vk::Format format)
     : extent{ext}, format{format} {
-    handle = swapchain;
+    handle = build::Build<vk::SwapchainKHR>(phDevice, device, surface,
+                                            ext.width, ext.height);
 }
 
 auto Swapchain::Extent() -> vk::Extent2D { return extent; }

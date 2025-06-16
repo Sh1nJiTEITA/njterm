@@ -19,16 +19,16 @@ template <> class Builder<vk::PhysicalDevice> {
     vk::SharedInstance inst;
 };
 
-template <> class Builder<ren::PhysicalDevice> {
-  public:
-    Builder(vk::SharedInstance instance);
-
-    using Handle = std::shared_ptr<ren::PhysicalDevice>;
-    Handle Build();
-
-  private:
-    vk::SharedInstance inst;
-};
+// template <> class Builder<ren::PhysicalDevice> {
+//   public:
+//     Builder(vk::SharedInstance instance);
+//
+//     using Handle = std::shared_ptr<ren::PhysicalDevice>;
+//     Handle Build();
+//
+//   private:
+//     vk::SharedInstance inst;
+// };
 
 } // namespace nj::build
 

@@ -8,12 +8,18 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_build_physical_device.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_build_swapchain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_build_render_context.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_build_render_pass.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_build_framebuffer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_builder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_instance.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_physical_device.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_swapchain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_render_context.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_device.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_device.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_render_pass.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_grid_render_pass.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment_color.cpp")
 
 add_library(njvk STATIC ${SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/njvk.cpp")
 

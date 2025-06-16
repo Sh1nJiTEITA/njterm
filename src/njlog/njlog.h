@@ -1,16 +1,15 @@
 #pragma once
-
-#include <exception>
-#include <utility>
 #ifndef NJ_LOG_H
 #define NJ_LOG_H
 
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <exception>
 #include <fmt/base.h>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
+#include <utility>
 
 namespace nj {
 namespace log {
