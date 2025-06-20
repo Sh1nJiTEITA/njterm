@@ -11,7 +11,8 @@ namespace nj::ren {
 class Swapchain : public VulkanObject<vk::SwapchainKHR> {
   public:
     Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
-              vk::SharedSurfaceKHR surface, vk::Extent2D ext);
+              vk::SharedSurfaceKHR surface, vk::Extent2D ext,
+              vk::ImageUsageFlags flags);
     //! Current swapchain extent (simular to window size)
     auto Extent() -> vk::Extent2D;
 
@@ -31,7 +32,7 @@ class Swapchain : public VulkanObject<vk::SwapchainKHR> {
   private:
     std::vector<vk::SharedImage> images;
     vk::Format format;
-    const vk::Extent2D extent;
+    vk::Extent2D extent;
 };
 using SwapchainH = std::shared_ptr<Swapchain>;
 

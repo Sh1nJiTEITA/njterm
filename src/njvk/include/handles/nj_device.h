@@ -11,7 +11,7 @@ namespace nj::ren {
 
 class Device : public VulkanObject<vk::Device> {
   public:
-    Device(ren::InstanceH, ren::PhysicalDeviceH, vk::SharedSurfaceKHR);
+    Device(ren::InstanceH, ren::PhysicalDeviceH);
     auto HandleName() const noexcept -> std::string override;
 };
 using DeviceH = std::shared_ptr<Device>;

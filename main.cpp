@@ -1,5 +1,6 @@
 #include "nj_attachment_color.h"
 #include "nj_command_pool.h"
+#include "nj_debug_utils_messenger.h"
 #include "nj_grid_render_pass.h"
 #include "nj_render_context.h"
 #include "nj_vk_build.h"
@@ -24,19 +25,21 @@ int main(int argc, char **argv) {
     auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
 
-    // auto inst = std::make_shared<ren::Instance>(win_ext);
     auto inst = log::MakeSharedWithLog<ren::Instance>(win_ext);
-    auto messenger = build::Build<vk::DebugUtilsMessengerEXT>(inst->Handle());
+    auto messenger = log::MakeSharedWithLog<ren::DebugUtilsMessenger>(inst);
     auto surface = win->CreateSurface(inst->Handle());
+
     auto physical_device = log::MakeSharedWithLog<ren::PhysicalDevice>(inst);
     physical_device->UpdateQueueIndices(surface);
+    physical_device->UpdateQueueProperties();
 
-    auto device = log::MakeSharedWithLog<ren::Device>(inst, physical_device, surface);
+    auto device = log::MakeSharedWithLog<ren::Device>(inst, physical_device);
     auto swapchain = log::MakeSharedWithLog<ren::Swapchain>(
         physical_device, 
         device,
         surface,
-        vk::Extent2D{ 800, 600 } 
+        vk::Extent2D{ 800, 600 },
+        vk::ImageUsageFlagBits::eColorAttachment
     );
     swapchain->UpdateImages(device);
     nj::log::Info("Current swapchain extent: {}, {}", 
@@ -52,12 +55,9 @@ int main(int argc, char **argv) {
         color_att
     };
     auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
-        "Render context", device, swapchain, attachments 
+        "Render context", device, swapchain, render_pass, attachments
     );
     auto command_pool = log::MakeSharedWithLog<ren::CommandPool>(device, physical_device);
-
-
-    // auto context = nj::build::Build<ren::RenderContext>(device, swapchain);
 
     return 0;
 }

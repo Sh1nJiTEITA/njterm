@@ -1,4 +1,4 @@
-#include "nj_build_debug_messanger.h"
+#include "nj_debug_utils_messenger.h"
 #include "njvklog.h"
 
 static PFN_vkCreateDebugUtilsMessengerEXT messenger_create_func;
@@ -17,35 +17,37 @@ VKAPI_ATTR void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(
     return messenger_delete_func(instance, messenger, pAllocator);
 }
 
-namespace nj::build {
+namespace nj::ren {
 
-using BDebugMessenger = Builder<vk::DebugUtilsMessengerEXT>;
-
-BDebugMessenger::Builder(vk::SharedInstance instance) : inst{instance} {}
-BDebugMessenger::Handle BDebugMessenger::Build() {
+DebugUtilsMessenger::DebugUtilsMessenger(ren::InstanceH instance) {
     // clang-format off
     auto messenger_info = nj::log::VkLogCreateInfo();
     
     messenger_create_func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-        inst->getProcAddr("vkCreateDebugUtilsMessengerEXT")
+        instance->Handle()->getProcAddr("vkCreateDebugUtilsMessengerEXT")
     );
     if (!messenger_create_func) { 
-        nj::log::FatalExit("Cant find create function for vk::DebugUtilsMessengerEXT. "
-                           "Need to disable validation to work");
+        log::FatalExit("Cant find create function for vk::DebugUtilsMessengerEXT. "
+                       "Need to disable validation to work");
     }
 
     messenger_delete_func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-        inst->getProcAddr("vkCreateDebugUtilsMessengerEXT")
+        instance->Handle()->getProcAddr("vkCreateDebugUtilsMessengerEXT")
     );
 
     if (!messenger_create_func) { 
-        nj::log::FatalExit("Cant find delete function for vk::DebugUtilsMessengerEXT. "
-                           "Need to disable validation to work");
+        log::FatalExit("Cant find delete function for vk::DebugUtilsMessengerEXT. "
+                       "Need to disable validation to work");
     }
     
-    auto raw = inst->createDebugUtilsMessengerEXT(messenger_info);
-    return vk::SharedDebugUtilsMessengerEXT(raw, inst);
+    auto raw = instance->Handle()->createDebugUtilsMessengerEXT(messenger_info);
+    handle = vk::SharedDebugUtilsMessengerEXT(raw, instance->Handle());
     // clang-format off
+
 }
 
-} // namespace nj::build
+auto DebugUtilsMessenger::HandleName() const noexcept -> std::string {
+    return "DebugUtilsMessenger";
+}
+
+} // namespace nj::ren

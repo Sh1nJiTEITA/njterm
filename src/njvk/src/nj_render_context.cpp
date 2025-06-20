@@ -1,5 +1,5 @@
 #include "nj_render_context.h"
-#include "nj_build_framebuffer.h"
+#include "nj_render_pass.h"
 #include "njcon.h"
 #include "njlog.h"
 
@@ -10,16 +10,25 @@ auto Framebuffer::Attachement(size_t idx) -> const ren::AttachmentDataH & {
 }
 
 Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
+                         ren::RenderPassH renderpass,
                          const std::vector<ren::AttachmentDataH> &att)
     : attachments{att} {
 
-    std::vector<vk::SharedImageView> views;
+    std::vector<vk::ImageView> views;
     views.reserve(att.size());
     for (auto &a : att) {
-        views.push_back(a->imageView);
+        views.push_back(*a->imageView);
     }
+    vk::Extent2D extent = swapchain->Extent();
+    auto info = vk::FramebufferCreateInfo{}
+                    .setAttachments(views)
+                    .setWidth(extent.width)
+                    .setHeight(extent.height)
+                    .setLayers(1)
+                    .setRenderPass(*renderpass->Handle());
 
-    handle = build::Build<vk::Framebuffer>(device, swapchain, views);
+    vk::Framebuffer frame_buffer = device->Handle()->createFramebuffer(info);
+    handle = vk::SharedFramebuffer(frame_buffer, device->Handle());
 }
 
 auto Framebuffer::HandleName() const noexcept -> std::string {
@@ -28,6 +37,7 @@ auto Framebuffer::HandleName() const noexcept -> std::string {
 
 // clang-format off
 RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
+                             ren::RenderPassH renderpass,
                              const std::vector<ren::AttachmentH> &attachments) {
 
     const uint32_t frames = con::Buffering();
@@ -35,7 +45,6 @@ RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
         std::vector<ren::AttachmentDataH> attachement_datas;
 
         for (auto& att : attachments) { 
-            log::Debug("Frame={} attachemnt...", frame);
             auto attachemnt_data = std::make_shared<ren::AttachmentData>( 
                 att->CreateData(frame, device)
             );
@@ -43,7 +52,7 @@ RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
         }
 
         auto framebuffer = std::make_shared<ren::Framebuffer>(
-            device, swapchain, attachement_datas
+            device, swapchain, renderpass, attachement_datas
         );
         framebuffers.push_back(std::move(framebuffer));
     }

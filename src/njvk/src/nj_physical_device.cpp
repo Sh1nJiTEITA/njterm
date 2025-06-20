@@ -1,5 +1,4 @@
 #include "nj_physical_device.h"
-#include "nj_build_physical_device.h"
 #include "nj_builder.h"
 #include "njlog.h"
 #include <ranges>
@@ -8,7 +7,9 @@
 namespace nj::ren {
 
 PhysicalDevice::PhysicalDevice(ren::InstanceH instance) {
-    handle = build::Build<vk::PhysicalDevice>(instance->Handle());
+    handle = vk::SharedPhysicalDevice(
+        instance->Handle()->enumeratePhysicalDevices().front(),
+        instance->Handle());
 }
 
 auto PhysicalDevice::UpdateQueueProperties() -> void {
@@ -63,6 +64,7 @@ auto PhysicalDevice::UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void {
             "Cant find queue family index for KHR present logic. "
             "Videocard is not compatible");
     }
+    presentIndex = present_idx.value();
 }
 
 //! @return Found via UpdateQueueIndices PRESENT queue family index

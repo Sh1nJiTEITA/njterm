@@ -3,6 +3,7 @@
 #define NJ_RENDER_PASS_H
 
 #include "nj_handle.h"
+#include <memory>
 
 namespace nj::ren {
 
@@ -11,6 +12,7 @@ class RenderPass : public VulkanObject<vk::RenderPass> {
     RenderPass() = default;
     auto HandleName() const noexcept -> std::string override;
 };
+using RenderPassH = std::shared_ptr<RenderPass>;
 
 }; // namespace nj::ren
 
