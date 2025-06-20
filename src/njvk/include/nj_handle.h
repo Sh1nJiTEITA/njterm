@@ -9,8 +9,10 @@ namespace nj::ren {
 template <typename T> class VulkanObject {
   public:
     VulkanObject() = default;
+    using HandleType = T;
 
     vk::SharedHandle<T> &Handle() { return handle; }
+    virtual std::string HandleName() const noexcept = 0;
 
   protected:
     vk::SharedHandle<T> handle;

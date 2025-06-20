@@ -11,6 +11,7 @@ namespace nj::ren {
 class GridRenderPass : public RenderPass {
   public:
     GridRenderPass(DeviceH device, AttachmentColor colorAtt);
+    auto HandleName() const noexcept -> std::string override;
 };
 
 } // namespace nj::ren

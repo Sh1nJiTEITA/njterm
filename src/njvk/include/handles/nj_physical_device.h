@@ -47,6 +47,8 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
     //! @return Unique family indices
     auto UniqueQueueIndices() -> std::vector<size_t>;
 
+    auto HandleName() const noexcept -> std::string override;
+
   private:
     size_t presentIndex;  
     std::map<vk::QueueFlags, size_t> indices;

@@ -33,4 +33,8 @@ auto Swapchain::Images() -> const std::vector<vk::SharedImage> & {
     return images;
 }
 
+auto Swapchain::HandleName() const noexcept -> std::string {
+    return "Swapchain";
+}
+
 } // namespace nj::ren

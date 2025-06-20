@@ -8,4 +8,6 @@ Device::Device(ren::InstanceH instance, ren::PhysicalDeviceH phDevice,
     handle = build::Build<vk::Device>(instance, phDevice, surface);
 }
 
+auto Device::HandleName() const noexcept -> std::string { return "Device"; }
+
 } // namespace nj::ren

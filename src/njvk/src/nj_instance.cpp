@@ -10,4 +10,6 @@ Instance::Instance(const std::vector<std::string> &inext) {
     handle = build::Builder<vk::Instance>(inext).Build();
 }
 
+auto Instance::HandleName() const noexcept -> std::string { return "Instance"; }
+
 } // namespace nj::ren

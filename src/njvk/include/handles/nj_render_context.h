@@ -11,30 +11,26 @@
 
 namespace nj::ren {
 
-class FrameData {
+class Framebuffer : VulkanObject<vk::Framebuffer> {
   public:
-    FrameData() = default;
-    FrameData(ren::DeviceH device, ren::SwapchainH swapchain,
-              const std::vector<ren::AttachmentDataH> &att);
+    Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
+                const std::vector<ren::AttachmentDataH> &att);
 
-    auto Framebuffer() -> vk::SharedFramebuffer &;
     auto Attachement(size_t idx) -> const ren::AttachmentDataH &;
+    auto HandleName() const noexcept -> std::string override;
 
   private:
-    vk::SharedFramebuffer framebuffer;
     std::vector<ren::AttachmentDataH> attachments;
 };
-using FrameDataH = std::shared_ptr<FrameData>;
+using FramebufferH = std::shared_ptr<Framebuffer>;
 
 class RenderContext {
-
   public:
     RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
                   const std::vector<ren::AttachmentH> &att);
 
-  protected:
   private:
-    std::vector<FrameDataH> frameDatas;
+    std::vector<FramebufferH> framebuffers;
 };
 using RenderContextH = std::shared_ptr<RenderContext>;
 

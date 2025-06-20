@@ -2,7 +2,6 @@
 #ifndef NJ_BUILDER_H
 #define NJ_BUILDER_H
 
-#include <map>
 #include <njvkutils.h>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>

@@ -26,6 +26,8 @@ class Swapchain : public VulkanObject<vk::SwapchainKHR> {
     //! Get access to stored swapchain images
     auto Images() -> const std::vector<vk::SharedImage> &;
 
+    auto HandleName() const noexcept -> std::string override;
+
   private:
     std::vector<vk::SharedImage> images;
     vk::Format format;

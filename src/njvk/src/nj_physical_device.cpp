@@ -82,4 +82,8 @@ auto PhysicalDevice::UniqueQueueIndices() -> std::vector<size_t> {
     return set | std::ranges::to<std::vector>();
 }
 
+auto PhysicalDevice::HandleName() const noexcept -> std::string {
+    return "PhysicalDevice";
+}
+
 } // namespace nj::ren

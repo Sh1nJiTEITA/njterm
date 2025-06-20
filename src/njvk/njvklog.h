@@ -1,11 +1,13 @@
 #pragma once
-
 #ifndef NJ_VK_LOG_H
 #define NJ_VK_LOG_H
 
+#include "nj_handle.h"
 #include "njlog.h"
+#include <type_traits>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_to_string.hpp>
 
 namespace nj::log {
 template <typename... Args>
@@ -18,6 +20,33 @@ inline auto CheckCall(vk::Result res, fmt::format_string<Args...> str,
         std::exit(EXIT_FAILURE);
     }
 }
+
+// clang-format off
+template <typename T, typename... Args,
+          std::enable_if_t<
+              std::is_base_of_v<ren::VulkanObject<typename T::HandleType>, T>, bool> = true>
+decltype(auto) MakeSharedWithLog(Args &&...args) {
+    auto delete_log = [](auto obj) { 
+        log::Info("Deleting shared vk-wrapper-object \"{}\"", obj->HandleName());
+    };
+    auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, 
+                                     std::move(delete_log));
+    log::Info("Created shared vk-wrapper-object \"{}\"", object->HandleName());
+    return object;
+};
+
+template <typename T, typename... Args>
+decltype(auto) MakeSharedWithLog(std::string name, Args &&...args) {
+    auto delete_log = [&name](auto obj) { 
+        log::Info("Deleting shared object \"{}\"", name);
+    };
+    // auto object = std::make_shared<T>(std::forward<Args>(args)...);
+    auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, delete_log);
+    log::Info("Created new shared object \"{}\"", std::move(name));
+    return object;
+};
+
+// clang-format on
 
 static auto VkLog(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                   vk::DebugUtilsMessageTypeFlagsEXT messageType,

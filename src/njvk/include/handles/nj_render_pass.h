@@ -9,6 +9,7 @@ namespace nj::ren {
 class RenderPass : public VulkanObject<vk::RenderPass> {
   public:
     RenderPass() = default;
+    auto HandleName() const noexcept -> std::string override;
 };
 
 }; // namespace nj::ren
