@@ -12,6 +12,7 @@ namespace nj::ren {
 class CommandPool : public VulkanObject<vk::CommandPool> {
   public:
     CommandPool(ren::DeviceH, ren::PhysicalDeviceH);
+    ~CommandPool();
     auto HandleName() const noexcept -> std::string override;
 };
 using CommandPoolH = std::shared_ptr<CommandPool>;

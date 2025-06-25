@@ -3,10 +3,10 @@
 namespace nj::ren {
 
 // clang-format off
-GridRenderPass::GridRenderPass(DeviceH device, AttachmentColor colorAtt) {
-    vk::AttachmentDescription cdesc = colorAtt.Description();
-    vk::AttachmentReference cref = colorAtt.Reference(0);
-    vk::SubpassDependency cdep = colorAtt.Dependency();
+GridRenderPass::GridRenderPass(DeviceH device, AttachmentColorH colorAtt) {
+    vk::AttachmentDescription cdesc = colorAtt->Description();
+    vk::AttachmentReference cref = colorAtt->Reference(0);
+    vk::SubpassDependency cdep = colorAtt->Dependency();
     auto csub_desc = vk::SubpassDescription{}
         .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
         .setPColorAttachments(&cref)

@@ -3,10 +3,10 @@
 #include "nj_debug_utils_messenger.h"
 #include "nj_grid_render_pass.h"
 #include "nj_render_context.h"
-#include "nj_vk_build.h"
 #include "njlog.h"
 #include "njvklog.h"
 #include "njwin.h"
+#include "src/njcon/njcon.h"
 /*
 
     // auto keyctrl = nj::win::CreateKeyControl();
@@ -49,15 +49,13 @@ int main(int argc, char **argv) {
     auto color_att = log::MakeSharedWithLog<ren::AttachmentColor>(
         "Color attachment", swapchain
     );
-    auto render_pass = log::MakeSharedWithLog<ren::GridRenderPass>(device, *color_att);
-
-    std::vector<ren::AttachmentH> attachments { 
-        color_att
-    };
-    auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
-        "Render context", device, swapchain, render_pass, attachments
-    );
+    auto render_pass = log::MakeSharedWithLog<ren::GridRenderPass>(device, color_att);
     auto command_pool = log::MakeSharedWithLog<ren::CommandPool>(device, physical_device);
-
+    auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
+        "Render context", device, swapchain, render_pass, command_pool,
+        con::Buffering(),
+        std::vector< ren::AttachmentH > { color_att } 
+    );
+    render_context->CleanUp();
     return 0;
 }

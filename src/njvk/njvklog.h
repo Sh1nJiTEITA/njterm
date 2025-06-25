@@ -30,7 +30,7 @@ decltype(auto) MakeSharedWithLog(Args &&...args) {
         log::Info("Deleting shared vk-wrapper-object \"{}\"", obj->HandleName());
     };
     auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, 
-                                     std::move(delete_log));
+                                     delete_log);
     log::Info("Created shared vk-wrapper-object \"{}\"", object->HandleName());
     return object;
 };
@@ -42,7 +42,7 @@ decltype(auto) MakeSharedWithLog(std::string name, Args &&...args) {
     };
     // auto object = std::make_shared<T>(std::forward<Args>(args)...);
     auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, delete_log);
-    log::Info("Created new shared object \"{}\"", std::move(name));
+    log::Info("Created new shared object \"{}\"", name);
     return object;
 };
 

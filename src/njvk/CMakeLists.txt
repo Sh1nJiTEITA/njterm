@@ -9,13 +9,18 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_swapchain.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_device.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_render_context.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_render_sync.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_render_pass.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_grid_render_pass.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_command_pool.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_command_buffer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment_color.cpp")
 
 add_library(njvk STATIC ${SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/njvk.cpp")
+
+# target_compile_definitions(njvk PUBLIC VULKAN_HPP_NO_SMART_HANDLE=0)
+# target_compile_definitions(njvk PUBLIC VULKAN_HPP_HANDLES_MOVE_EXCHANGE=1)
 
 target_include_directories(
   njvk

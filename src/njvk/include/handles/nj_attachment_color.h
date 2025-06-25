@@ -19,6 +19,7 @@ class AttachmentColor : public Attachment {
   protected:
     std::weak_ptr<ren::Swapchain> swapchainWeak;
 };
+using AttachmentColorH = std::shared_ptr<AttachmentColor>;
 // clang-format on
 
 } // namespace nj::ren

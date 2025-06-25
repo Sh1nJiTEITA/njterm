@@ -1,4 +1,5 @@
 #pragma once
+#include <vulkan/vulkan.hpp>
 #ifndef NJ_VULKAN_OBJECT_H
 #define NJ_VULKAN_OBJECT_H
 
@@ -16,6 +17,18 @@ template <typename T> class VulkanObject {
 
   protected:
     vk::SharedHandle<T> handle;
+};
+
+template <typename T, typename Dispatch> class VulkanObjectUnique {
+  public:
+    VulkanObjectUnique() = default;
+    using HandleType = T;
+
+    T &Handle() { return handle; }
+    virtual std::string HandleName() const noexcept = 0;
+
+  protected:
+    vk::UniqueHandle<T, Dispatch> handle;
 };
 
 }; // namespace nj::ren
