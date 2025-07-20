@@ -10,6 +10,7 @@
 #include "njwin.h"
 #include "src/njcon/njcon.h"
 #include <vulkan/vulkan_enums.hpp>
+
 /*
 
     // auto keyctrl = nj::win::CreateKeyControl();
@@ -65,14 +66,7 @@ int main(int argc, char **argv) {
 
     ren::Buffer buf( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
     ren::Buffer buf1( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
-    ren::Buffer buf3( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
-
-
-
-
-
-
-
+    ren::Buffer buf3( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {}); 
 
     render_context->CleanUp();
     return 0;

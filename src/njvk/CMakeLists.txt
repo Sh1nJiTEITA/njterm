@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 4.0.1)
 project(njvk)
 
 set(SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/njvkutils.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_builder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_instance.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_debug_utils_messenger.cpp"

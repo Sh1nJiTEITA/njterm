@@ -3,6 +3,7 @@
 #define NJ_VK_UTILS_H
 
 #include <any>
+#include <cstdint>
 #include <vector>
 
 namespace nj::ren {
@@ -26,6 +27,8 @@ class VarHandles {
   private:
     std::vector<std::any> vars;
 };
+
+auto GenerateId() -> uint32_t;
 
 } // namespace nj::ren
 
