@@ -11,7 +11,13 @@ class VarHandles {
   public:
     VarHandles() { vars.reserve(1000); }
 
-    template <typename T> std::decay_t<T> &Handle(T &&var) {
+    // template <typename T> T &Handle(T &&var) const {
+    //     using U = std::decay_t<T>;
+    //     vars.push_back(std::forward<T>(var));
+    //     return std::any_cast<U &>(vars.back());
+    // }
+
+    template <typename T> T &Handle(T &&var) {
         using U = std::decay_t<T>;
         vars.push_back(std::forward<T>(var));
         return std::any_cast<U &>(vars.back());

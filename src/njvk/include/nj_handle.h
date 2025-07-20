@@ -1,8 +1,8 @@
 #pragma once
-#include <vulkan/vulkan.hpp>
 #ifndef NJ_VULKAN_OBJECT_H
 #define NJ_VULKAN_OBJECT_H
 
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_shared.hpp>
 
 namespace nj::ren {
@@ -13,6 +13,7 @@ template <typename T> class VulkanObject {
     using HandleType = T;
 
     vk::SharedHandle<T> &Handle() { return handle; }
+    T CHandle() { return static_cast<typename T::CType>(handle.get()); }
     virtual std::string HandleName() const noexcept = 0;
 
   protected:

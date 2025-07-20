@@ -1,4 +1,6 @@
+#include "nj_allocator.h"
 #include "nj_attachment_color.h"
+#include "nj_buffer.h"
 #include "nj_command_pool.h"
 #include "nj_debug_utils_messenger.h"
 #include "nj_grid_render_pass.h"
@@ -7,6 +9,7 @@
 #include "njvklog.h"
 #include "njwin.h"
 #include "src/njcon/njcon.h"
+#include <vulkan/vulkan_enums.hpp>
 /*
 
     // auto keyctrl = nj::win::CreateKeyControl();
@@ -34,6 +37,8 @@ int main(int argc, char **argv) {
     physical_device->UpdateQueueProperties();
 
     auto device = log::MakeSharedWithLog<ren::Device>(inst, physical_device);
+    auto allocator = log::MakeSharedWithLog<ren::Allocator>("Allocator", inst, device, physical_device);
+
     auto swapchain = log::MakeSharedWithLog<ren::Swapchain>(
         physical_device, 
         device,
@@ -56,6 +61,19 @@ int main(int argc, char **argv) {
         con::Buffering(),
         std::vector< ren::AttachmentH > { color_att } 
     );
+
+
+    ren::Buffer buf( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
+    ren::Buffer buf1( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
+    ren::Buffer buf3( device, allocator, 2048, vk::BufferUsageFlagBits::eVertexBuffer, {}, {});
+
+
+
+
+
+
+
+
     render_context->CleanUp();
     return 0;
 }
