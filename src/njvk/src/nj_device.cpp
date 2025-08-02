@@ -12,7 +12,7 @@ DeviceQueueInfos(ren::VarHandles& h, ren::PhysicalDeviceH phDevice) {
     // WARN: Until this moment phDevice (ren::PhysicalDevice) must be updated
     // So all needed indices must be already loaded
     // Default queue types
-    const std::vector<vk::QueueFlags> needed_types = build::NeededQueueFamilyTypes();
+    const std::vector<vk::QueueFlagBits> needed_types = build::NeededQueueFamilyTypes();
     std::set<size_t> unique_indices;
     for (auto q : needed_types) {
         const size_t idx = phDevice->QueueIndex(q);

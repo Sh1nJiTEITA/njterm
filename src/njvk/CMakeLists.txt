@@ -16,6 +16,7 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_grid_render_pass.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_command_pool.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_context.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_pipeline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_vertex.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor.cpp"

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef NJ_DESCRIPTOR_H
-#define NJ_DESCRIPTOR_H
+#ifndef NJ_BUFFER_H
+#define NJ_BUFFER_H
 
 #include "nj_allocator.h"
 #include "nj_handle.h"
@@ -70,11 +70,14 @@ class Image : public AllocationUnit, public VulkanObject<vk::Image> {
     auto Width() -> size_t;
     auto Height() -> size_t;
 
+    auto HandleName() const noexcept -> std::string override;
+
   private:
     vk::ImageLayout layout;
     size_t height;
     size_t width;
 };
+
 // clang-format on
 
 } // namespace nj::ren

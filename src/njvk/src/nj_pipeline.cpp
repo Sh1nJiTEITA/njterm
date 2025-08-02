@@ -198,8 +198,8 @@ auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreat
     ;
 }
 
-auto PipelineBuilderTest::PipelineLayoutInfo() -> vk::PipelineLayoutCreateInfo {
-
+auto PipelineBuilderTest::PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo {
+    return vk::PipelineLayoutCreateInfo{}.setSetLayouts(layouts);
 }
 
 // clang-format on

@@ -91,13 +91,17 @@ RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
         device, swapchain, renderpass, 
         command_pool, frames, attachments
     );
-    
     log::Debug("Context was build");
 }
 
 void RenderContext::CleanUp()
 { 
     contexts.clear();
+}
+
+
+auto RenderContext::Context(size_t frame) -> FrameContextH & { 
+    return contexts[frame];
 }
 
 // clang-format off

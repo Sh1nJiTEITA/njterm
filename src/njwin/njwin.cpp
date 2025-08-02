@@ -20,7 +20,7 @@ auto CreateWindow() -> std::unique_ptr<Window> {
     static_assert(false, "No window impl is chosen");
 #endif
     win->Create();
-    return std::move(win);
+    return win;
 }
 
 auto CreateKeyControl() -> std::unique_ptr<KeyControl> {

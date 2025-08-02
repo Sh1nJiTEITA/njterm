@@ -53,7 +53,7 @@ auto AppInfo() -> vk::ApplicationInfo;
 //! This funcs returns needed to app queue-types
 //!  FIXME: For some reason it returns vec of bits but
 //!  it is BAD DESIGN
-auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlags>;
+auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlagBits>;
 
 //! @ingroup vk-settings
 //! Physical device features are stored here, not inside config (bad design maybe?)

@@ -19,6 +19,8 @@ class WindowGLFW : public win::Window {
     virtual auto SetTitle(std::string title) -> void override;
     virtual auto VulkanExtensions() const -> std::vector<std::string> override;
     virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR override;
+    virtual auto ShouldClose() -> bool override;
+    virtual auto Update() -> void override;
 
   private:
     GLFWwindow *glfwWindowHandle;

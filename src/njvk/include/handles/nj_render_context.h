@@ -13,7 +13,7 @@
 
 namespace nj::ren {
 
-class Framebuffer : VulkanObject<vk::Framebuffer> {
+class Framebuffer : public VulkanObject<vk::Framebuffer> {
   public:
     Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
                 ren::RenderPassH renderpass,
@@ -40,7 +40,6 @@ class FrameContext {
     FrameContext(FramebufferH, CommandBufferH, SyncDataH);
     FrameContext(FrameContext &&) noexcept = default;
 
-  private:
     FramebufferH framebuffer;
     CommandBufferH commandBuffer;
     SyncDataH syncData;
@@ -58,6 +57,8 @@ class RenderContext {
                   size_t frames, const std::vector<ren::AttachmentH> &att = {});
 
     void CleanUp();
+
+    auto Context(size_t frame) -> FrameContextH &;
 
   private:
     void CreateFrameContexts(ren::DeviceH device, ren::SwapchainH swapchain,

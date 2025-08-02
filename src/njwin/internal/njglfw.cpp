@@ -29,6 +29,7 @@ WindowGLFW::~WindowGLFW() {
     if (glfwWindowHandle) {
         glfwDestroyWindow(glfwWindowHandle);
     }
+    glfwTerminate();
 }
 
 auto WindowGLFW::Create() -> void {
@@ -70,6 +71,12 @@ auto WindowGLFW::CreateSurface(vk::SharedInstance inst)
     glfwCreateWindowSurface(*inst, glfwWindowHandle, nullptr, &surface_);
     return vk::SharedSurfaceKHR(surface_, inst);
 }
+
+auto WindowGLFW::ShouldClose() -> bool {
+    return glfwWindowShouldClose(glfwWindowHandle);
+}
+
+auto WindowGLFW::Update() -> void { glfwPollEvents(); }
 
 auto KeyControlGLFW::ToInternal(win::KeyType key) -> win::Key {
     // clang-format off

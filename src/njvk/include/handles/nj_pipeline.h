@@ -25,7 +25,7 @@ class PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo = 0;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo = 0;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo = 0;
-    virtual auto PipelineLayoutInfo() -> vk::PipelineLayoutCreateInfo = 0;
+    virtual auto PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo = 0;
 };
 using PipelineBuilderInterfaceH = std::shared_ptr< PipelineBuilderInterface >;
 
@@ -58,9 +58,7 @@ class PipelineBuilderTest : public PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo override;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo override;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo override;
-
-    // TODO: IMPLEMENT!
-    virtual auto PipelineLayoutInfo() -> vk::PipelineLayoutCreateInfo override;
+    virtual auto PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo override;
   private:
     ren::VarHandles h;
 };

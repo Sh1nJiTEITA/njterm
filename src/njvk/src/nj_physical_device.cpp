@@ -18,7 +18,7 @@ auto PhysicalDevice::UpdateQueueProperties() -> void {
     }
 }
 
-auto PhysicalDevice::PickFamilyIndex(vk::QueueFlags flag)
+auto PhysicalDevice::PickFamilyIndex(vk::QueueFlagBits flag)
     -> std::optional<size_t> {
     UpdateQueueProperties();
     const auto hasFlag = [flag](const vk::QueueFamilyProperties &f) {
@@ -45,7 +45,7 @@ auto PhysicalDevice::PickSurfaceFamilyIndex(vk::SharedSurfaceKHR surface)
 
 auto PhysicalDevice::UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void {
     // Getting needed queue-types from config
-    std::vector<vk::QueueFlags> needed = build::NeededQueueFamilyTypes();
+    std::vector<vk::QueueFlagBits> needed = build::NeededQueueFamilyTypes();
     log::Info("Searching for queue-family-indices...");
     for (auto flag : needed) {
         const auto index = PickFamilyIndex(flag);
@@ -67,12 +67,22 @@ auto PhysicalDevice::UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void {
     presentIndex = present_idx.value();
 }
 
+auto PhysicalDevice::UpdateQueues(vk::SharedDevice device) -> void {
+    for (const auto &[key, idx] : indices) {
+        queues[key] = device->getQueue(idx, 0);
+    }
+}
+
 //! @return Found via UpdateQueueIndices PRESENT queue family index
 auto PhysicalDevice::PresentQueueIndex() -> size_t { return presentIndex; }
 
 //! @return Found via UpdateQueueIndices <FLAG> queue family index
-auto PhysicalDevice::QueueIndex(vk::QueueFlags flag) -> size_t {
-    return indices.at(flag);
+auto PhysicalDevice::QueueIndex(vk::QueueFlagBits flag) -> size_t {
+    return indices[flag];
+}
+
+auto PhysicalDevice::Queue(vk::QueueFlagBits flag) -> vk::Queue & {
+    return queues[flag];
 }
 
 auto PhysicalDevice::UniqueQueueIndices() -> std::vector<size_t> {

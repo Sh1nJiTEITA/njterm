@@ -150,7 +150,7 @@ auto AppInfo() -> vk::ApplicationInfo {
 //
 // }
 
-auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlags> { 
+auto NeededQueueFamilyTypes() -> std::vector<vk::QueueFlagBits> { 
     return { 
         vk::QueueFlagBits::eGraphics,
         vk::QueueFlagBits::eTransfer

@@ -29,11 +29,11 @@ inline void DisableLevel(LevelType level) { LevelBitSet.fetch_and(~level); }
 
 template <Level l> constexpr const char *LevelString() {
     // clang-format off
-    if constexpr (l == Level::Debug) return " DEBUG ";
-    else if constexpr (l == Level::Info) return " INFO ";
-    else if constexpr (l == Level::Warn) return " WARN ";
-    else if constexpr (l == Level::Error) return " ERROR ";
-    else if constexpr (l == Level::Fatal) return " FATAL ";
+    if constexpr (l == Level::Debug) return " DEB ";
+    else if constexpr (l == Level::Info) return " INF ";
+    else if constexpr (l == Level::Warn) return " WAR ";
+    else if constexpr (l == Level::Error) return " ERR ";
+    else if constexpr (l == Level::Fatal) return " FAT ";
     else return " UNKNOWN ";
     // clang-format on
 }

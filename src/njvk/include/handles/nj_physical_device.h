@@ -1,12 +1,14 @@
 #pragma once
+#include <vulkan/vulkan_shared.hpp>
 #ifndef NJ_PHYSICAL_DEVICE_H
 #define NJ_PHYSICAL_DEVICE_H
 
 #include "nj_handle.h"
 #include "nj_instance.h"
-#include <map>
 #include <memory>
 #include <optional>
+#include <unordered_map>
+#include <vulkan/vulkan_enums.hpp>
 
 namespace nj::ren {
 
@@ -24,7 +26,7 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
     //! Not caching results.
     //! @param flag Flag (type) of queue to search for
     //! @return Possiable index of queue if it is found
-    auto PickFamilyIndex(vk::QueueFlags flag) -> std::optional<size_t>;
+    auto PickFamilyIndex(vk::QueueFlagBits flag) -> std::optional<size_t>;
 
     //! Searches queue family index comp with SurfaceKHR a.k.a PRESENT queue
     //! Not caching results.
@@ -37,12 +39,14 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
     //! creation
     //! @param surface Surface handle to find present family index for
     auto UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void; 
+    auto UpdateQueues(vk::SharedDevice device) -> void;
 
     //! @return Found via UpdateQueueIndices PRESENT queue family index
     auto PresentQueueIndex() -> size_t;
 
     //! @return Found via UpdateQueueIndices <FLAG> queue family index
-    auto QueueIndex(vk::QueueFlags flag) -> size_t;
+    auto QueueIndex(vk::QueueFlagBits flag) -> size_t;
+    auto Queue(vk::QueueFlagBits flag) -> vk::Queue&;
     
     //! @return Unique family indices
     auto UniqueQueueIndices() -> std::vector<size_t>;
@@ -51,7 +55,8 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
 
   private:
     size_t presentIndex;  
-    std::map<vk::QueueFlags, size_t> indices;
+    std::unordered_map<vk::QueueFlagBits, size_t> indices;
+    std::unordered_map<vk::QueueFlagBits, vk::Queue> queues;
 
     //! Caching queue family properties
     std::vector<vk::QueueFamilyProperties> queueProperties;
