@@ -25,7 +25,7 @@ class PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo = 0;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo = 0;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo = 0;
-    virtual auto PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo = 0;
+    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout = 0;
 };
 using PipelineBuilderInterfaceH = std::shared_ptr< PipelineBuilderInterface >;
 
@@ -34,6 +34,7 @@ class Pipeline : ren::VulkanObject<vk::Pipeline> {
   public:
     Pipeline(DeviceH device, RenderPassH render_pass,
              PipelineBuilderInterfaceH builder,
+             const std::vector<vk::SharedDescriptorSetLayout> &layouts,
              const fs::path &shader_directory);
 
     auto LayoutHandle() -> vk::SharedPipelineLayout;
@@ -47,7 +48,7 @@ class Pipeline : ren::VulkanObject<vk::Pipeline> {
 auto ReadShaderFile(const fs::path& path) -> std::vector<char>;
 auto CreateShaderModule(ren::DeviceH device, const std::vector<char>& data) -> vk::SharedShaderModule;
 auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::SharedShaderModule;
-auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path& path) -> std::vector< vk::PipelineShaderStageCreateInfo >;
+auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::SharedShaderModule >& modules) -> std::vector< vk::PipelineShaderStageCreateInfo >;
 
 class PipelineBuilderTest : public PipelineBuilderInterface {
   public:
@@ -58,7 +59,7 @@ class PipelineBuilderTest : public PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo override;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo override;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo override;
-    virtual auto PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo override;
+    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout override;
   private:
     ren::VarHandles h;
 };

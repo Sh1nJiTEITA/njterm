@@ -3,8 +3,10 @@
 #include "njlog.h"
 #include "njvklog.h"
 #include "njvkutils.h"
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_shared.hpp>
@@ -21,8 +23,17 @@ auto Pipeline::HandleName() const noexcept -> std::string {
 
 Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
                    PipelineBuilderInterfaceH builder,
+                   const std::vector<vk::SharedDescriptorSetLayout> &layouts,
                    const fs::path &shader_directory) {
     ren::VarHandles h{};
+
+    auto ll = layouts | std::views::transform([](const auto& l){ return l.get(); }) 
+                      | std::ranges::to<std::vector>() 
+                      ;
+
+    layout = builder->PipelineLayout(device, ll);
+
+    std::vector< vk::SharedShaderModule > modules;
     auto pipeline_info = vk::GraphicsPipelineCreateInfo{}
         .setPVertexInputState( &h.Handle(builder->VertexInputState()) )
         .setPInputAssemblyState( &h.Handle(builder->InputAssemblyState()) )
@@ -35,7 +46,7 @@ Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
         .setSubpass( 0 )
         .setBasePipelineHandle( VK_NULL_HANDLE )
         .setLayout( *layout )
-        .setStages( h.Handle(CreateShaderCreateInfos(device, shader_directory)) )
+        .setStages( h.Handle(CreateShaderCreateInfos(device, shader_directory, modules)) )
         ;
     auto result = device->Handle()->createGraphicsPipeline({}, pipeline_info);
     log::CheckCall(result.result, "Creating pipeline failed...");
@@ -85,7 +96,7 @@ auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::Shared
     return CreateShaderModule(device, data);
 }
 
-auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path) -> std::vector<vk::PipelineShaderStageCreateInfo> {
+auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::SharedShaderModule >& modules) -> std::vector<vk::PipelineShaderStageCreateInfo> {
 
     static std::unordered_map<std::string, vk::ShaderStageFlagBits> stage_bits = {
         {"vert", vk::ShaderStageFlagBits::eVertex},
@@ -101,20 +112,28 @@ auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path) -> std::
     for (const auto &entry : std::filesystem::directory_iterator(path)) {
         auto path = entry.path();
         if (path.extension() == ".spv") {
+            log::Info("Found shader file with needed ext with path={}", path.string());
             filenames.push_back(std::move(path));
         } 
     }
 
     std::vector<vk::PipelineShaderStageCreateInfo> infos;
     infos.reserve(filenames.size());
+    modules.reserve(filenames.size());
 
+    log::Info("Total filenames count={}", filenames.size());
     for (size_t i = 0; i < filenames.size(); ++i) {
+        log::Debug("Processing file with index={} and path={} and stage={}", i, filenames[i].string(), filenames[i].stem().string());
         vk::SharedShaderModule module = CreateShaderModule(device, filenames[i]);
-        auto& info = *infos.insert(infos.end(), {});
-        info.setPName("main")
+        modules.push_back(module);
+        // auto& info = *infos.insert(infos.end(), vk::PipelineShaderStageCreateInfo{});
+        infos.push_back(vk::PipelineShaderStageCreateInfo{}
+            .setPName("main")
             .setModule(module.get())
-            .setStage(stage_bits[filenames[i].stem()]);
+            .setStage(stage_bits[filenames[i].stem()])
+        );
     }
+    log::Info("Total count of stages={}", infos.size());
     return infos;
 }
 
@@ -162,7 +181,8 @@ auto PipelineBuilderTest::RasterizationState() -> vk::PipelineRasterizationState
         .setPolygonMode(vk::PolygonMode::eFill)
         .setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise)
-    ;
+        .setLineWidth(1.) // NOTE: MUST BE PRESENT!
+        ;
 }
 auto PipelineBuilderTest::MultisampleState() -> vk::PipelineMultisampleStateCreateInfo {
     return vk::PipelineMultisampleStateCreateInfo{}
@@ -172,7 +192,7 @@ auto PipelineBuilderTest::MultisampleState() -> vk::PipelineMultisampleStateCrea
         .setPSampleMask(nullptr)
         .setAlphaToCoverageEnable(false)
         .setAlphaToOneEnable(false)
-    ;
+        ;
 
 }
 auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreateInfo {
@@ -198,8 +218,14 @@ auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreat
     ;
 }
 
-auto PipelineBuilderTest::PipelineLayoutInfo(const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::PipelineLayoutCreateInfo {
-    return vk::PipelineLayoutCreateInfo{}.setSetLayouts(layouts);
+auto PipelineBuilderTest::PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout { 
+    auto info = vk::PipelineLayoutCreateInfo{}
+        .setSetLayouts(layouts)
+        ;
+    return vk::SharedPipelineLayout(
+        device->Handle()->createPipelineLayout(info), 
+        device->Handle()
+    );
 }
 
 // clang-format on

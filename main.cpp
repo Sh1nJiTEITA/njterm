@@ -6,6 +6,7 @@
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
 #include "nj_grid_render_pass.h"
+#include "nj_pipeline.h"
 #include "nj_render_context.h"
 #include "njlog.h"
 #include "njvklog.h"
@@ -70,19 +71,26 @@ int main(int argc, char **argv) {
 
     auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, render_pass, command_pool,
-        frames,
+        con::Buffering(),
         std::vector< ren::AttachmentH > { color_att } 
     );
     auto desc_pool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
     
-
     auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>("Descriptor context", device, desc_pool, allocator, frames);
 
+    auto pipeline_builder = log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
+    auto pipeline = log::MakeSharedWithLog<ren::Pipeline>("Pipeline", device, render_pass, pipeline_builder, std::vector<vk::SharedDescriptorSetLayout>{}, fs::path("/home/snj/Code/Other/njterm/build/basic/"));
+
     uint32_t frame = 0;
-    uint32_t current_image = 0;
+    uint32_t current_image;
     
+    render_context->CleanUp();
+    return 0;
+
     while (!win->ShouldClose()) {
         win->Update(); 
+        
+        log::Debug("Frame={} current_image={}", frame, current_image);
 
         auto  cdevice = device->CHandle();
         auto& frame_context = render_context->Context(frame);
@@ -91,12 +99,13 @@ int main(int argc, char **argv) {
         auto  command_buffer = frame_context->commandBuffer->CHandle();
         
 
-        auto [res_ac, _] = cdevice.acquireNextImageKHR(
+        auto [res_ac, new_image] = cdevice.acquireNextImageKHR(
             swapchain->CHandle(),
             std::numeric_limits<uint64_t>::max(), 
-            frame_context->syncData->availableSemaphore.get(), 
+            sync_data->availableSemaphore.get(), 
             {}
         );
+        current_image = new_image;
         
         if (res_ac == vk::Result::eErrorOutOfDateKHR) { 
             log::Error("Need to recreate swachain...");
@@ -127,9 +136,24 @@ int main(int argc, char **argv) {
                 .setClearValues(clear_color)
                 ;
             command_buffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
-            { 
-                
-            }
+            { // clang-format on
+                auto viewport = vk::Viewport{}
+                                    .setX(0)
+                                    .setY(0)
+                                    .setHeight(swapchain->Extent().height)
+                                    .setWidth(swapchain->Extent().width);
+
+                command_buffer.setViewport(0, 1, &viewport);
+
+                vk::Rect2D scissor{};
+                scissor.offset = vk::Offset2D{static_cast<int32_t>(0),
+                                              static_cast<int32_t>(0)};
+                scissor.extent = vk::Extent2D{
+                    static_cast<uint32_t>(swapchain->Extent().height),
+                    static_cast<uint32_t>(swapchain->Extent().width)};
+                command_buffer.setScissor(0, 1, &scissor);
+            } // clang-format off
+
             command_buffer.endRenderPass();
         }
         command_buffer.end();

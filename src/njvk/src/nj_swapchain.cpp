@@ -12,10 +12,7 @@ Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
     : extent{ext} {
     ren::VarHandles h;
 
-    // auto builder = build::Builder<vk::SwapchainKHR>(phDevice, device, surface,
-    //                                                 ext.width, ext.height);
-    // handle = builder.Build();
-    // format = builder.Format();
+
 
 
     std::vector<vk::SurfaceFormatKHR> surface_formats = phDevice->Handle()->getSurfaceFormatsKHR(*surface); 
@@ -63,6 +60,7 @@ Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
 
     if ( present_idx != graphics_idx  )
     {
+        log::Debug("Present queue idx != graphics queue idx");
         // NOTE: Code sample from https://github.com/KhronosGroup/Vulkan-Hpp/blob/main/samples/05_InitSwapchain/05_InitSwapchain.cpp
         // If the graphics and present queues are from different queue families, we either have to explicitly transfer
         // ownership of images between the queues, or we have to create the swapchain with imageSharingMode as

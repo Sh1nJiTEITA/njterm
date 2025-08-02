@@ -24,7 +24,7 @@ const char *stdConfigFile = R"lua(
                 },
             }, -- validation
             buffering = 3,
-            frames = 2,
+            frames = 3,
         }, -- vk
         test = { 
             field = 1488,
