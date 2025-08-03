@@ -71,10 +71,15 @@ auto PhysicalDevice::UpdateQueues(vk::SharedDevice device) -> void {
     for (const auto &[key, idx] : indices) {
         queues[key] = device->getQueue(idx, 0);
     }
+    presentQueue = device->getQueue(presentIndex, 0);
 }
 
 //! @return Found via UpdateQueueIndices PRESENT queue family index
 auto PhysicalDevice::PresentQueueIndex() -> size_t { return presentIndex; }
+auto PhysicalDevice::PresentQueue() -> vk::Queue & { return presentQueue; }
+auto PhysicalDevice::GraphicsQueue() -> vk::Queue & {
+    return Queue(vk::QueueFlagBits::eGraphics);
+}
 
 //! @return Found via UpdateQueueIndices <FLAG> queue family index
 auto PhysicalDevice::QueueIndex(vk::QueueFlagBits flag) -> size_t {

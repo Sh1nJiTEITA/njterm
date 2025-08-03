@@ -3,6 +3,7 @@
 #include "nj_render_pass.h"
 #include "njcon.h"
 #include "njlog.h"
+#include <limits>
 #include <memory>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
@@ -86,7 +87,11 @@ RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
                              ren::RenderPassH renderpass,
                              ren::CommandPoolH command_pool,
                              size_t frames,
-                             const std::vector<ren::AttachmentH>& attachments) {
+                             const std::vector<ren::AttachmentH>& attachments) 
+    : currentImageIndex{ 0 } 
+    , currentFrameIndex{ 0 } 
+    , framesInFlight{ frames } 
+{
     
     log::Debug("Creating RenderContext...");
     CreateFrameContexts(device, command_pool, frames);
@@ -100,8 +105,37 @@ void RenderContext::CleanUp()
 }
 
 
-auto RenderContext::GetFrameContext(size_t frame) -> FrameContextH & { return frameContexts[frame]; }
-auto RenderContext::GetImageContext(size_t image) -> ImageContextH & { return imageContexts[image]; }
+auto RenderContext::GetFrameContext(size_t frame) -> FrameContextH  { return frameContexts[frame]; }
+auto RenderContext::GetImageContext(size_t image) -> ImageContextH  { return imageContexts[image]; }
+auto RenderContext::CurrentImageIndex() const noexcept -> size_t { return currentImageIndex; }
+auto RenderContext::CurrentFrameIndex() const noexcept -> size_t { return currentFrameIndex; }
+auto RenderContext::CurrentCommandBuffer() noexcept -> CommandBufferH { 
+    auto frame_ctx = GetFrameContext(currentFrameIndex);
+    return frame_ctx->commandBuffer;
+}
+auto RenderContext::CurrentFramebuffer() noexcept -> FramebufferH { 
+    auto image_ctx = GetImageContext(currentImageIndex);
+    return image_ctx->framebuffer;
+}
+
+auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> void { 
+    const auto timeout = std::numeric_limits<uint64_t>::max();
+    auto frame_ctx = GetFrameContext(currentFrameIndex);
+    currentImageIndex = GetNewImage(device, swapchain, frame_ctx, timeout);
+    auto image_ctx = GetImageContext(currentImageIndex);
+    ResetFences(device, frame_ctx);
+    BeginCommandBuffer(frame_ctx);
+}
+
+auto RenderContext::EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain) -> void { 
+    const auto timeout = std::numeric_limits<uint64_t>::max();
+    auto frame_ctx = GetFrameContext(currentFrameIndex);
+    EndCommandBuffer(frame_ctx);
+    SubmitGraphics(frame_ctx, physical_device);
+    SubmitPresent(frame_ctx, physical_device, swapchain);
+    WaitFences(device, frame_ctx, timeout);
+    currentFrameIndex = (currentFrameIndex + 1) % framesInFlight;
+}
 
 // clang-format off
 void RenderContext::CreateFrameContexts(
@@ -140,6 +174,83 @@ void RenderContext::CreateImageContexts(ren::DeviceH device, ren::SwapchainH swa
         );
         imageContexts.push_back(std::make_shared<ImageContext>(std::move(framebuffer)));
     }
+}
+
+auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout) -> size_t { 
+
+    auto acquire_result = device->Handle()->acquireNextImageKHR(
+        swapchain->CHandle(), 
+        timeout,
+        frame_ctx->syncData->availableSemaphore.get()
+    );
+
+    if (acquire_result.result  == vk::Result::eErrorOutOfDateKHR) { 
+        log::Error("Need to recreate swachain...");
+    } else if (acquire_result.result != vk::Result::eSuccess && 
+               acquire_result.result != vk::Result::eSuboptimalKHR) { 
+        log::FatalExit("Failed to acquire swapchain image...");
+    }
+
+    return static_cast<size_t>(acquire_result.value);
+}
+
+auto RenderContext::ResetFences(DeviceH device, FrameContextH frame_ctx) -> void { 
+    frame_ctx->commandBuffer->Handle()->reset();
+    device->Handle()->resetFences(std::vector{ 
+        frame_ctx->syncData->frameFence.get()
+    });
+}
+
+void RenderContext::BeginCommandBuffer(FrameContextH frame_ctx) { 
+    auto command_buffer_begin_info = vk::CommandBufferBeginInfo{} 
+        .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)
+        ;
+    frame_ctx->commandBuffer->Handle()->begin(command_buffer_begin_info);
+}
+
+
+void RenderContext::EndCommandBuffer(FrameContextH frame_ctx) { 
+    frame_ctx->commandBuffer->Handle()->end();  
+}
+
+void RenderContext::SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH physical_device) { 
+    auto wait_semaphores = std::array { frame_ctx->syncData->availableSemaphore.get() };
+    auto wait_stages = vk::PipelineStageFlags { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    auto signal_semaphores = std::array { frame_ctx->syncData->finishSemaphore.get() };
+    auto command_buffers = std::array { frame_ctx->commandBuffer->CHandle() };
+    auto submit_info = vk::SubmitInfo{}
+        .setWaitSemaphores(wait_semaphores)
+        .setWaitDstStageMask(wait_stages)
+        .setCommandBuffers(command_buffers) 
+        .setSignalSemaphores(signal_semaphores)
+        ;
+
+    auto& graphics_queue = physical_device->GraphicsQueue();
+    graphics_queue.submit(submit_info, frame_ctx->syncData->frameFence.get());
+}
+
+void RenderContext::SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, SwapchainH swapchain) { 
+    auto swapchains = std::array { swapchain->CHandle() };
+    auto signal_semaphores = std::array { frame_ctx->syncData->finishSemaphore.get() };
+    auto current_images = std::array { static_cast<uint32_t>( currentImageIndex ) };
+    auto present_info = vk::PresentInfoKHR{}
+        .setWaitSemaphores(signal_semaphores)
+        .setSwapchains(swapchains)
+        .setImageIndices(current_images)
+        ;
+
+    auto& present_queue = physical_device->PresentQueue();
+    auto res_qp = present_queue.presentKHR(present_info);
+
+    if (res_qp == vk::Result::eErrorOutOfDateKHR || res_qp == vk::Result::eSuboptimalKHR) {
+        log::Error("Need to recreate swachain 2...");
+    } else if (res_qp != vk::Result::eSuccess) { 
+        log::FatalExit("Failed to present KHR...");
+    }
+}
+
+void RenderContext::WaitFences(DeviceH device, FrameContextH frame_ctx, uint64_t timeout) { 
+    device->Handle()->waitForFences(std::array { frame_ctx->syncData->frameFence.get() }, true, timeout);
 }
 
 

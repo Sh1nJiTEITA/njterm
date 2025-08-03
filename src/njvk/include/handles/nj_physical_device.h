@@ -43,6 +43,8 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
 
     //! @return Found via UpdateQueueIndices PRESENT queue family index
     auto PresentQueueIndex() -> size_t;
+    auto PresentQueue() -> vk::Queue&;
+    auto GraphicsQueue() -> vk::Queue&;
 
     //! @return Found via UpdateQueueIndices <FLAG> queue family index
     auto QueueIndex(vk::QueueFlagBits flag) -> size_t;
@@ -50,13 +52,13 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
     
     //! @return Unique family indices
     auto UniqueQueueIndices() -> std::vector<size_t>;
-
     auto HandleName() const noexcept -> std::string override;
 
   private:
     size_t presentIndex;  
     std::unordered_map<vk::QueueFlagBits, size_t> indices;
     std::unordered_map<vk::QueueFlagBits, vk::Queue> queues;
+    vk::Queue presentQueue;
 
     //! Caching queue family properties
     std::vector<vk::QueueFamilyProperties> queueProperties;

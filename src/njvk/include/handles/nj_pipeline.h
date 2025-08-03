@@ -40,7 +40,7 @@ class Pipeline : public ren::VulkanObject<vk::Pipeline> {
     auto LayoutHandle() -> vk::SharedPipelineLayout;
     auto HandleName() const noexcept -> std::string override;
 
-  private:
+    // private:
     vk::SharedPipelineLayout layout;
 };
 // clang-format off
