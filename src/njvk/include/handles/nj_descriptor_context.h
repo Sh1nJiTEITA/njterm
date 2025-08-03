@@ -13,6 +13,7 @@ using DescriptorU = std::unique_ptr<Descriptor>;
 class DescriptorContext {
 public:
     DescriptorContext(DeviceH device, DescriptorPoolH pool, AllocatorH allocator, size_t frames);
+    ~DescriptorContext();
   
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptor);
 
@@ -37,7 +38,6 @@ public:
     auto Get(size_t frame, size_t layout, size_t binding) -> T& { 
         return static_cast<T&>(Get(frame, layout, binding));
     };
-    
 
   private:
     class Impl; std::unique_ptr<Impl> impl;

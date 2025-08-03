@@ -32,7 +32,7 @@ DebugUtilsMessenger::DebugUtilsMessenger(ren::InstanceH instance) {
     }
 
     messenger_delete_func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-        instance->Handle()->getProcAddr("vkCreateDebugUtilsMessengerEXT")
+        instance->Handle()->getProcAddr("vkDestroyDebugUtilsMessengerEXT")
     );
 
     if (!messenger_create_func) { 

@@ -52,6 +52,10 @@ Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
     log::CheckCall(result.result, "Creating pipeline failed...");
     handle = vk::SharedPipeline(result.value, device->Handle());
 }
+
+Pipeline::~Pipeline() { 
+    layout.reset();
+}
 // clang-format on
 
 auto ReadShaderFile(const fs::path &path) -> std::vector<char> {

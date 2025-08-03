@@ -141,6 +141,7 @@ public:
     {
         // Your internal data and setup
     }
+    virtual ~Impl() {} 
 
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptors) {
         log::Debug(
@@ -275,6 +276,11 @@ void DescriptorContext::Add(size_t layout,
                             std::vector<DescriptorU>&& descriptor) { 
     impl->Add(layout, binding, std::move(descriptor));
 }
+
+DescriptorContext::~DescriptorContext() { 
+
+}
+
 
 
 void DescriptorContext::CreateLayouts() { impl->CreateLayouts(); }

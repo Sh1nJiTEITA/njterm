@@ -28,6 +28,7 @@ template <typename T, typename... Args,
 decltype(auto) MakeSharedWithLog(Args &&...args) {
     auto delete_log = [](auto obj) { 
         log::Info("Deleting shared vk-wrapper-object \"{}\"", obj->HandleName());
+        delete obj;
     };
     auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, 
                                      delete_log);
@@ -39,6 +40,7 @@ template <typename T, typename... Args>
 decltype(auto) MakeSharedWithLog(std::string name, Args &&...args) {
     auto delete_log = [&name](auto obj) { 
         log::Info("Deleting shared object \"{}\"", name);
+        delete obj;
     };
     // auto object = std::make_shared<T>(std::forward<Args>(args)...);
     auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, delete_log);

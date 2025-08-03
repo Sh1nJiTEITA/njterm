@@ -36,6 +36,7 @@ class Pipeline : public ren::VulkanObject<vk::Pipeline> {
              PipelineBuilderInterfaceH builder,
              const std::vector<vk::SharedDescriptorSetLayout> &layouts,
              const fs::path &shader_directory);
+    virtual ~Pipeline();
 
     auto LayoutHandle() -> vk::SharedPipelineLayout;
     auto HandleName() const noexcept -> std::string override;
