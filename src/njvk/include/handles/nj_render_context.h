@@ -33,14 +33,20 @@ using FramebufferH = std::shared_ptr<Framebuffer>;
 //
 //
 //
+class ImageContext {
+  public:
+    ImageContext(FramebufferH framebuffer);
+    FramebufferH framebuffer;
+};
+using ImageContextH = std::shared_ptr<ImageContext>;
+//
 //
 //
 class FrameContext {
   public:
-    FrameContext(FramebufferH, CommandBufferH, SyncDataH);
+    FrameContext(CommandBufferH, SyncDataH);
     FrameContext(FrameContext &&) noexcept = default;
 
-    FramebufferH framebuffer;
     CommandBufferH commandBuffer;
     SyncDataH syncData;
 };
@@ -49,7 +55,7 @@ using FrameContextH = std::shared_ptr<FrameContext>;
 //
 //
 //
-//
+// clang-format off
 class RenderContext {
   public:
     RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
@@ -58,18 +64,21 @@ class RenderContext {
 
     void CleanUp();
 
-    auto Context(size_t frame) -> FrameContextH &;
+    auto GetFrameContext(size_t frame) -> FrameContextH &;
+    auto GetImageContext(size_t image) -> ImageContextH &;
 
   private:
-    void CreateFrameContexts(ren::DeviceH device, ren::SwapchainH swapchain,
-                             ren::RenderPassH renderpass,
-                             ren::CommandPoolH command_pool, size_t frames,
-                             const std::vector<ren::AttachmentH> &att);
+    void CreateFrameContexts(DeviceH device, CommandPoolH command_pool, size_t frames);
+    void CreateImageContexts(DeviceH device, SwapchainH swapchain, RenderPassH renderpass,
+                             const std::vector<AttachmentH> &attachments);
 
   private:
-    std::vector<FrameContextH> contexts;
+    std::vector<FrameContextH> frameContexts;
+    std::vector<ImageContextH> imageContexts;
 };
 using RenderContextH = std::shared_ptr<RenderContext>;
+
+// clang-format on
 
 }; // namespace nj::ren
 

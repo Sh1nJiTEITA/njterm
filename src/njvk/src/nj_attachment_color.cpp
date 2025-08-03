@@ -22,7 +22,8 @@ auto AttachmentColor::Description() -> vk::AttachmentDescription {
         .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
         .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
         .setInitialLayout(vk::ImageLayout::eUndefined)
-        .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+        // .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+        .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 }
 auto AttachmentColor::Reference(uint32_t idx) -> vk::AttachmentReference {
     return vk::AttachmentReference{}
@@ -39,7 +40,7 @@ auto AttachmentColor::Dependency() -> vk::SubpassDependency {
         .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
 }
 
-auto AttachmentColor::CreateData(uint32_t frame_idx, DeviceH device)
+auto AttachmentColor::CreateData(uint32_t image_idx, DeviceH device)
     -> AttachmentData {
     auto sc = swapchainWeak.lock();
     if (!sc) {
@@ -47,7 +48,7 @@ auto AttachmentColor::CreateData(uint32_t frame_idx, DeviceH device)
                        "during creation of "
                        "image color attachment");
     }
-    vk::SharedImage image = sc->Images().at(frame_idx);
+    vk::SharedImage image = sc->Images().at(image_idx);
 
     const auto com = vk::ComponentMapping{
         vk::ComponentSwizzle::eIdentity,

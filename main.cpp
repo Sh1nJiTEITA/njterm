@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <limits>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -57,6 +58,7 @@ int main(int argc, char **argv) {
         vk::ImageUsageFlagBits::eColorAttachment
     );
     swapchain->UpdateImages(device);
+
     nj::log::Info("Current swapchain extent: {}, {}", 
                   swapchain->Extent().width,
                   swapchain->Extent().height);
@@ -71,7 +73,7 @@ int main(int argc, char **argv) {
 
     auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, render_pass, command_pool,
-        con::Buffering(),
+        con::Frames(),
         std::vector< ren::AttachmentH > { color_att } 
     );
     auto desc_pool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
@@ -79,33 +81,51 @@ int main(int argc, char **argv) {
     auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>("Descriptor context", device, desc_pool, allocator, frames);
 
     auto pipeline_builder = log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
-    auto pipeline = log::MakeSharedWithLog<ren::Pipeline>("Pipeline", device, render_pass, pipeline_builder, std::vector<vk::SharedDescriptorSetLayout>{}, fs::path("/home/snj/Code/Other/njterm/build/basic/"));
+    auto pipeline = log::MakeSharedWithLog<ren::Pipeline>(device, render_pass, pipeline_builder, std::vector<vk::SharedDescriptorSetLayout>{}, fs::path("/home/snj/Code/Other/njterm/build/basic/"));
 
     uint32_t frame = 0;
-    uint32_t current_image;
+    uint32_t current_image = 0;
     
-    render_context->CleanUp();
-    return 0;
+    // render_context->CleanUp();
+    // return 0;
 
+
+    auto present_queue = device->Handle()->getQueue(physical_device->PresentQueueIndex(), 0);
     while (!win->ShouldClose()) {
         win->Update(); 
         
         log::Debug("Frame={} current_image={}", frame, current_image);
-
+        
         auto  cdevice = device->CHandle();
-        auto& frame_context = render_context->Context(frame);
+        auto& frame_context = render_context->GetFrameContext(frame);
+
         auto& sync_data = frame_context->syncData;
-        auto& framebuffer = frame_context->framebuffer;
         auto  command_buffer = frame_context->commandBuffer->CHandle();
         
+        // log::Debug("Fence={}", static_cast< VkFence > (sync_data->frameFence.get()));
+        // log::Debug("Fence={} availSem={} finishSem={}", sync_data->frameFence,
+        //             static_cast< VkSemaphore >(sync_data->availableSemaphore.get()), sync_data->finishSemaphore);
+        
+        // auto res_wf = cdevice.waitForFences(std::array {sync_data->frameFence.get() }, true, std::numeric_limits<uint64_t>::max());
 
-        auto [res_ac, new_image] = cdevice.acquireNextImageKHR(
-            swapchain->CHandle(),
-            std::numeric_limits<uint64_t>::max(), 
-            sync_data->availableSemaphore.get(), 
-            {}
-        );
-        current_image = new_image;
+        while ( vk::Result::eTimeout == cdevice.waitForFences(std::array {sync_data->frameFence.get() }, true, std::numeric_limits<uint64_t>::max()))
+        ;
+
+        // auto [res_ac, new_image] = cdevice.acquireNextImageKHR(
+        //     swapchain->CHandle(),
+        //     std::numeric_limits<uint64_t>::max(), 
+        //     sync_data->availableSemaphore.get(), 
+        //     {}
+        // );
+        // current_image = new_image;
+        
+        auto res_ac = cdevice.acquireNextImageKHR(swapchain->CHandle(), 
+                                                  UINT64_MAX, 
+                                                  sync_data->availableSemaphore.get(), 
+                                                  {}, 
+                                                  &current_image);
+
+        auto& image_context = render_context->GetImageContext(current_image);
         
         if (res_ac == vk::Result::eErrorOutOfDateKHR) { 
             log::Error("Need to recreate swachain...");
@@ -113,8 +133,8 @@ int main(int argc, char **argv) {
             log::FatalExit("Failed to acquire swapchain image...");
         }
 
-        cdevice.resetFences(std::vector{sync_data->frameFence.get()});
         command_buffer.reset();
+        cdevice.resetFences(std::vector{sync_data->frameFence.get()});
         
         auto command_buffer_begin_info = vk::CommandBufferBeginInfo{} 
             .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)
@@ -131,7 +151,7 @@ int main(int argc, char **argv) {
                 ;
             auto render_pass_info = vk::RenderPassBeginInfo{}
                 .setRenderPass(render_pass->Handle().get())
-                .setFramebuffer(framebuffer->Handle().get())
+                .setFramebuffer(image_context->framebuffer->Handle().get())
                 .setRenderArea(render_area)
                 .setClearValues(clear_color)
                 ;
@@ -149,9 +169,13 @@ int main(int argc, char **argv) {
                 scissor.offset = vk::Offset2D{static_cast<int32_t>(0),
                                               static_cast<int32_t>(0)};
                 scissor.extent = vk::Extent2D{
-                    static_cast<uint32_t>(swapchain->Extent().height),
-                    static_cast<uint32_t>(swapchain->Extent().width)};
+                    static_cast<uint32_t>(swapchain->Extent().width),
+                    static_cast<uint32_t>(swapchain->Extent().height)};
                 command_buffer.setScissor(0, 1, &scissor);
+                // command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                //                             pipeline->CHandle());
+                // command_buffer.bindVertexBuffers(1, {}, {});
+                // command_buffer.draw(3, 1, 0, 0);
             } // clang-format off
 
             command_buffer.endRenderPass();
@@ -163,34 +187,33 @@ int main(int argc, char **argv) {
         
         auto wait_semaphores = std::array { sync_data->availableSemaphore.get() };
         auto wait_stages = vk::PipelineStageFlags { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-        auto submit_command_buffers = std::array { command_buffer };
         auto signal_semaphores = std::array { sync_data->finishSemaphore.get() };
-        auto swapchains = std::array { swapchain->CHandle() };
-        auto images = std::array { current_image };
 
         auto submit_info = vk::SubmitInfo{}
             .setWaitSemaphores(wait_semaphores)
             .setWaitDstStageMask(wait_stages)
-            .setCommandBuffers(submit_command_buffers) 
+            .setCommandBuffers(command_buffer) 
             .setSignalSemaphores(signal_semaphores)
             ;
 
         auto& graphics_queue = physical_device->Queue(vk::QueueFlagBits::eGraphics);
         graphics_queue.submit(submit_info, sync_data->frameFence.get());
 
+        auto swapchains = std::array { swapchain->CHandle() };
         auto present_info = vk::PresentInfoKHR{}
             .setWaitSemaphores(signal_semaphores)
             .setSwapchains(swapchains)
-            .setImageIndices(images)
+            .setImageIndices(current_image)
             ;
 
-        auto res_qp = graphics_queue.presentKHR(present_info);
+        // auto res_qp = graphics_queue.presentKHR(present_info);
+        auto res_qp = present_queue.presentKHR(present_info);
         if (res_qp == vk::Result::eErrorOutOfDateKHR || res_qp == vk::Result::eSuboptimalKHR) {
             log::Error("Need to recreate swachain 2...");
         } else if (res_qp != vk::Result::eSuccess) { 
             log::FatalExit("Failed to present KHR...");
         }
-        auto res_wf = cdevice.waitForFences(std::array {sync_data->frameFence.get() }, true, std::numeric_limits<uint64_t>::max());
+
         frame = (frame + 1) % frames;
     }
 

@@ -14,7 +14,7 @@ class AttachmentColor : public Attachment {
     auto Description() -> vk::AttachmentDescription override;
     auto Reference(uint32_t idx) -> vk::AttachmentReference override;
     auto Dependency() -> vk::SubpassDependency override;
-    auto CreateData(uint32_t frame_idx, DeviceH device) -> AttachmentData override;
+    auto CreateData(uint32_t image_idx, DeviceH device) -> AttachmentData override;
 
   protected:
     std::weak_ptr<ren::Swapchain> swapchainWeak;

@@ -30,7 +30,7 @@ class PipelineBuilderInterface {
 using PipelineBuilderInterfaceH = std::shared_ptr< PipelineBuilderInterface >;
 
 // clang-format on
-class Pipeline : ren::VulkanObject<vk::Pipeline> {
+class Pipeline : public ren::VulkanObject<vk::Pipeline> {
   public:
     Pipeline(DeviceH device, RenderPassH render_pass,
              PipelineBuilderInterfaceH builder,

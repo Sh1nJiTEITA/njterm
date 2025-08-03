@@ -3,6 +3,7 @@
 #include "nj_render_pass.h"
 #include "njcon.h"
 #include "njlog.h"
+#include <memory>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
 
@@ -67,10 +68,11 @@ auto Framebuffer::HandleName() const noexcept -> std::string {
     return "Framebuffer";
 }
 
-FrameContext::FrameContext(FramebufferH framebuffer,
-                           CommandBufferH commandBuffer, SyncDataH syncData)
-    : framebuffer{std::move(framebuffer)}, commandBuffer{commandBuffer},
-      syncData{std::move(syncData)} {}
+ImageContext::ImageContext(FramebufferH framebuffer)
+    : framebuffer{std::move(framebuffer)} {}
+
+FrameContext::FrameContext(CommandBufferH commandBuffer, SyncDataH syncData)
+    : commandBuffer{std::move(commandBuffer)}, syncData{std::move(syncData)} {}
 
 // FrameContext::FrameContext(FrameContext &&other) noexcept
 //     : framebuffer{std::move(other.framebuffer)},
@@ -87,56 +89,58 @@ RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
                              const std::vector<ren::AttachmentH>& attachments) {
     
     log::Debug("Creating RenderContext...");
-    CreateFrameContexts(
-        device, swapchain, renderpass, 
-        command_pool, frames, attachments
-    );
+    CreateFrameContexts(device, command_pool, frames);
+    CreateImageContexts(device, swapchain, renderpass, attachments);
     log::Debug("Context was build");
 }
 
 void RenderContext::CleanUp()
 { 
-    contexts.clear();
+    frameContexts.clear();
 }
 
 
-auto RenderContext::Context(size_t frame) -> FrameContextH & { 
-    return contexts[frame];
-}
+auto RenderContext::GetFrameContext(size_t frame) -> FrameContextH & { return frameContexts[frame]; }
+auto RenderContext::GetImageContext(size_t image) -> ImageContextH & { return imageContexts[image]; }
 
 // clang-format off
 void RenderContext::CreateFrameContexts(
     ren::DeviceH device, 
-    ren::SwapchainH swapchain, 
-    ren::RenderPassH renderpass, 
     ren::CommandPoolH command_pool, 
-    size_t frames, 
-    const std::vector<ren::AttachmentH> &attachments) {
-    
-    contexts.reserve(frames);
-    for (uint32_t frame = 0; frame < frames; ++frame) {
-        log::Debug("[{}] Creating framebuffer", frame);
+    size_t frames) {
+    frameContexts.reserve(frames);
+    for (size_t frame = 0; frame < frames; ++frame) {
+        log::Debug("[{}] Creating sync-data", frame);
+        auto syncdata = std::make_shared<ren::SyncData>(device);
+
+        log::Debug("[{}] Creating command_buffer", frame);
+        auto command_buf = std::make_shared<ren::CommandBuffer>(device, command_pool);
+
+        log::Debug("[{}] Creating render-context data", frame);
+        frameContexts.push_back(std::make_shared<ren::FrameContext>(
+            std::move(command_buf),
+            std::move(syncdata)
+        ));
+    }
+}
+
+void RenderContext::CreateImageContexts(ren::DeviceH device, ren::SwapchainH swapchain,
+                         ren::RenderPassH renderpass,
+                         const std::vector<ren::AttachmentH> &attachments) { 
+    for (size_t image = 0; image < swapchain->Images().size(); ++image) {  
         std::vector<ren::AttachmentDataH> attachement_datas;
         for (const auto &att : attachments) {
             auto attachemnt_data = std::make_shared<ren::AttachmentData>(
-                att->CreateData(frame, device)
+                att->CreateData(image, device)
             );
             attachement_datas.push_back( std::move(attachemnt_data) );
         }
         auto framebuffer = std::make_shared<ren::Framebuffer>(
             device, swapchain, renderpass, std::move(attachement_datas)
         );
-        log::Debug("[{}] Creating sync-data", frame);
-        auto syncdata = std::make_shared<ren::SyncData>(device);
-        log::Debug("[{}] Creating command_buffer", frame);
-        auto command_buf = std::make_shared<ren::CommandBuffer>(device, command_pool);
-        log::Debug("[{}] Creating render-context data", frame);
-        contexts.push_back(std::make_shared<ren::FrameContext>(
-            std::move(framebuffer), 
-            std::move(command_buf),
-            std::move(syncdata)
-        ));
+        imageContexts.push_back(std::make_shared<ImageContext>(std::move(framebuffer)));
     }
 }
+
 
 } // namespace nj::ren

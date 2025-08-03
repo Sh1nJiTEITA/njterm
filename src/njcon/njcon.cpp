@@ -23,8 +23,8 @@ const char *stdConfigFile = R"lua(
                     3 -- VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT  
                 },
             }, -- validation
-            buffering = 3,
-            frames = 3,
+            buffering = 2,
+            frames = 2,
         }, -- vk
         test = { 
             field = 1488,
