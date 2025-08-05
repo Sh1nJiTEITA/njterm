@@ -1,5 +1,13 @@
 from conan import ConanFile
 
+# To install dependecies:
+
+#           conan install . -of=<BUILD_DIR> -b=missing
+
+# To run cmake:
+# (It will run cmake with needed dependencies)
+#           cmake --preset conan-debug
+
 
 class CompressorRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"

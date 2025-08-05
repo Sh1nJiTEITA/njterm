@@ -38,13 +38,12 @@ decltype(auto) MakeSharedWithLog(Args &&...args) {
 
 template <typename T, typename... Args>
 decltype(auto) MakeSharedWithLog(std::string name, Args &&...args) {
-    auto delete_log = [&name](auto obj) { 
+    log::Info("Created new shared object \"{}\"", name);
+    auto delete_log = [name = std::move(name)](auto obj) { 
         log::Info("Deleting shared object \"{}\"", name);
         delete obj;
     };
-    // auto object = std::make_shared<T>(std::forward<Args>(args)...);
     auto object = std::shared_ptr<T>(new T{std::forward<Args>(args)...}, delete_log);
-    log::Info("Created new shared object \"{}\"", name);
     return object;
 };
 

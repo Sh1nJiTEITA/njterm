@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
     uint32_t current_image = 0;
     
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
-
     while (!win->ShouldClose()) {
         win->Update(); 
         // log::Debug("Frame={} Image={}", render_context->CurrentFrameIndex(), render_context->CurrentImageIndex());
@@ -129,17 +128,9 @@ int main(int argc, char **argv) {
             command_buffer->Handle()->endRenderPass();
         }
         render_context->EndFrame(device, physical_device, swapchain);
-        // break;
     }
     clear_color = {};
     device->Handle()->waitIdle();
-    
-
     log::Debug("Render loop ended");
-    log::Debug("Waiting for device to idle");
-    log::Debug("Cleaning up pipeline...");
-    log::Debug("Cleaning up...");
-    log::Debug("Clean up done");
-
     return 0;
 }
