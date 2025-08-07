@@ -31,6 +31,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njpt")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njwin")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njcon")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njft")
 
 # EXE
 add_executable(njterm ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)

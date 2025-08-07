@@ -14,6 +14,7 @@ class CompressorRecipe(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps"
 
     def requirements(self):
+        assert self.requires is not None
         self.requires("fmt/11.2.0")
         self.requires("lua/5.4.7")
         self.requires("glfw/3.4")
@@ -21,6 +22,4 @@ class CompressorRecipe(ConanFile):
         self.requires("vulkan-headers/1.4.309.0", override=True)
         self.requires("vulkan-loader/1.4.309.0", override=True)
         self.requires("vulkan-memory-allocator/3.0.1")
-
-    # def build_requirements(self):
-    #     self.tool_requires("cmake/4.0.1")
+        self.requires("freetype/2.13.3")
