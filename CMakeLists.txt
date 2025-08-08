@@ -38,6 +38,8 @@ add_executable(njterm ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 target_link_libraries(njterm PRIVATE njpt)
 target_link_libraries(njterm PRIVATE njvk)
 target_link_libraries(njterm PRIVATE njwin)
+target_link_libraries(njterm PRIVATE njcon)
+target_link_libraries(njterm PRIVATE njft)
 
 target_compile_definitions(
   njterm

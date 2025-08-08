@@ -2,6 +2,8 @@
 #include "njlog.h"
 // clang-format off
 #include <ft2build.h>
+#include <memory>
+#include <unordered_map>
 #include FT_FREETYPE_H
 #include <freetype/freetype.h>
 #include <freetype/fttypes.h>
@@ -10,9 +12,9 @@
 
 namespace nj::ft {
 
-class Library::Impl {
-  public:
-    Impl() : isFaceLoaded { false } {
+
+struct Library::Impl {
+    Impl() { 
         log::Debug("Constructing ft::Library...");
         FT_Error error = FT_Init_FreeType(&library);
         log::CheckCall( error, "Cant init Freetype library" );
@@ -22,70 +24,109 @@ class Library::Impl {
         log::Debug("Killing ft::Library::face...");
         FT_Error error = FT_Done_FreeType(library);
         log::CheckCall( error, "Cant kill Freetype library" );
+    }
 
+    FaceID NewFaceID() { 
+        static size_t counter = 0;
+        return counter++;
+    }
+    
+    FaceID LoadFace(Library &lib, const fs::path &path, size_t face_idx) { 
+        FaceID id = NewFaceID();
+        faces.emplace(id, std::unique_ptr<Face>(new Face(lib, path, face_idx)));
+        return id;
+    }
+
+    FaceID LoadFace(Library &lib, std::string_view data, size_t face_idx){ 
+        FaceID id = NewFaceID();
+        faces.emplace(id, std::unique_ptr<Face>(new Face(lib, data, face_idx)));
+        return id;
+    }
+    
+
+public:
+    std::unordered_map<FaceID, std::unique_ptr<Face>> faces;
+    FT_Library library;
+};
+
+Library::Library() : impl{ std::make_unique<Library::Impl>() } {}
+Library::~Library() { }
+
+FaceID Library::LoadFace(const fs::path &path, size_t face_idx) { 
+    return impl->LoadFace(*this, path, face_idx);
+}
+
+FaceID Library::LoadFace(std::string_view data, size_t face_idx) { 
+    return impl->LoadFace(*this, data, face_idx);
+}
+
+
+struct Face::Impl { 
+    Impl(Library &lib, const fs::path &path, size_t face_idx = 0) { 
+        FT_Error error = FT_New_Face(lib.impl->library, path.c_str(), face_idx, &face);
+        log::CheckCall( error, "Cant load Freetype face with path=", path.c_str() );
+    }
+
+    Impl(Library& lib, std::string_view data, size_t face_idx) { 
+        auto data_ptr = reinterpret_cast<const unsigned char*>(data.data());
+        FT_Error error = FT_New_Memory_Face(
+            lib.impl->library, data_ptr, data.size(), face_idx, &face
+        );
+        log::CheckCall( error, "Cant load Freetype face from memory" );
+    }
+
+    virtual ~Impl() { 
         log::Debug("Killing ft::Library::face...");
-        error = FT_Done_Face(face);
+        FT_Error error = FT_Done_Face(face);
         log::CheckCall( error, "Cant kill Freetype face" );
     }
 
-    void LoadFace(const fs::path& path, size_t face_idx) { 
-        FT_Error error = FT_New_Face(library, path.c_str(), face_idx, &face);
-        log::CheckCall( error, "Cant load Freetype face with path=", path.c_str() );
-        isFaceLoaded = true;
-    }
-
-    void LoadFace(std::string_view data, size_t face_idx) { 
-        auto data_ptr = reinterpret_cast<const unsigned char*>(data.data());
-        FT_Error error = FT_New_Memory_Face(
-            library, data_ptr, data.size(), face_idx, &face
-        );
-        log::CheckCall( error, "Cant load Freetype face from memory" );
-        isFaceLoaded = true;
-    }
-
-    bool IsFaceLoaded() { 
-        return isFaceLoaded;
-    }
-
-    auto FamilyName() -> std::string { return face->family_name; }
-    auto StyleName() -> std::string { return face->style_name; }
-    auto NumFaces() -> FT_Long          { return face->num_faces; } 
-    auto FaceIndex() -> FT_Long          { return face->face_index; } 
-    auto FaceFlags() -> FT_Long          { return face->face_flags; } 
-    auto StyleFlags() -> FT_Long          { return face->style_flags; } 
-    auto NumGlyphs() -> FT_Long          { return face->num_glyphs; } 
-    auto Num_fixedSizes() -> FT_Int           { return face->num_fixed_sizes; } 
-    auto AvailableSizes() -> FT_Bitmap_Size*  { return face->available_sizes; } 
-    auto NumCharmaps() -> FT_Int           { return face->num_charmaps; } 
-    auto Charmaps() -> FT_CharMap*      { return face->charmaps; } 
-    auto Generic() -> FT_Generic       { return face->generic; } 
-    auto Bbox() -> FT_BBox          { return face->bbox; } 
-    auto Units_perEM() -> FT_UShort        { return face->units_per_EM; } 
-    auto Ascender() -> FT_Short         { return face->ascender; } 
-    auto Descender() -> FT_Short         { return face->descender; } 
-    auto Height() -> FT_Short         { return face->height; } 
-    auto Max_advanceWidth() -> FT_Short         { return face->max_advance_width; } 
-    auto Max_advanceHeight() -> FT_Short         { return face->max_advance_height; } 
-    auto UnderlinePosition() -> FT_Short         { return face->underline_position; } 
-    auto UnderlineThickness() -> FT_Short         { return face->underline_thickness; } 
-    auto Glyph() -> FT_GlyphSlot     { return face->glyph; } 
-    auto Size() -> FT_Size          { return face->size; } 
-    auto Charmap() -> FT_CharMap       { return face->charmap; } 
-
-  private:
-    FT_Library library;
+public:
     FT_Face face;
-    bool isFaceLoaded;
 };
 
-Library::Library() {}
-Library::~Library() {}
 
-void Library::LoadFace(const fs::path &path, size_t face_idx) { impl->LoadFace(path, face_idx); }
-void Library::LoadFace(std::string_view data, size_t face_idx) { impl->LoadFace(data, face_idx); }
-void Library::LoadFace() { 
-    log::FatalExit("Loading freetype face from cache is not implemented yet"); 
+Face::Face(Library &lib, const fs::path &path, size_t face_idx) 
+    : impl { std::make_unique<Face::Impl>( lib , path, face_idx ) } 
+{ 
+    log::Debug("Constructing Face with ctor 1. path={} face_idx={}", path.string(), face_idx);
 }
-auto Library::IsFaceLoaded() -> bool { return impl->IsFaceLoaded(); }
+
+Face::Face(Library &lib, std::string_view data, size_t face_idx) 
+    : impl { std::make_unique<Face::Impl>( lib, data, face_idx ) } 
+{ 
+    log::Debug("Constructing Face with ctor 2. data.size={} face_idx={}", data.size(), face_idx);
+}
+
+Face::~Face() { 
+    log::Debug("Descructing face");
+}
+
+
+auto Face::FamilyName() -> std::string { return impl->face->family_name; }
+auto Face::StyleName() -> std::string { return impl->face->style_name; }
+auto Face::NumFaces() -> FT_Long { return impl->face->num_faces; }
+auto Face::FaceIndex() -> FT_Long { return impl->face->face_index; }
+auto Face::FaceFlags() -> FT_Long { return impl->face->face_flags; }
+auto Face::StyleFlags() -> FT_Long { return impl->face->style_flags; }
+auto Face::NumGlyphs() -> FT_Long { return impl->face->num_glyphs; }
+auto Face::NumFixedSizes() -> FT_Int { return impl->face->num_fixed_sizes; } 
+auto Face::AvailableSizes() -> FT_Bitmap_Size * { return impl->face->available_sizes; }
+auto Face::NumCharmaps() -> FT_Int { return impl->face->num_charmaps; }
+auto Face::Charmaps() -> FT_CharMap * { return impl->face->charmaps; } 
+auto Face::Generic() -> FT_Generic { return impl->face->generic; }
+auto Face::Bbox() -> FT_BBox { return impl->face->bbox; }
+auto Face::UnitsPerEM() -> FT_UShort { return impl->face->units_per_EM; }
+auto Face::Ascender() -> FT_Short { return impl->face->ascender; }
+auto Face::Descender() -> FT_Short { return impl->face->descender; }
+auto Face::Height() -> FT_Short { return impl->face->height; }
+auto Face::MaxAdvanceWidth() -> FT_Short { return impl->face->max_advance_width; }
+auto Face::MaxAdvanceHeight() -> FT_Short { return impl->face->max_advance_height; }
+auto Face::UnderlinePosition() -> FT_Short { return impl->face->underline_position; }
+auto Face::UnderlineThickness() -> FT_Short { return impl->face->underline_thickness; }
+auto Face::Glyph() -> FT_GlyphSlot { return impl->face->glyph; }
+auto Face::Size() -> FT_Size { return impl->face->size; }
+auto Face::Charmap() -> FT_CharMap { return impl->face->charmap; }
+
 
 } // namespace nj::ft

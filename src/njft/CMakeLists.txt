@@ -11,4 +11,4 @@ target_include_directories(njft PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(njft PRIVATE njlog)
 
 find_package(freetype REQUIRED)
-target_link_libraries(njft PRIVATE Freetype::Freetype)
+target_link_libraries(njft PUBLIC Freetype::Freetype)

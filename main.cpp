@@ -5,13 +5,15 @@
 #include "nj_debug_utils_messenger.h"
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
+#include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
 #include "nj_pipeline.h"
 #include "nj_render_context.h"
+#include "njcon.h"
 #include "njlog.h"
 #include "njvklog.h"
 #include "njwin.h"
-#include "src/njcon/njcon.h"
+
 #include <cstdint>
 #include <limits>
 #include <vulkan/vulkan.hpp>
@@ -30,10 +32,20 @@
 
 */
 
+void load_fonts() {
+    using namespace nj;
+
+    ft::Library lib{};
+};
+
 int main(int argc, char **argv) {
     // clang-format off
     using namespace nj;
 
+    load_fonts(); 
+
+    return 0;
+    
     auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
 
