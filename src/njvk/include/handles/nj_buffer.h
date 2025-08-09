@@ -34,9 +34,11 @@ class Buffer : public AllocationUnit /* , public VulkanObject<vk::Buffer> */ {
 
     auto Map() -> void *;
     auto Unmap() -> void;
+
     std::shared_ptr<vk::Buffer> &Handle() { return handle; }
     VkBuffer CHandle() { return static_cast<VkBuffer>(*handle); }
     auto HandleName() const noexcept -> std::string;
+
     auto InitialSize() const noexcept -> size_t {
         return initialAllocationSize;
     }
@@ -47,7 +49,7 @@ class Buffer : public AllocationUnit /* , public VulkanObject<vk::Buffer> */ {
 };
 
 // clang-format off
-class Image : public AllocationUnit, public VulkanObject<vk::Image> {
+class Image : public AllocationUnit/* , public VulkanObject<vk::Image> */ {
   public:
     //! Creation of image
     //!
@@ -78,12 +80,15 @@ class Image : public AllocationUnit, public VulkanObject<vk::Image> {
     auto Width() -> size_t;
     auto Height() -> size_t;
 
-    auto HandleName() const noexcept -> std::string override;
+    std::shared_ptr<vk::Image> &Handle() { return handle; }
+    VkImage CHandle() { return static_cast<VkImage>(*handle); }
+    auto HandleName() const noexcept -> std::string;
 
-  private:
+  protected:
     vk::ImageLayout layout;
     size_t height;
     size_t width;
+    std::shared_ptr<vk::Image> handle;
 };
 
 // clang-format on

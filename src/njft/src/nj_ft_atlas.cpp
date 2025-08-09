@@ -23,13 +23,14 @@ Atlas::Atlas(FaceH face, size_t face_sz, size_t start_char, size_t end_char)
                start_char, end_char, static_cast<char>(start_char),
                static_cast<char>(end_char));
     for (size_t code = start_char; code < end_char; ++code) {
-        log::Debug("Loading code={}... STARTED", code);
         const bool sts = face->LoadGlyph(code);
         if (!sts) {
-            log::Error("Loading code={}... CAUSED ERROR", code);
+            log::Error("Loading code={} (char={}) ... ERROR", code,
+                       static_cast<char>(code));
             continue;
         }
-        log::Debug("Loading code={}... DONE", code);
+        log::Debug("Loading code={} (char={}) ... DONE", code,
+                   static_cast<char>(code));
         auto glyph_bitmap_ptr = face->Glyph()->bitmap;
         auto glyph_bitmap_buffer = glyph_bitmap_ptr.buffer;
 

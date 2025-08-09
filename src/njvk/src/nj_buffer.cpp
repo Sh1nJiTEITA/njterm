@@ -104,8 +104,7 @@ Image::Image(ren::DeviceH device, ren::AllocatorH allocator, size_t width,
         &vmaAllocInfo, &image, &allocation, &allocationInfo));
 
     log::CheckCall(res, "Cant create vulkan image");
-
-    handle = vk::SharedImage(image, device->Handle(), {});
+    *handle = image;
 }
 
 auto Image::Layout() -> vk::ImageLayout { return layout; }
