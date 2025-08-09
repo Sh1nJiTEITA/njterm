@@ -89,8 +89,11 @@ int main(int argc, char **argv) {
         frames,
         std::vector< ren::AttachmentH > { color_att } 
     );
+
     auto desc_pool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
-    auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>("Descriptor context", device, desc_pool, allocator, frames);
+    auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>(
+        "Descriptor context", device, desc_pool, allocator, frames
+    );
 
     auto pipeline_builder = log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
     auto pipeline = log::MakeSharedWithLog<ren::Pipeline>(device, render_pass, pipeline_builder, std::vector<vk::SharedDescriptorSetLayout>{}, fs::path("/home/snj/Code/Other/njterm/build/basic/"));

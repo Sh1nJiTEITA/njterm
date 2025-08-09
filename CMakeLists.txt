@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 # CMAKE ADDS
 include("cmake/find_dep.cmake")
+include("cmake/compile_shaders.cmake")
 
 # INFO ======================================================
 set(APP_NAME "njterm")
@@ -54,9 +55,11 @@ target_compile_definitions(
 
 # DEPENDECIES
 
-# SETTINGS ==================================================
-
 # For LSP server autocomplete
 set(CMAKE_BUILD_TYPE Debug)
 # CPP-23 standart
 set_property(TARGET njterm PROPERTY CXX_STANDART 23)
+
+set(SHADER_PACK_PATHS "${CMAKE_SOURCE_DIR}/shaders/basic")
+
+compile_shaders(${SHADER_PACK_PATHS})
