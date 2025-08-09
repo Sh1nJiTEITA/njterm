@@ -28,6 +28,8 @@ class Library {
     auto LoadFace(const fs::path &path, size_t face_idx = 0) -> FaceID;
     auto LoadFace(std::string_view data, size_t face_idx = 0) -> FaceID;
 
+    auto GetFace(FaceID id) -> std::shared_ptr<Face>;
+    
 
   private:
     struct Impl;
@@ -57,7 +59,7 @@ class Face {
     auto GlyphIndex(size_t char_code) -> size_t;
     //! Try to load input char code glyph image from char code 
     //! 
-    auto LoadGlyph(size_t char_code, size_t flags = 0) -> void;
+    auto LoadGlyph(size_t char_code, size_t flags = 0) -> bool;
 
 
     auto FamilyName() -> std::string;
@@ -109,6 +111,7 @@ class Face {
     struct Impl;
     std::unique_ptr<Impl> impl;
 };
+using FaceH = std::shared_ptr<Face>;
 
 } // namespace nj::ft
 

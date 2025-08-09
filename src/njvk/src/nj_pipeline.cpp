@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <ranges>
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
@@ -31,12 +30,6 @@ Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
     auto ll = layouts | std::views::transform([](const auto& l){ return l.get(); }) 
                       | std::ranges::to<std::vector>() 
                       ;
-
-    for (int i = 0; i < layouts.size(); ++i) {
-        // log::Debug("Set {} -> Layout handle: {}", i, layouts[i].get());
-        std::cout << "Set " << i << " -> Layout handle: " << layouts[i].get() << std::endl;
-    }
-    log::Debug("Pipeline::ctor ll.size={}", ll.size());
 
     layout = builder->PipelineLayout(device, ll);
 

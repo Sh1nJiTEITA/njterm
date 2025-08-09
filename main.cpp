@@ -6,6 +6,7 @@
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
 #include "nj_descriptor_test.h"
+#include "nj_ft_atlas.h"
 #include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
 #include "nj_pipeline.h"
@@ -23,6 +24,7 @@
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
+using namespace nj;
 /*
 
     // auto keyctrl = nj::win::CreateKeyControl();
@@ -34,18 +36,19 @@
 
 */
 
-void load_fonts() {
-    using namespace nj;
+ft::FaceID load_fonts() {
     ft::Library lib{};
     fs::path font_path{"/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"};
     ft::FaceID id = lib.LoadFace(font_path);
+
+    auto face = lib.GetFace(id);
+    ft::Atlas atlas{face, 12, 32, 255};
+    return id;
 };
 
 int main(int argc, char **argv) {
     // clang-format off
-    using namespace nj;
-
-    load_fonts(); 
+    ft::FaceID face_id = load_fonts(); 
 
     
     auto win = win::CreateWindow();
@@ -169,7 +172,7 @@ int main(int argc, char **argv) {
                 );
 
                 command_buffer->Handle()->bindPipeline( vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
-                command_buffer->Handle()->draw(3, 1, 0, 0);
+                command_buffer->Handle()->draw(6, 1, 0, 0);
             } // clang-format on:
             command_buffer->Handle()->endRenderPass();
         }

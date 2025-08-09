@@ -1,5 +1,6 @@
 #include "nj_ft_library.h"
 // clang-format off
+#include <freetype/ftimage.h>
 #include <ft2build.h>
 #include <memory>
 #include <unordered_map>
@@ -36,20 +37,22 @@ struct Library::Impl {
     
     FaceID LoadFace(Library &lib, const fs::path &path, size_t face_idx) { 
         FaceID id = NewFaceID();
-        faces.emplace(id, std::unique_ptr<Face>(new Face(lib, path, face_idx)));
+        faces.emplace(id, std::shared_ptr<Face>(new Face(lib, path, face_idx)));
         return id;
     }
 
     FaceID LoadFace(Library &lib, std::string_view data, size_t face_idx){ 
         FaceID id = NewFaceID();
-        faces.emplace(id, std::unique_ptr<Face>(new Face(lib, data, face_idx)));
+        faces.emplace(id, std::shared_ptr<Face>(new Face(lib, data, face_idx)));
         return id;
     }
+
+    std::shared_ptr<Face> GetFace(FaceID id) { return faces[id]; }
 
     
 
 public:
-    std::unordered_map<FaceID, std::unique_ptr<Face>> faces;
+    std::unordered_map<FaceID, std::shared_ptr<Face>> faces;
     FT_Library library;
 };
 
@@ -64,6 +67,7 @@ FaceID Library::LoadFace(std::string_view data, size_t face_idx) {
     return impl->LoadFace(*this, data, face_idx);
 }
 
+auto Library::GetFace(FaceID id) -> std::shared_ptr<Face> { return impl->GetFace(id); }
 
 struct Face::Impl { 
     Impl(Library &lib, const fs::path &path, size_t face_idx = 0) { 
@@ -101,10 +105,18 @@ struct Face::Impl {
         return FT_Get_Char_Index(face, code);
     }
 
-    auto LoadGlyph(size_t char_code, size_t flags) -> void { 
+    auto LoadGlyph(size_t char_code, size_t flags) -> bool { 
         size_t glyph { GlyphIndex(char_code) };
+        if (!glyph) { 
+            return false;
+        }
         FT_Error error = FT_Load_Glyph(face, glyph, flags);
-        log::CheckCall( error, "Cant load glypth with char_code={}", char_code );
+        log::CheckCall( error, "Cant load glyph with char_code={}", char_code );
+        if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP) { 
+            error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+            log::CheckCall( error, "Cant render glyph with char_code={}", char_code );
+        }
+        return true;
     }
 
 
@@ -134,7 +146,7 @@ auto Face::SetCharSize(size_t w, size_t h, size_t hr, size_t vr) -> void {
 }
 auto Face::SetPixelSize(size_t w, size_t h) -> void { impl->SetPixelSize(w, h); }
 auto Face::GlyphIndex(size_t char_code) -> size_t { return impl->GlyphIndex(char_code); }
-auto Face::LoadGlyph(size_t char_code, size_t flags) -> void { impl->LoadGlyph(char_code, flags); }
+auto Face::LoadGlyph(size_t char_code, size_t flags) -> bool { return impl->LoadGlyph(char_code, flags); }
 
 
 auto Face::FamilyName() -> std::string { return impl->face->family_name; }
