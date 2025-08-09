@@ -34,8 +34,9 @@
 
 void load_fonts() {
     using namespace nj;
-
     ft::Library lib{};
+    fs::path font_path{"/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"};
+    ft::FaceID id = lib.LoadFace(font_path);
 };
 
 int main(int argc, char **argv) {
@@ -44,7 +45,6 @@ int main(int argc, char **argv) {
 
     load_fonts(); 
 
-    return 0;
     
     auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
@@ -98,6 +98,9 @@ int main(int argc, char **argv) {
     uint32_t current_image = 0;
     
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
+
+    // auto vertex_buffer = 
+
     while (!win->ShouldClose()) {
         win->Update(); 
         // log::Debug("Frame={} Image={}", render_context->CurrentFrameIndex(), render_context->CurrentImageIndex());
@@ -135,7 +138,7 @@ int main(int argc, char **argv) {
                 command_buffer->Handle()->bindPipeline(
                     vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
                 // command_buffer.bindVertexBuffers(1, {}, {});
-                // command_buffer.draw(3, 1, 0, 0);
+                command_buffer->Handle()->draw(3, 1, 0, 0);
             } // clang-format off
             command_buffer->Handle()->endRenderPass();
         }

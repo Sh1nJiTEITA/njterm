@@ -12,3 +12,6 @@ target_link_libraries(njft PRIVATE njlog)
 
 find_package(freetype REQUIRED)
 target_link_libraries(njft PUBLIC Freetype::Freetype)
+
+find_package(Fontconfig REQUIRED)
+target_link_libraries(njft PUBLIC Fontconfig::Fontconfig)

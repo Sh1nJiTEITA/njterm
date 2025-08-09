@@ -2,11 +2,11 @@
 #ifndef NJ_FT_LIBRARY_H
 #define NJ_FT_LIBRARY_H
 
-#include <filesystem>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <freetype/fttypes.h>
 
+#include <filesystem>
 #include <memory>
 
 namespace fs = std::filesystem;
@@ -20,9 +20,7 @@ using FaceID = size_t;
 
 // clang-format off
 class Library {
-  public:
-    friend class Face;
-
+  public: friend class Face;
   public:
     Library();
     virtual ~Library();
@@ -38,24 +36,57 @@ class Library {
 // clang-format off
 
 class Face {
-  public:
-    friend class Library;
-
-  public:
+  public: friend class Library;
+  public: 
     virtual ~Face();
+
+
+    //! Set needed face size. Are usually used independent of screen
+    //! resolution
+    //! @param w Char width in 1/64 of points,  point = 1/72 inch
+    //! @param h Char height in 1/64 of points, point = 1/72 inch
+    //! @param hr Horizontal device resolution, dpi
+    //! @param vr Vertical device resolution,   dpi
+    //! @note w=0 -> w=h
+    auto SetCharSize(size_t w, size_t h, size_t hr, size_t vr) -> void;
+  
+    //! Set needed face size in pixels.
+    //! @param w Pixel width
+    //! @param h Pixel height
+    auto SetPixelSize(size_t w, size_t h) -> void;
+    auto GlyphIndex(size_t char_code) -> size_t;
+    //! Try to load input char code glyph image from char code 
+    //! 
+    auto LoadGlyph(size_t char_code, size_t flags = 0) -> void;
+
 
     auto FamilyName() -> std::string;
     auto StyleName() -> std::string;
     auto NumFaces() -> FT_Long;
-    auto FaceIndex() -> FT_Long; auto FaceFlags() -> FT_Long;
+    auto FaceIndex() -> FT_Long; 
+    //! Get current face flags where each flag describes some 
+    //! properties of this face
+    //! @return flags bitmap inside long int
+    auto FaceFlags() -> FT_Long;
     auto StyleFlags() -> FT_Long;
+    //! Get number of glyphs (character images) no direct corr
+    //! with char-codes inside this face
+    //! @return number of glyphs
     auto NumGlyphs() -> FT_Long;
+    //! Get number of embedded bitmap strikes in the current face
+    //! @return number of bitmap strikes
     auto NumFixedSizes() -> FT_Int;
+    //! Get pointer to an array of bitmap sizes elements. Each 
+    //! element describes horizontal and vertical pixel sizes for
+    //! each strike that are present in this face
     auto AvailableSizes() -> FT_Bitmap_Size *;
     auto NumCharmaps() -> FT_Int;
     auto Charmaps() -> FT_CharMap *;
     auto Generic() -> FT_Generic;
     auto Bbox() -> FT_BBox;
+    //! Get number of font units covered by the EM
+    //! @note works with scalable formats
+    //! @return number of units 
     auto UnitsPerEM() -> FT_UShort;
     auto Ascender() -> FT_Short;
     auto Descender() -> FT_Short;
@@ -67,6 +98,7 @@ class Face {
     auto Glyph() -> FT_GlyphSlot;
     auto Size() -> FT_Size;
     auto Charmap() -> FT_CharMap;
+
 
   private:
 

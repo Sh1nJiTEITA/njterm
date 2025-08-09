@@ -1,5 +1,4 @@
 #include "nj_ft_library.h"
-#include "njlog.h"
 // clang-format off
 #include <ft2build.h>
 #include <memory>
@@ -9,6 +8,7 @@
 #include <freetype/fttypes.h>
 #include "internals/nj_ft_error.h"
 #include "internals/nj_ft_log.h"
+#include "njlog.h"
 
 namespace nj::ft {
 
@@ -21,9 +21,12 @@ struct Library::Impl {
     }
 
     virtual ~Impl() { 
-        log::Debug("Killing ft::Library::face...");
-        FT_Error error = FT_Done_FreeType(library);
-        log::CheckCall( error, "Cant kill Freetype library" );
+        faces.clear();
+        log::Debug("Killing ft::Library...");
+        if (library) { 
+            FT_Error error = FT_Done_FreeType(library);
+            log::CheckCall( error, "Cant kill Freetype library" );
+        }
     }
 
     FaceID NewFaceID() { 
@@ -42,6 +45,7 @@ struct Library::Impl {
         faces.emplace(id, std::unique_ptr<Face>(new Face(lib, data, face_idx)));
         return id;
     }
+
     
 
 public:
@@ -77,9 +81,32 @@ struct Face::Impl {
 
     virtual ~Impl() { 
         log::Debug("Killing ft::Library::face...");
-        FT_Error error = FT_Done_Face(face);
-        log::CheckCall( error, "Cant kill Freetype face" );
+        if (face) { 
+            FT_Error error = FT_Done_Face(face);
+            log::CheckCall( error, "Cant kill Freetype face" );
+        }
     }
+
+    auto SetCharSize(size_t w, size_t h, size_t hr, size_t vr) -> void { 
+        FT_Error error = FT_Set_Char_Size(face, w, h, hr, vr);
+        log::CheckCall( error, "Cant set font size" );
+    }
+    
+    auto SetPixelSize(size_t w, size_t h) { 
+        FT_Error error = FT_Set_Pixel_Sizes(face, w, h);
+        log::CheckCall( error, "Cant set font size" );
+    }
+
+    auto GlyphIndex(size_t code) -> size_t { 
+        return FT_Get_Char_Index(face, code);
+    }
+
+    auto LoadGlyph(size_t char_code, size_t flags) -> void { 
+        size_t glyph { GlyphIndex(char_code) };
+        FT_Error error = FT_Load_Glyph(face, glyph, flags);
+        log::CheckCall( error, "Cant load glypth with char_code={}", char_code );
+    }
+
 
 public:
     FT_Face face;
@@ -87,7 +114,7 @@ public:
 
 
 Face::Face(Library &lib, const fs::path &path, size_t face_idx) 
-    : impl { std::make_unique<Face::Impl>( lib , path, face_idx ) } 
+    : impl { std::make_unique<Face::Impl>( lib, path, face_idx ) } 
 { 
     log::Debug("Constructing Face with ctor 1. path={} face_idx={}", path.string(), face_idx);
 }
@@ -99,8 +126,15 @@ Face::Face(Library &lib, std::string_view data, size_t face_idx)
 }
 
 Face::~Face() { 
-    log::Debug("Descructing face");
 }
+
+
+auto Face::SetCharSize(size_t w, size_t h, size_t hr, size_t vr) -> void { 
+    impl->SetCharSize(w, h, hr, vr);
+}
+auto Face::SetPixelSize(size_t w, size_t h) -> void { impl->SetPixelSize(w, h); }
+auto Face::GlyphIndex(size_t char_code) -> size_t { return impl->GlyphIndex(char_code); }
+auto Face::LoadGlyph(size_t char_code, size_t flags) -> void { impl->LoadGlyph(char_code, flags); }
 
 
 auto Face::FamilyName() -> std::string { return impl->face->family_name; }
