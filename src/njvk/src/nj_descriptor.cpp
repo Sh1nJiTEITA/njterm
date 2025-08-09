@@ -10,9 +10,10 @@ DescriptorPool::DescriptorPool(ren::DeviceH device) {
 
     auto info = vk::DescriptorPoolCreateInfo{}
         .setPoolSizes(
-            h.Handle(std::vector{ vk::DescriptorPoolSize{}.setDescriptorCount(10) })
+            h.Handle(std::vector{ vk::DescriptorPoolSize{}.setDescriptorCount(10).setType(vk::DescriptorType::eUniformBuffer) })
         )
         .setMaxSets(10)
+        .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
         ;
 
     handle = vk::SharedDescriptorPool(device->Handle()->createDescriptorPool(info), device->Handle());
@@ -37,7 +38,7 @@ auto Descriptor::BufferInfo() -> vk::DescriptorBufferInfo {
         return  vk::DescriptorBufferInfo {}
             .setBuffer(buffer->CHandle())
             .setOffset(0)
-            .setRange(buffer->Size())
+            .setRange(buffer->InitialSize())
             ;
     }
     return {};

@@ -5,6 +5,7 @@
 #include "nj_debug_utils_messenger.h"
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
+#include "nj_descriptor_test.h"
 #include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
 #include "nj_pipeline.h"
@@ -94,9 +95,20 @@ int main(int argc, char **argv) {
     auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>(
         "Descriptor context", device, desc_pool, allocator, frames
     );
+    // auto desc_test = log::MakeSharedWithLog<ren::DescriptorTest>("DescriptorTest");
+    desc_context->Add<ren::DescriptorTest>(frames, 0, 0);
+    desc_context->CreateLayouts();
+    desc_context->AllocateSets();
+    desc_context->UpdateSets();
+    auto all_layouts = desc_context->AllLayouts();
+    log::Debug("Descriptor layout count={}", all_layouts.size());
+
 
     auto pipeline_builder = log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
-    auto pipeline = log::MakeSharedWithLog<ren::Pipeline>(device, render_pass, pipeline_builder, std::vector<vk::SharedDescriptorSetLayout>{}, fs::path("/home/snj/Code/Other/njterm/build/basic/"));
+    auto pipeline = log::MakeSharedWithLog<ren::Pipeline>(
+        device, render_pass, pipeline_builder, all_layouts, 
+        fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
+    );
 
     uint32_t frame = 0;
     uint32_t current_image = 0;
@@ -104,12 +116,13 @@ int main(int argc, char **argv) {
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
 
     auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>("Buffer",
-    // auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>(
         device, allocator, static_cast<size_t>(200), 
         vk::BufferUsageFlags(vk::BufferUsageFlagBits::eVertexBuffer),
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
         VmaAllocationCreateFlags{}
     );
+
+
 
     while (!win->ShouldClose()) {
         win->Update(); 
@@ -130,6 +143,8 @@ int main(int argc, char **argv) {
                 ;
             command_buffer->Handle()->beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
             { // clang-format off
+                desc_context->BindSets(0, frame, command_buffer, pipeline->LayoutHandle());
+
                 auto viewport = vk::Viewport{}
                                     .setX(0)
                                     .setY(0)

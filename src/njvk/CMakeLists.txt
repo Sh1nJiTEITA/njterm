@@ -20,6 +20,7 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_pipeline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_vertex.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_test.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_buffer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_command_buffer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_attachment_color.cpp")

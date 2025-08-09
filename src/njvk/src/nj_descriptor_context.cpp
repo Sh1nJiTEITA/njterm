@@ -39,10 +39,12 @@ public:
     DescriptorSet(ren::DeviceH device, std::vector<FrameDescriptorSetPack>&& packs) 
         : framePacks{ std::move(packs) }
     {
+        log::Debug("DescriptorSet::ctor packs.size={}", packs.size());
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         std::set<uint32_t> unique;
-        for (size_t frame_index = 0; frame_index < packs.size(); ++frame_index) {
-            for (auto &desc : packs[frame_index].descriptors) {
+        for (size_t frame_index = 0; frame_index < framePacks.size(); ++frame_index) {
+
+            for (auto &desc : framePacks[frame_index].descriptors) {
                 auto info = desc->LayoutBinding();
                 auto [it, success] = unique.insert(info.binding);
                 if (success) {
@@ -53,7 +55,7 @@ public:
         }
 
         auto layout_create_info = vk::DescriptorSetLayoutCreateInfo{}
-            .setBindingCount(static_cast<uint32_t>(bindings.size()))
+            // .setBindingCount(static_cast<uint32_t>(bindings.size()))
             .setBindings(bindings)
             ;
 
@@ -159,32 +161,39 @@ public:
     void CreateLayouts() { 
         using layout_idx = size_t;
         using binding_idx = size_t;
-
+        
+        log::Info("Creating descriptor context layouts... STARTED");
+        
         std::unordered_map<layout_idx, 
                            std::unordered_map<binding_idx, 
                                               DescriptorTempCreateInfo>> m;
 
-        while (tempCreateInfos.empty()) { 
+        log::Debug("Processing added descriptors... STARTED");
+        while (!tempCreateInfos.empty()) { 
             auto desc = std::move(tempCreateInfos.top());
             tempCreateInfos.pop();
 
             const size_t layout = desc.layout;
             const size_t binding = desc.binding;
 
+            log::Debug("Processing descriptor with layout={}, binding={}", layout, binding);
+
             auto& set = m[layout];
             if (set.empty()) { 
-                log::Debug("New set with index={} found in descriptors data", layout);
+                log::Debug("New set with layout={} found in descriptors data", layout);
             }
-            auto [_, new_desc_in_set_success] = m.at(layout).insert({binding, std::move(desc)});
-            if (!new_desc_in_set_success) { 
+            auto [_, new_desc_in_set_status] = m.at(layout).insert({binding, std::move(desc)});
+            if (!new_desc_in_set_status) { 
                 log::FatalExit("Cant add descriptor with binding={} to set={}, already exists", layout, binding);
             }
             else { 
                 log::Debug("New descriptor with binding={} added to set with index={}", binding, layout);
             }
         }
+        log::Debug("Processing added descriptors... DONE");
+
         for (auto& [set_i, bindings_map] : m) {
-            log::Debug("Creating descriptor-set-layout with index={} and " "descriptors count={}",
+            log::Debug("Creating descriptor-set-layout with index={} and descriptors count={}",
                          set_i, bindings_map.size());
 
             std::vector<DescriptorSet::FrameDescriptorSetPack> current_packs;
@@ -202,19 +211,25 @@ public:
                         std::move(tmpStorage.descriptorPerFrame[pack_index])
                     );
                 }
+                // log::Debug("current_packs[pack_index].descriptors={}", current_packs[pack_index].descriptors.size());
             }
 
             auto complete_set = std::make_unique<DescriptorSet>(device, std::move(current_packs));
             sets.insert_or_assign(set_i, std::move(complete_set));
+            // sets.emplace(set_i, std::move(complete_set));
         }
+        log::Debug("Creating descriptor context layouts... DONE");
     };
     // clang-format on
     void AllocateSets() {
+        log::Debug(
+            "Allocating descriptor sets for descriptor context... STARTED");
         for (auto &[layout_index, set] : sets) {
-            fmt::println("Allocating sets for layout={}",
-                         static_cast<int>(layout_index));
+            log::Debug("Allocating sets for layout={}",
+                       static_cast<int>(layout_index));
             set->Allocate(device, pool);
         }
+        log::Debug("Allocating descriptor sets for descriptor context... DONE");
     }
 
     void UpdateSets() {
@@ -246,7 +261,7 @@ public:
         for (auto &[layout, set] : sets) {
             l.push_back(set->Layout());
         }
-        std::reverse(l.begin(), l.end());
+        // std::reverse(l.begin(), l.end());
         return l;
     }
 

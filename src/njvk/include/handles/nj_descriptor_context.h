@@ -1,9 +1,10 @@
 #pragma once
-#include "nj_command_buffer.h"
 #ifndef NJ_DESCRIPTOR_CONTEXT_H
 #define NJ_DESCRIPTOR_CONTEXT_H
 
-#include <nj_descriptor.h>
+#include "nj_command_buffer.h"
+#include "nj_descriptor.h"
+#include "njlog.h"
 
 namespace nj::ren {
 
@@ -19,6 +20,8 @@ public:
 
     template <typename DescriptorType, typename ...Args>
     void Add(size_t frames, size_t layout, size_t binding, const Args& ...args) { 
+        log::Debug("Adding new descriptor to context; frames={}, layout={}, binding={}",
+                   frames, layout, binding);
         std::vector<DescriptorU> vec { };
         vec.reserve(frames);
         for (size_t frame_idx = 0; frame_idx < frames; ++frame_idx) { 

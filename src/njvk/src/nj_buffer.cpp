@@ -18,6 +18,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
            vk::BufferUsageFlags vk_flags, VmaMemoryUsage vma_usage,
            VmaAllocationCreateFlags flags) 
     : AllocationUnit(allocator)
+    , initialAllocationSize{ alloc_size } 
 {
     log::Debug("Creating new vkBuffer with id={}...", id);
 

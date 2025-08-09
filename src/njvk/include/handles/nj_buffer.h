@@ -37,8 +37,12 @@ class Buffer : public AllocationUnit /* , public VulkanObject<vk::Buffer> */ {
     std::shared_ptr<vk::Buffer> &Handle() { return handle; }
     VkBuffer CHandle() { return static_cast<VkBuffer>(*handle); }
     auto HandleName() const noexcept -> std::string;
+    auto InitialSize() const noexcept -> size_t {
+        return initialAllocationSize;
+    }
 
   protected:
+    const size_t initialAllocationSize;
     std::shared_ptr<vk::Buffer> handle;
 };
 
