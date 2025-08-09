@@ -19,6 +19,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 /*
@@ -99,7 +100,13 @@ int main(int argc, char **argv) {
     
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
 
-    // auto vertex_buffer = 
+    auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>("Buffer",
+    // auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>(
+        device, allocator, static_cast<size_t>(200), 
+        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eVertexBuffer),
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+        VmaAllocationCreateFlags{}
+    );
 
     while (!win->ShouldClose()) {
         win->Update(); 
@@ -119,7 +126,7 @@ int main(int argc, char **argv) {
                 .setClearValues(clear_color)
                 ;
             command_buffer->Handle()->beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
-            { // clang-format on
+            { // clang-format off
                 auto viewport = vk::Viewport{}
                                     .setX(0)
                                     .setY(0)
@@ -129,17 +136,23 @@ int main(int argc, char **argv) {
                 command_buffer->Handle()->setViewport(0, 1, &viewport);
 
                 vk::Rect2D scissor{};
-                scissor.offset = vk::Offset2D{static_cast<int32_t>(0),
-                                              static_cast<int32_t>(0)};
-                scissor.extent = vk::Extent2D{
+                scissor.offset = vk::Offset2D{static_cast<int32_t>(0), static_cast<int32_t>(0)};
+                scissor.extent = vk::Extent2D{ 
                     static_cast<uint32_t>(swapchain->Extent().width),
-                    static_cast<uint32_t>(swapchain->Extent().height)};
+                    static_cast<uint32_t>(swapchain->Extent().height)
+                };
                 command_buffer->Handle()->setScissor(0, 1, &scissor);
-                command_buffer->Handle()->bindPipeline(
-                    vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
-                // command_buffer.bindVertexBuffers(1, {}, {});
+                
+                auto buffers = std::array<vk::Buffer, 1>{ vertex_buffer->CHandle() };
+                auto offsets = std::array<vk::DeviceSize, 1>{ {} };
+                
+                command_buffer->Handle()->bindVertexBuffers(
+                    0, buffers, offsets
+                );
+
+                command_buffer->Handle()->bindPipeline( vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
                 command_buffer->Handle()->draw(3, 1, 0, 0);
-            } // clang-format off
+            } // clang-format on:
             command_buffer->Handle()->endRenderPass();
         }
         render_context->EndFrame(device, physical_device, swapchain);

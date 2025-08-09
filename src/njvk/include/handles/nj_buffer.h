@@ -25,7 +25,7 @@ class AllocationUnit {
     VmaAllocationInfo allocationInfo;
 };
 
-class Buffer : public AllocationUnit, public VulkanObject<vk::Buffer> {
+class Buffer : public AllocationUnit /* , public VulkanObject<vk::Buffer> */ {
   public:
     Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size,
            vk::BufferUsageFlags vk_flags, VmaMemoryUsage vma_usage,
@@ -34,8 +34,12 @@ class Buffer : public AllocationUnit, public VulkanObject<vk::Buffer> {
 
     auto Map() -> void *;
     auto Unmap() -> void;
+    std::shared_ptr<vk::Buffer> &Handle() { return handle; }
+    VkBuffer CHandle() { return static_cast<VkBuffer>(*handle); }
+    auto HandleName() const noexcept -> std::string;
 
-    auto HandleName() const noexcept -> std::string override;
+  protected:
+    std::shared_ptr<vk::Buffer> handle;
 };
 
 // clang-format off

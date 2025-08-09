@@ -31,23 +31,27 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
       .usage = vma_usage
     };
 
-    VkBuffer buf{};
+    handle = std::make_shared< vk::Buffer >();
+
+    VkBuffer pBuffer {};
 
     auto res = static_cast<vk::Result>(vmaCreateBuffer(
         *allocator->CHandle(),
         &static_cast<VkBufferCreateInfo&>(buffer_info),
         &vma_info,
-        &buf,
+        &pBuffer,
         &allocation,
         &allocationInfo
     ));
+    *handle = pBuffer; 
+
+    // vmaDestroyBuffer(*allocator->CHandle(), pBuffer, allocation);
     log::CheckCall(res, "Cant create vulkan buffer");
-    handle = vk::SharedBuffer(buf, device->Handle(), {});
 }
 
 Buffer::~Buffer() { 
     log::Debug("Deleting vkBuffer with id={}...", id);
-    // vmaDestroyBuffer(*allocator->CHandle(), handle.get(), allocation);
+    vmaDestroyBuffer(*allocator->CHandle(), *handle, allocation);
 }
 
 // clang-format on
