@@ -107,7 +107,7 @@ Image::Image(ren::DeviceH device, ren::AllocatorH allocator, size_t width,
     *handle = image;
 }
 
-auto Image::Layout() -> vk::ImageLayout { return layout; }
+auto Image::Layout() -> vk::ImageLayout & { return layout; }
 auto Image::Width() -> size_t { return width; }
 auto Image::Height() -> size_t { return height; }
 auto Image::HandleName() const noexcept -> std::string { return "Image"; }

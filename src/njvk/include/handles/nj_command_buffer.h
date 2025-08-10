@@ -17,10 +17,6 @@ class CommandBuffer : public VulkanObject<vk::CommandBuffer> {
 };
 using CommandBufferH = std::shared_ptr<CommandBuffer>;
 
-
-auto AllocateCommandBuffers(ren::DeviceH device, ren::CommandPoolH command_pool,
-                            uint32_t frames) -> std::vector<CommandBufferH>;
-
 // clang-format on
 //
 } // namespace nj::ren
