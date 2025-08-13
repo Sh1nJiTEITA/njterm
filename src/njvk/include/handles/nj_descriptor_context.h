@@ -18,14 +18,31 @@ public:
   
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptor);
 
+    // template <typename DescriptorType, typename ...Args>
+    // void Add(size_t frames, size_t layout, size_t binding, const Args& ...args) { 
+    //     log::Debug("Adding new descriptor to context; frames={}, layout={}, binding={}",
+    //                frames, layout, binding);
+    //     std::vector<DescriptorU> vec { };
+    //     vec.reserve(frames);
+    //     for (size_t frame_idx = 0; frame_idx < frames; ++frame_idx) { 
+    //         vec.push_back(std::make_unique<DescriptorType>(
+    //             layout, binding, std::forward<Args>(args)...)
+    //         );
+    //     }
+    //     Add(layout, binding, std::move(vec));
+    // }
+
     template <typename DescriptorType, typename ...Args>
     void Add(size_t frames, size_t layout, size_t binding, const Args& ...args) { 
-        log::Debug("Adding new descriptor to context; frames={}, layout={}, binding={}",
+        log::Debug("------------------------------------------------");
+        log::Debug("Adding new descriptor to context: frames={}, layout={}, binding={}",
                    frames, layout, binding);
         std::vector<DescriptorU> vec { };
         vec.reserve(frames);
         for (size_t frame_idx = 0; frame_idx < frames; ++frame_idx) { 
-            vec.push_back(std::make_unique<DescriptorType>(std::forward<Args>(args)...));
+            vec.push_back(std::make_unique<DescriptorType>(
+                layout, binding, args...
+            ));
         }
         Add(layout, binding, std::move(vec));
     }

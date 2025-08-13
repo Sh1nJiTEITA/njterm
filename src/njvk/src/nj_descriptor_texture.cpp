@@ -42,44 +42,72 @@ DescriptorTexture::DescriptorTexture(size_t layout, size_t binding,
                                      vk::ShaderStageFlags stages,
                                      CommandBufferH command_buffer,
                                      PhysicalDeviceH physical_device,
-                                     size_t width, size_t height,
-                                     std::vector<uint8_t> &&data)
+                                     SamplerH sampler, size_t width,
+                                     size_t height,
+                                     const std::vector<uint8_t> &data)
     : Descriptor{layout, binding, vk::DescriptorType::eCombinedImageSampler,
                  stages},
-      bitmap{std::move(data)}, commandBuffer{command_buffer},
-      phDevice{physical_device}, textureWidth{width}, textureHeight{height}
-
-{}
+      bitmap{data}, commandBuffer{command_buffer}, phDevice{physical_device},
+      sampler{sampler}, textureWidth{width}, textureHeight{height} {}
 
 DescriptorTexture::~DescriptorTexture() {
+    log::Debug("Destroying DescriptorTexture...");
+    textureBuffer.reset();
     phDevice.reset();
     commandBuffer.reset();
+    sampler.reset();
 }
 
 void DescriptorTexture::CreateBuffer(ren::DeviceH device,
                                      ren::AllocatorH allocator) {
     using BitType = decltype(bitmap)::value_type;
     const size_t buf_sz = sizeof(BitType) * bitmap.size();
-    buffer = std::make_unique<Buffer>(
+    textureBuffer = std::make_unique<Buffer>(
         device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
             VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
-    void *data = buffer->Map();
+    void *data = textureBuffer->Map();
     memcpy(data, bitmap.data(), buf_sz);
-    buffer->Unmap();
+    textureBuffer->Unmap();
 }
 
+// clang-format off
 void DescriptorTexture::CreateImage(ren::DeviceH device,
                                     ren::AllocatorH allocator) {
     image = std::make_unique<Image>(
         device, allocator, textureWidth, textureHeight, 1, vk::Format::eR8Srgb,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
+
+    TransitionImageLayout(vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    CopyBufferToImage();
+    TransitionImageLayout(vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 }
+// clang-format off
 
 void DescriptorTexture::CreateView(ren::DeviceH device,
-                                   ren::AllocatorH allocator) {}
+                                   ren::AllocatorH allocator) {
+    vk::ImageViewCreateInfo info{};
+    info.image = image->CHandle();
+    info.viewType = vk::ImageViewType::e2D;
+    info.format = vk::Format::eR8Srgb;
+    info.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    info.subresourceRange.baseMipLevel = 0;
+    info.subresourceRange.levelCount = 1;
+    info.subresourceRange.baseArrayLayer = 0;
+    info.subresourceRange.layerCount = 1;
+    imageView = std::make_unique<vk::SharedImageView>(
+        device->Handle()->createImageView(info), 
+        device->Handle()
+    );
+}
+
+auto DescriptorTexture::ImageInfo() -> vk::DescriptorImageInfo { 
+    auto image_info = Descriptor::ImageInfo();
+    image_info.setSampler(sampler->CHandle());
+    return image_info;
+}
 
 void DescriptorTexture::BeginCommandBufferSingleCommand() {
     auto info = vk::CommandBufferBeginInfo{}.setFlags(
@@ -131,6 +159,33 @@ void DescriptorTexture::TransitionImageLayout(vk::ImageLayout o,
                                              std::array{bar});
     EndCommandBufferSingleCommand();
 }
+
+// clang-format off
+void DescriptorTexture::CopyBufferToImage() {
+    BeginCommandBufferSingleCommand();
+    auto info = vk::BufferImageCopy{}
+        .setBufferOffset(0)
+        .setBufferRowLength(0)
+        .setBufferImageHeight(0)
+        .setImageSubresource(vk::ImageSubresourceLayers{}
+                                .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                                .setMipLevel(0)
+                                .setBaseArrayLayer(0)
+                                .setLayerCount(1))
+        .setImageOffset({ 0, 0, 0 })
+        .setImageExtent({ 
+            static_cast< uint32_t > ( textureWidth ),
+            static_cast< uint32_t > ( textureHeight ) ,
+            1
+        })
+        ;
+    commandBuffer->Handle()->copyBufferToImage(
+        textureBuffer->CHandle(), image->CHandle(), 
+        vk::ImageLayout::eTransferDstOptimal, info
+    );
+    EndCommandBufferSingleCommand();
+}
+// clang-format off
 
 void DescriptorTexture::EndCommandBufferSingleCommand() {
     commandBuffer->Handle()->end();

@@ -10,7 +10,7 @@ namespace nj::ren {
 
 
 struct DescriptorTest : public ren::Descriptor {
-    DescriptorTest();
+    DescriptorTest(size_t layout, size_t binding);
 
     struct Data { 
         glm::vec3 color;

@@ -18,12 +18,16 @@ class Atlas {
 
   public:
     Atlas(FaceH face, size_t face_sz, size_t start_char, size_t end_char);
+      
+    size_t Side() const noexcept;
+    const std::vector<uint8_t>& Bitmap() const noexcept;
 
   private:
     FaceH face;
     const size_t faceSize;
     const size_t startCharCode;
     const size_t endCharCode;
+    size_t atlasSide;
     
     std::unordered_map<size_t, CharData> charDatas;
     std::vector<uint8_t> bitmap;    

@@ -2,8 +2,8 @@
 
 namespace nj::ren {
 
-DescriptorTest::DescriptorTest()
-    : Descriptor(0, 0, vk::DescriptorType::eUniformBuffer) {}
+DescriptorTest::DescriptorTest(size_t layout, size_t binding)
+    : Descriptor(layout, binding, vk::DescriptorType::eUniformBuffer) {}
 
 // clang-format off
 void DescriptorTest::CreateBuffer(ren::DeviceH device,

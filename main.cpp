@@ -6,11 +6,13 @@
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
 #include "nj_descriptor_test.h"
+#include "nj_descriptor_texture.h"
 #include "nj_ft_atlas.h"
 #include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
 #include "nj_pipeline.h"
 #include "nj_render_context.h"
+#include "nj_sampler.h"
 #include "njcon.h"
 #include "njlog.h"
 #include "njvklog.h"
@@ -36,21 +38,21 @@ using namespace nj;
 
 */
 
-ft::FaceID load_fonts() {
-    ft::Library lib{};
+decltype(auto) create_atlas() {
+    static ft::Library lib{};
     fs::path font_path{"/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"};
-    ft::FaceID id = lib.LoadFace(font_path);
+    static ft::FaceID id = lib.LoadFace(font_path);
 
-    auto face = lib.GetFace(id);
+    static auto face = lib.GetFace(id);
     ft::Atlas atlas{face, 12, 32, 255};
-    return id;
+
+    return atlas;
 };
 
 int main(int argc, char **argv) {
     // clang-format off
-    ft::FaceID face_id = load_fonts(); 
+    auto atlas = create_atlas(); 
 
-    
     auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
 
@@ -93,6 +95,8 @@ int main(int argc, char **argv) {
         frames,
         std::vector< ren::AttachmentH > { color_att } 
     );
+    
+    auto sampler = log::MakeSharedWithLog<ren::Sampler>(device);
 
     auto desc_pool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
     auto desc_context = log::MakeSharedWithLog<ren::DescriptorContext>(
@@ -100,6 +104,15 @@ int main(int argc, char **argv) {
     );
     // auto desc_test = log::MakeSharedWithLog<ren::DescriptorTest>("DescriptorTest");
     desc_context->Add<ren::DescriptorTest>(frames, 0, 0);
+    desc_context->Add<ren::DescriptorTexture>(
+        frames, 0, 1, 
+        vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
+        render_context->CurrentCommandBuffer(), 
+        physical_device, 
+        sampler,
+        atlas.Side(), atlas.Side(), 
+        atlas.Bitmap()
+    );
     desc_context->CreateLayouts();
     desc_context->AllocateSets();
     desc_context->UpdateSets();

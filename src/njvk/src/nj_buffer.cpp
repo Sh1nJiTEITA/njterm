@@ -73,7 +73,7 @@ Image::Image(ren::DeviceH device, ren::AllocatorH allocator, size_t width,
              size_t height, size_t depth, vk::Format format,
              vk::ImageUsageFlags usage, VmaMemoryUsage memory_usage,
              VmaAllocationCreateFlags vma_flags, vk::ImageLayout init_layout)
-    : AllocationUnit{allocator} {
+    : AllocationUnit{allocator}, handle{} {
 
     vk::Extent3D ext{static_cast<uint32_t>(width),
                      static_cast<uint32_t>(height),
@@ -104,7 +104,12 @@ Image::Image(ren::DeviceH device, ren::AllocatorH allocator, size_t width,
         &vmaAllocInfo, &image, &allocation, &allocationInfo));
 
     log::CheckCall(res, "Cant create vulkan image");
-    *handle = image;
+    handle = std::make_shared<vk::Image>(image);
+}
+
+Image::~Image() {
+    log::Debug("Deleting vkImage with id={}...", id);
+    vmaDestroyImage(*allocator->CHandle(), *handle, allocation);
 }
 
 auto Image::Layout() -> vk::ImageLayout & { return layout; }

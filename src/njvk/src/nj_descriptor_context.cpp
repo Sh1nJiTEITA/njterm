@@ -39,7 +39,7 @@ public:
     DescriptorSet(ren::DeviceH device, std::vector<FrameDescriptorSetPack>&& packs) 
         : framePacks{ std::move(packs) }
     {
-        log::Debug("DescriptorSet::ctor packs.size={}", packs.size());
+        log::Debug("DescriptorSet::ctor packs.size={}", framePacks.size());
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         std::set<uint32_t> unique;
         for (size_t frame_index = 0; frame_index < framePacks.size(); ++frame_index) {
@@ -83,11 +83,14 @@ public:
         }
     }
 
-    auto Write(size_t frame, std::vector<vk::DescriptorBufferInfo>& buffer_infos,
-                              std::vector<vk::DescriptorImageInfo>& image_infos) -> std::vector<vk::WriteDescriptorSet> { 
+    auto Write(size_t frame, std::list<vk::DescriptorBufferInfo>& buffer_infos,
+                              std::list<vk::DescriptorImageInfo>& image_infos) -> std::vector<vk::WriteDescriptorSet> { 
+        log::Debug("------> Make writes for frame={}", frame);
         std::vector<vk::WriteDescriptorSet> writes;
         const auto& frame_pack = framePacks[frame];
-        for (const auto& desc : frame_pack.descriptors) { 
+        for (size_t desc_idx = 0; desc_idx < frame_pack.descriptors.size(); ++desc_idx) { 
+            const auto& desc = frame_pack.descriptors[desc_idx];
+            log::Debug("--------> Adding write for descriptor with index (binding)={} and hasBuffer={}, hasImage={}", desc_idx, desc->HasBuffer(), desc->HasImage());
             const auto& buffer_info_it = *buffer_infos.insert(buffer_infos.end(), desc->BufferInfo());
             const auto& image_info_it = *image_infos.insert(image_infos.end(), desc->ImageInfo());
             auto write_info = vk::WriteDescriptorSet{}
@@ -180,7 +183,7 @@ public:
 
             auto& set = m[layout];
             if (set.empty()) { 
-                log::Debug("New set with layout={} found in descriptors data", layout);
+                log::Debug("New desc with layout={} found in descriptors data", layout);
             }
             auto [_, new_desc_in_set_status] = m.at(layout).insert({binding, std::move(desc)});
             if (!new_desc_in_set_status) { 
@@ -193,13 +196,14 @@ public:
         log::Debug("Processing added descriptors... DONE");
 
         for (auto& [set_i, bindings_map] : m) {
-            log::Debug("Creating descriptor-set-layout with index={} and descriptors count={}",
-                         set_i, bindings_map.size());
+            log::Debug("--> Creating descriptor-set-layout with index={} and descriptors count={}",
+                       set_i, bindings_map.size());
 
             std::vector<DescriptorSet::FrameDescriptorSetPack> current_packs;
             current_packs.resize(frames);
 
             for (auto &[binding, tmpStorage] : bindings_map) {
+                log::Debug("----> Going through bindings map with binding={} as key", binding);
                 const size_t packs_count = tmpStorage.descriptorPerFrame.size();
 
                 assert(packs_count == frames &&
@@ -207,11 +211,15 @@ public:
                        "count");
 
                 for (size_t pack_index = 0; pack_index < packs_count; ++pack_index) {
+                    log::Debug("------> Going through packs with pack={} as frame", pack_index);
                     current_packs[pack_index].descriptors.push_back(
                         std::move(tmpStorage.descriptorPerFrame[pack_index])
                     );
                 }
                 // log::Debug("current_packs[pack_index].descriptors={}", current_packs[pack_index].descriptors.size());
+            }
+            for (size_t frame = 0; frame < frames; ++frame) { 
+                log::Debug("==> In frame pack with index={} as frame descriptor count={}", frame, current_packs[frame].descriptors.size());
             }
 
             auto complete_set = std::make_unique<DescriptorSet>(device, std::move(current_packs));
@@ -233,19 +241,27 @@ public:
     }
 
     void UpdateSets() {
-        for (int i = 0; i < frames; ++i) {
+        log::Debug("Updating descriptor sets... STARTED");
+        // FIXME: remove literal with logic
+        const size_t TRUE_WRITES_COUNT = 150;
+        for (int frame = 0; frame < frames; ++frame) {
+            log::Debug("--> Updating sets for frame={}", frame);
             std::vector<vk::WriteDescriptorSet> writes;
-            std::vector<vk::DescriptorBufferInfo> binfos;
-            std::vector<vk::DescriptorImageInfo> iinfos;
+            writes.reserve(TRUE_WRITES_COUNT);
+            std::list<vk::DescriptorBufferInfo> binfos;
+            std::list<vk::DescriptorImageInfo> iinfos;
             // FIXME: Missing texel ...
             for (auto &[layout, pset] : sets) {
-                auto new_writes = pset->Write(i, binfos, iinfos);
+                log::Debug("----> Updating set with layout={}", layout);
+                auto new_writes = pset->Write(frame, binfos, iinfos);
                 std::copy(new_writes.begin(), new_writes.end(),
                           std::back_inserter(writes));
             }
+            log::Debug("==> Calling vk-update func for frame={}", frame);
             device->Handle()->updateDescriptorSets(writes.size(), writes.data(),
                                                    0, nullptr);
         }
+        log::Debug("Updating descriptor sets... DONE");
     }
 
     void BindSets(size_t layout, size_t frame, CommandBufferH cb,

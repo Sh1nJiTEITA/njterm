@@ -10,7 +10,10 @@ DescriptorPool::DescriptorPool(ren::DeviceH device) {
 
     auto info = vk::DescriptorPoolCreateInfo{}
         .setPoolSizes(
-            h.Handle(std::vector{ vk::DescriptorPoolSize{}.setDescriptorCount(10).setType(vk::DescriptorType::eUniformBuffer) })
+            h.Handle(std::vector{ 
+                vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, 10},
+                vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 10},
+            })
         )
         .setMaxSets(10)
         .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
@@ -20,9 +23,12 @@ DescriptorPool::DescriptorPool(ren::DeviceH device) {
 }
 // clang-format off
 
+
 auto DescriptorPool::HandleName() const noexcept -> std::string {
     return "DescriptorPool";
 }
+
+Descriptor::~Descriptor() { }
 
 auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
     return vk::DescriptorSetLayoutBinding{}

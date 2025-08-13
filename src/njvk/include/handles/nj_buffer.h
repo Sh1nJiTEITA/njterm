@@ -75,7 +75,7 @@ class Image : public AllocationUnit/* , public VulkanObject<vk::Image> */ {
           VmaMemoryUsage memory_usage = {},
           VmaAllocationCreateFlags vma_flags = 0,
           vk::ImageLayout init_layout = vk::ImageLayout::eUndefined);
-
+    ~Image();
     auto Layout() -> vk::ImageLayout&;
     auto Width() -> size_t;
     auto Height() -> size_t;

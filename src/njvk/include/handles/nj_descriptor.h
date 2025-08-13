@@ -32,7 +32,7 @@ struct Descriptor {
                                              vk::ShaderStageFlagBits::eFragment)
         : layout{layout}, binding{binding}, shaderStages{stages}, type{type} {}
 
-    virtual ~Descriptor() { }
+    virtual ~Descriptor();
     Descriptor(const Descriptor &) = delete;
     Descriptor &operator=(const Descriptor &) = delete;
 
@@ -59,6 +59,7 @@ struct Descriptor {
 
     std::unique_ptr<Buffer> buffer;
     std::unique_ptr<Image> image;
+    // std::unique_ptr<vk::ImageView> imageView;
     std::unique_ptr<vk::SharedImageView> imageView;
 };
 // clang-format on

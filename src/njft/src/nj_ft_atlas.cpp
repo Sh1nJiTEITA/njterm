@@ -15,8 +15,8 @@ Atlas::Atlas(FaceH face, size_t face_sz, size_t start_char, size_t end_char)
     assert(end_char > start_char &&
            "End char code must be > then start to start iteration");
     const size_t char_count = end_char - start_char;
-    const size_t atlas_side = char_count * face_sz;
-    const size_t atlas_area = atlas_side * atlas_side;
+    atlasSide = char_count * face_sz;
+    const size_t atlas_area = atlasSide * atlasSide;
     bitmap.assign(atlas_area, 0);
     glm::ivec2 pen{0, 0};
     log::Debug("Started iterating between codes=[{},{}] or [\"{}\", \"{}\"]...",
@@ -36,7 +36,7 @@ Atlas::Atlas(FaceH face, size_t face_sz, size_t start_char, size_t end_char)
 
         const size_t glyph_width = glyph_bitmap_ptr.width;
         const size_t glyph_height = glyph_bitmap_ptr.rows;
-        const size_t global_pen = pen.x + pen.y * atlas_side;
+        const size_t global_pen = pen.x + pen.y * atlasSide;
         for (size_t i = 0; i < glyph_width; ++i) {
             for (size_t j = 0; j < glyph_height; ++j) {
                 const size_t local_pen = i + j * glyph_width;
@@ -50,6 +50,8 @@ Atlas::Atlas(FaceH face, size_t face_sz, size_t start_char, size_t end_char)
     log::Info("Atlas creation of face={}... DONE", face->FamilyName());
 }
 
+size_t Atlas::Side() const noexcept { return atlasSide; }
+const std::vector<uint8_t> &Atlas::Bitmap() const noexcept { return bitmap; }
 // clang-format off
 // auto CreateAtlas(Face &face, size_t face_sz, size_t start_char, size_t end_char) {
     
