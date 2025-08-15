@@ -53,6 +53,19 @@ DescriptorTexture::DescriptorTexture(size_t layout, size_t binding,
     assert(data.size() == width * height);
 }
 
+DescriptorTexture::DescriptorTexture(size_t layout, size_t binding,
+                                     vk::ShaderStageFlags stages,
+                                     CommandBufferH command_buffer,
+                                     PhysicalDeviceH physical_device,
+                                     SamplerH sampler, size_t width,
+                                     size_t height,
+                                     std::unique_ptr<Buffer> buffer)
+    : Descriptor{layout, binding, vk::DescriptorType::eCombinedImageSampler,
+                 stages},
+      bitmap{}, commandBuffer{command_buffer}, phDevice{physical_device},
+      sampler{sampler}, width{width}, height{height}, stride{0},
+      textureBuffer{std::move(buffer)} {}
+
 DescriptorTexture::~DescriptorTexture() {
     log::Debug("Destroying DescriptorTexture...");
     textureBuffer.reset();
@@ -63,20 +76,22 @@ DescriptorTexture::~DescriptorTexture() {
 
 void DescriptorTexture::CreateBuffer(ren::DeviceH device,
                                      ren::AllocatorH allocator) {
-    using BitType = decltype(bitmap)::value_type;
-    const size_t buf_sz = sizeof(BitType) * bitmap.size();
-    textureBuffer = std::make_unique<Buffer>(
-        device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
-        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-            VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
-    void *data = textureBuffer->Map();
-    uint8_t *dst = static_cast<uint8_t *>(data);
+    if (!textureBuffer && !stride) {
+        using BitType = decltype(bitmap)::value_type;
+        const size_t buf_sz = sizeof(BitType) * bitmap.size();
+        textureBuffer = std::make_unique<Buffer>(
+            device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
+            VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
+        void *data = textureBuffer->Map();
+        uint8_t *dst = static_cast<uint8_t *>(data);
 
-    for (int y = 0; y < height; ++y) {
-        memcpy(dst + y * width, bitmap.data() + y * stride, width);
+        for (int y = 0; y < height; ++y) {
+            memcpy(dst + y * width, bitmap.data() + y * stride, width);
+        }
+        textureBuffer->Unmap();
     }
-    textureBuffer->Unmap();
     // void *data = textureBuffer->Map();
     // memcpy(data, bitmap.data(), buf_sz);
     // textureBuffer->Unmap();

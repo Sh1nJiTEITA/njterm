@@ -35,6 +35,7 @@ class Library {
     struct Impl;
     std::unique_ptr<Impl> impl;
 };
+using LibraryH = std::shared_ptr<Library>;
 // clang-format off
 
 class Face {

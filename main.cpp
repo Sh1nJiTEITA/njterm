@@ -40,29 +40,20 @@ using namespace nj;
 
 */
 
-decltype(auto) create_atlas() {
-    static ft::Library lib{};
-    fs::path font_path{"/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"};
-    static ft::FaceID id = lib.LoadFace(font_path);
+struct FtContext {
+    ft::LibraryH lib;
+    ft::FaceH face;
+    ft::AtlasH atlas;
+};
 
-    static auto face = lib.GetFace(id);
-    ft::Atlas atlas{face, 12, 32, 255};
-
-    // face->SetPixelSize(100, 100);
-    // face->LoadGlyph('a');
-    // auto &bm = face->Glyph()->bitmap;
-    // log::Debug("width={} height={}", bm.width, bm.rows);
-    // std::stringstream ss;
-    // for (size_t i = 0; i < bm.rows; ++i) {
-    //     for (size_t j = 0; j < bm.width; ++j) {
-    //         ss << bm.buffer[j + i * bm.width] << " ";
-    //     }
-    //     ss << "\n";
-    // }
-    // log::Debug("\n{}", ss.str());
-
-    // return face;
-    return face;
+FtContext create_ft_context() {
+    // ft::Library lib{};
+    // fs::path
+    // font_path{"/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"};
+    // ft::FaceID id = lib.LoadFace(font_path);
+    // auto face = lib.GetFace(id);
+    // ft::Atlas atlas{face, 12, 12, 32, 255};
+    // return { .lib = std::move(lib), .face = std::move(face), }
 };
 
 struct CharData {
@@ -97,10 +88,20 @@ CharData create_char_bitmap(ft::FaceH face, char ch) {
             .stride = static_cast<size_t>(bm.pitch)};
 }
 
+std::unique_ptr<ren::Buffer> create_atlas_buffer(ren::DeviceH device,
+                                                 ren::AllocatorH allocator) {
+    const size_t buf_sz{500 * 500};
+    return std::make_unique<ren::Buffer>(
+        device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
+};
+
 int main(int argc, char **argv) {
     // clang-format off
     // auto face = create_atlas(); 
-    auto face = create_atlas(); 
+    auto face = create_ft_context(); 
     // return 0;
 
     auto win = win::CreateWindow();
@@ -155,7 +156,7 @@ int main(int argc, char **argv) {
     // auto desc_test = log::MakeSharedWithLog<ren::DescriptorTest>("DescriptorTest");
     desc_context->Add<ren::DescriptorTest>(frames, 0, 0);
 
-    auto char_bm = create_char_bitmap(face, 'N');
+    auto char_bm = create_char_bitmap(face, 'w');
     desc_context->Add<ren::DescriptorTexture>(
         frames, 0, 1, 
         vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
