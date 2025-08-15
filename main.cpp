@@ -10,6 +10,7 @@
 #include "nj_ft_atlas.h"
 #include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
+#include "nj_log_char.h"
 #include "nj_pipeline.h"
 #include "nj_render_context.h"
 #include "nj_sampler.h"
@@ -20,6 +21,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <sstream>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
@@ -46,12 +48,60 @@ decltype(auto) create_atlas() {
     static auto face = lib.GetFace(id);
     ft::Atlas atlas{face, 12, 32, 255};
 
-    return atlas;
+    // face->SetPixelSize(100, 100);
+    // face->LoadGlyph('a');
+    // auto &bm = face->Glyph()->bitmap;
+    // log::Debug("width={} height={}", bm.width, bm.rows);
+    // std::stringstream ss;
+    // for (size_t i = 0; i < bm.rows; ++i) {
+    //     for (size_t j = 0; j < bm.width; ++j) {
+    //         ss << bm.buffer[j + i * bm.width] << " ";
+    //     }
+    //     ss << "\n";
+    // }
+    // log::Debug("\n{}", ss.str());
+
+    // return face;
+    return face;
 };
+
+struct CharData {
+    std::vector<uint8_t> data;
+    const size_t cols;
+    const size_t rows;
+    const size_t stride;
+};
+
+CharData create_char_bitmap(ft::FaceH face, char ch) {
+    face->SetPixelSize(800, 600);
+    // face->SetPixelSize(12, 100);
+    if (!face->LoadGlyph(ch)) {
+        std::exit(1);
+    }
+    auto &bm = face->Glyph()->bitmap;
+    // std::stringstream ss;
+    std::vector<uint8_t> data(bm.rows * bm.width, 0);
+    for (size_t i = 0; i < bm.rows; ++i) {
+        for (size_t j = 0; j < bm.width; ++j) {
+            const size_t index = j + i * bm.width;
+            // ss << static_cast<int>(bm.buffer[index]) << " ";
+            data[index] = bm.buffer[index];
+        }
+        // ss << "\n";
+    }
+    log::Debug("\n");
+    log::PrintChar(data, bm.rows, bm.width);
+    return {.data = std::move(data),
+            .cols = bm.width,
+            .rows = bm.rows,
+            .stride = static_cast<size_t>(bm.pitch)};
+}
 
 int main(int argc, char **argv) {
     // clang-format off
-    auto atlas = create_atlas(); 
+    // auto face = create_atlas(); 
+    auto face = create_atlas(); 
+    // return 0;
 
     auto win = win::CreateWindow();
     auto win_ext = win->VulkanExtensions();
@@ -104,14 +154,18 @@ int main(int argc, char **argv) {
     );
     // auto desc_test = log::MakeSharedWithLog<ren::DescriptorTest>("DescriptorTest");
     desc_context->Add<ren::DescriptorTest>(frames, 0, 0);
+
+    auto char_bm = create_char_bitmap(face, 'N');
     desc_context->Add<ren::DescriptorTexture>(
         frames, 0, 1, 
         vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
         render_context->CurrentCommandBuffer(), 
         physical_device, 
         sampler,
-        atlas.Side(), atlas.Side(), 
-        atlas.Bitmap()
+        char_bm.rows, char_bm.cols, char_bm.stride,
+        char_bm.data
+        // atlas.Side(), atlas.Side(), 
+        // atlas.Bitmap()
     );
     desc_context->CreateLayouts();
     desc_context->AllocateSets();

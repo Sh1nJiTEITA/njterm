@@ -7,14 +7,18 @@ Sampler::Sampler(DeviceH device) {
 
     vk::SamplerCreateInfo samplerInfo{};
 
-    samplerInfo.magFilter = vk::Filter::eLinear;
-    samplerInfo.minFilter = vk::Filter::eLinear;
+    samplerInfo.magFilter = vk::Filter::eNearest;
+    samplerInfo.minFilter = vk::Filter::eNearest;
 
     samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-    samplerInfo.anisotropyEnable = VK_TRUE;
+    // samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
+    // samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
+    // samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
+
+    samplerInfo.anisotropyEnable = VK_FALSE;
     samplerInfo.maxAnisotropy = 4;
 
     samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
@@ -23,7 +27,7 @@ Sampler::Sampler(DeviceH device) {
     samplerInfo.compareEnable = VK_FALSE;
     samplerInfo.compareOp = vk::CompareOp::eAlways;
 
-    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eNearest;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 0.0f;

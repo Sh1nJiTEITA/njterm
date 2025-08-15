@@ -43,12 +43,15 @@ DescriptorTexture::DescriptorTexture(size_t layout, size_t binding,
                                      CommandBufferH command_buffer,
                                      PhysicalDeviceH physical_device,
                                      SamplerH sampler, size_t width,
-                                     size_t height,
+                                     size_t height, size_t stride,
                                      const std::vector<uint8_t> &data)
     : Descriptor{layout, binding, vk::DescriptorType::eCombinedImageSampler,
                  stages},
       bitmap{data}, commandBuffer{command_buffer}, phDevice{physical_device},
-      sampler{sampler}, textureWidth{width}, textureHeight{height} {}
+      sampler{sampler}, width{width}, height{height}, stride{stride} {
+
+    assert(data.size() == width * height);
+}
 
 DescriptorTexture::~DescriptorTexture() {
     log::Debug("Destroying DescriptorTexture...");
@@ -68,15 +71,22 @@ void DescriptorTexture::CreateBuffer(ren::DeviceH device,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
             VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
     void *data = textureBuffer->Map();
-    memcpy(data, bitmap.data(), buf_sz);
+    uint8_t *dst = static_cast<uint8_t *>(data);
+
+    for (int y = 0; y < height; ++y) {
+        memcpy(dst + y * width, bitmap.data() + y * stride, width);
+    }
     textureBuffer->Unmap();
+    // void *data = textureBuffer->Map();
+    // memcpy(data, bitmap.data(), buf_sz);
+    // textureBuffer->Unmap();
 }
 
 // clang-format off
 void DescriptorTexture::CreateImage(ren::DeviceH device,
                                     ren::AllocatorH allocator) {
     image = std::make_unique<Image>(
-        device, allocator, textureWidth, textureHeight, 1, vk::Format::eR8Srgb,
+        device, allocator, width, height, 1, vk::Format::eR8Unorm,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
 
@@ -91,7 +101,11 @@ void DescriptorTexture::CreateView(ren::DeviceH device,
     vk::ImageViewCreateInfo info{};
     info.image = image->CHandle();
     info.viewType = vk::ImageViewType::e2D;
-    info.format = vk::Format::eR8Srgb;
+    info.format = vk::Format::eR8Unorm;
+    info.components.setR(vk::ComponentSwizzle::eR);
+    info.components.setG(vk::ComponentSwizzle::eR);
+    info.components.setB(vk::ComponentSwizzle::eR);
+    info.components.setA(vk::ComponentSwizzle::eR);
     info.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
     info.subresourceRange.baseMipLevel = 0;
     info.subresourceRange.levelCount = 1;
@@ -174,8 +188,8 @@ void DescriptorTexture::CopyBufferToImage() {
                                 .setLayerCount(1))
         .setImageOffset({ 0, 0, 0 })
         .setImageExtent({ 
-            static_cast< uint32_t > ( textureWidth ),
-            static_cast< uint32_t > ( textureHeight ) ,
+            static_cast< uint32_t > ( width ),
+            static_cast< uint32_t > ( height ) ,
             1
         })
         ;

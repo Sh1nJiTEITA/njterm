@@ -18,6 +18,7 @@ struct DescriptorTexture : public Descriptor {
                       SamplerH sampler,
                       size_t width,
                       size_t height,
+                      size_t stride,
                       const std::vector<uint8_t>& data);
     virtual ~DescriptorTexture();
     virtual void CreateBuffer(DeviceH device, AllocatorH allocator) override;
@@ -36,8 +37,10 @@ private:
     PhysicalDeviceH phDevice;
     SamplerH sampler;
 
-    size_t textureWidth;
-    size_t textureHeight;
+    size_t width;
+    size_t height;
+    size_t stride;
+
     std::unique_ptr<Buffer> textureBuffer;
     std::vector<uint8_t> bitmap;
 };

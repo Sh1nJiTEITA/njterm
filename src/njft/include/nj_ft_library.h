@@ -101,7 +101,6 @@ class Face {
     auto Size() -> FT_Size;
     auto Charmap() -> FT_CharMap;
 
-
   private:
 
     Face(Library &lib, const fs::path &path, size_t face_idx = 0);

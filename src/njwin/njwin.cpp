@@ -15,7 +15,7 @@ auto CreateWindow() -> std::unique_ptr<Window> {
     std::unique_ptr<Window> win;
 #if defined(NJ_USE_IMPL_GLFW)
     nj::log::Info("Creating window with impl GLFW");
-    win = std::make_unique<glfw::WindowGLFW>("njterm", glm::vec2{600, 600});
+    win = std::make_unique<glfw::WindowGLFW>("njterm", glm::vec2{1600, 1024});
 #elif
     static_assert(false, "No window impl is chosen");
 #endif

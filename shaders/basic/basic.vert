@@ -1,16 +1,28 @@
 #version 460
 #extension GL_EXT_debug_printf : enable
-// Structs 
+// Structs
 
 vec2 positions[6] = vec2[](
-    vec2(-0.5, 0.5),
-    vec2(0.5, 0.5),
-    vec2(0.5, -0.5),
-    vec2(0.5, -0.5),
-    vec2(-0.5, 0.5),
-    vec2(-0.5, -0.5)
-);
+        vec2(-1.0, 1.0),
+        vec2(1.0, 1.0),
+        vec2(1.0, -1.0),
+        vec2(1.0, -1.0),
+        vec2(-1.0, 1.0),
+        vec2(-1.0, -1.0)
+    );
+
+vec2 uvs[6] = vec2[](
+        vec2(0.0, 1.0), // top-left
+        vec2(1.0, 1.0), // top-right
+        vec2(1.0, 0.0), // bottom-right
+        vec2(1.0, 0.0), // bottom-right
+        vec2(0.0, 1.0), // top-left
+        vec2(0.0, 0.0) // bottom-left
+    );
+
+layout(location = 0) out vec2 fragUV;
 
 void main() {
     gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+    fragUV = uvs[gl_VertexIndex];
 }
