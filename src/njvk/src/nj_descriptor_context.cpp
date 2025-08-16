@@ -36,26 +36,33 @@ public:
 public:
     //! The only descriptor set ctor
     //! @param packs Map with keys as bindings ? and ... ? 
-    DescriptorSet(ren::DeviceH device, std::vector<FrameDescriptorSetPack>&& packs) 
+    DescriptorSet(ren::DeviceH device, 
+                  std::vector<FrameDescriptorSetPack>&& packs, 
+                  std::vector<DescriptorU>&& single_desc) 
         : framePacks{ std::move(packs) }
+        , singleDescriptors{ std::move(single_desc) } 
     {
         log::Debug("DescriptorSet::ctor packs.size={}", framePacks.size());
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         std::set<uint32_t> unique;
-        for (size_t frame_index = 0; frame_index < framePacks.size(); ++frame_index) {
+        log::Debug("Searching for unique bindings inside perframe descriptor list");
 
-            for (auto &desc : framePacks[frame_index].descriptors) {
-                auto info = desc->LayoutBinding();
-                auto [it, success] = unique.insert(info.binding);
-                if (success) {
-                    log::Debug("Unique binding={}", info.binding);
-                    bindings.push_back(std::move(info));
-                }
+        const auto add = [&unique, &bindings](DescriptorU& desc){
+            auto info = desc->LayoutBinding();
+            auto [it, success] = unique.insert(info.binding);
+            if (success) {
+                log::Debug("--> Unique binding={}", info.binding);
+                bindings.push_back(std::move(info));
             }
+        };
+
+        for (size_t frame_index = 0; frame_index < framePacks.size(); ++frame_index) {
+            for (auto &desc : framePacks[frame_index].descriptors) { add(desc); }
         }
+        log::Debug("Searching for unique bindings inside single descriptor list");
+        for (auto& single_desc : singleDescriptors) { add(single_desc); }
 
         auto layout_create_info = vk::DescriptorSetLayoutCreateInfo{}
-            // .setBindingCount(static_cast<uint32_t>(bindings.size()))
             .setBindings(bindings)
             ;
 
@@ -66,10 +73,12 @@ public:
     auto Layout() noexcept -> vk::SharedDescriptorSetLayout { return layout; }
 
     void Allocate(ren::DeviceH device, ren::DescriptorPoolH pool) { 
+        log::Debug("Allocating descriptor set...");
         const size_t frames_count = framePacks.size();
         const auto layouts = std::array{ layout.get() };
+        // log::Debug("Allocating for perframe descriptors...");
         for (size_t frame_idx = 0; frame_idx < frames_count; ++frame_idx) { 
-            log::Debug("Allocating DescriptorSet for frame {}...", frame_idx);
+            log::Debug("--> Allocating DescriptorSet for frame {}...", frame_idx);
             auto info = vk::DescriptorSetAllocateInfo{}
                 .setDescriptorPool(pool->CHandle())
                 .setDescriptorSetCount(descriptorSetCountPerClass)
@@ -103,9 +112,23 @@ public:
                 ;
             writes.push_back(std::move(write_info));
         }
+        
+        for (auto& desc : singleDescriptors) { 
+            const auto& buffer_info_it = *buffer_infos.insert(buffer_infos.end(), desc->BufferInfo());
+            const auto& image_info_it = *image_infos.insert(image_infos.end(), desc->ImageInfo());
+            auto write_info = vk::WriteDescriptorSet{}
+                .setDstSet(frame_pack.set.get())
+                .setDstBinding(desc->Binding())
+                .setDescriptorCount(1)
+                .setDescriptorType(desc->DescriptorType())
+                .setPImageInfo(desc->HasImage() ? &image_info_it : nullptr)
+                .setPBufferInfo(desc->HasBuffer() ? &buffer_info_it : nullptr)
+                ;
+            writes.push_back(std::move(write_info));
+        }
         return writes;
     }
-    
+
     
     
     auto Descriptor(size_t frame, size_t binding) -> Descriptor& { 
@@ -124,6 +147,7 @@ private:
     //! Holding frame packs continuously in memory
     //! Index => Frame number 
     std::vector< FrameDescriptorSetPack > framePacks;
+    std::vector< DescriptorU > singleDescriptors;
 };
 
 size_t DescriptorSet::descriptorSetCountPerClass = 1;
@@ -199,6 +223,7 @@ public:
             log::Debug("--> Creating descriptor-set-layout with index={} and descriptors count={}",
                        set_i, bindings_map.size());
 
+            std::vector<DescriptorU> single_desc;
             std::vector<DescriptorSet::FrameDescriptorSetPack> current_packs;
             current_packs.resize(frames);
 
@@ -206,15 +231,22 @@ public:
                 log::Debug("----> Going through bindings map with binding={} as key", binding);
                 const size_t packs_count = tmpStorage.descriptorPerFrame.size();
 
-                assert(packs_count == frames &&
-                       "Descriptor count must be the same as frames on flight "
-                       "count");
-
-                for (size_t pack_index = 0; pack_index < packs_count; ++pack_index) {
-                    log::Debug("------> Going through packs with pack={} as frame", pack_index);
-                    current_packs[pack_index].descriptors.push_back(
-                        std::move(tmpStorage.descriptorPerFrame[pack_index])
-                    );
+                // assert(packs_count == frames &&
+                //        "Descriptor count must be the same as frames on flight "
+                //        "count");
+                if (packs_count == frames) { 
+                    log::Debug("----> Descriptor resources are allocated "
+                               "for each frame SEPARETLY", binding);
+                    for (size_t pack_index = 0; pack_index < packs_count; ++pack_index) {
+                        log::Debug("------> Going through packs with pack={} as frame", pack_index);
+                        current_packs[pack_index].descriptors.push_back(
+                            std::move(tmpStorage.descriptorPerFrame[pack_index])
+                        );
+                    }
+                } else { 
+                    log::Debug("----> Descriptor resources are allocated "
+                               "for each frame SHAREDLY", binding);
+                    single_desc.push_back(std::move(tmpStorage.descriptorPerFrame[0]));
                 }
                 // log::Debug("current_packs[pack_index].descriptors={}", current_packs[pack_index].descriptors.size());
             }
@@ -222,7 +254,11 @@ public:
                 log::Debug("==> In frame pack with index={} as frame descriptor count={}", frame, current_packs[frame].descriptors.size());
             }
 
-            auto complete_set = std::make_unique<DescriptorSet>(device, std::move(current_packs));
+            auto complete_set = std::make_unique<DescriptorSet>(
+                device, 
+                std::move(current_packs), 
+                std::move(single_desc)
+            );
             sets.insert_or_assign(set_i, std::move(complete_set));
             // sets.emplace(set_i, std::move(complete_set));
         }

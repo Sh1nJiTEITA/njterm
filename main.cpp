@@ -92,8 +92,8 @@ CharData create_char_bitmap(ft::FaceH face, char ch) {
             .stride = static_cast<size_t>(bm.pitch)};
 }
 
-const size_t ATLAS_W = 500;
-const size_t ATLAS_H = 500;
+const size_t ATLAS_W = 100;
+const size_t ATLAS_H = 100;
 
 std::unique_ptr<ren::Buffer> create_atlas_buffer(ren::DeviceH device,
                                                  ren::AllocatorH allocator) {
@@ -173,16 +173,16 @@ int main(int argc, char **argv) {
     atlas_buf = upload_font(std::move(atlas_buf), ft_context);
 
 
-    auto char_bm = create_char_bitmap(ft_context.face, 'w');
+    // auto char_bm = create_char_bitmap(ft_context.face, 'w');
     desc_context->Add<ren::DescriptorTexture>(
-        frames, 0, 1, 
+        1, 0, 1, 
         vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
         render_context->CurrentCommandBuffer(), 
         physical_device, 
         sampler,
-        // ATLAS_W, ATLAS_H, std::move(atlas_buf)
-        char_bm.rows, char_bm.cols, char_bm.stride,
-        char_bm.data
+        ATLAS_W, ATLAS_H, std::move(atlas_buf)
+        // char_bm.rows, char_bm.cols, char_bm.stride,
+        // char_bm.data
         // atlas.Side(), atlas.Side(), 
         // atlas.Bitmap()
     );

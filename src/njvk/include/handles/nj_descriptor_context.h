@@ -18,35 +18,39 @@ public:
   
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptor);
 
-    // template <typename DescriptorType, typename ...Args>
-    // void Add(size_t frames, size_t layout, size_t binding, const Args& ...args) { 
-    //     log::Debug("Adding new descriptor to context; frames={}, layout={}, binding={}",
-    //                frames, layout, binding);
-    //     std::vector<DescriptorU> vec { };
-    //     vec.reserve(frames);
-    //     for (size_t frame_idx = 0; frame_idx < frames; ++frame_idx) { 
-    //         vec.push_back(std::make_unique<DescriptorType>(
-    //             layout, binding, std::forward<Args>(args)...)
-    //         );
-    //     }
-    //     Add(layout, binding, std::move(vec));
-    // }
-
     template <typename DescriptorType, typename ...Args>
-    void Add(size_t frames, size_t layout, size_t binding, const Args& ...args) { 
+    void Add(size_t frames, size_t layout, size_t binding, Args&& ...args) { 
         log::Debug("------------------------------------------------");
-        log::Debug("Adding new descriptor to context: frames={}, layout={}, binding={}",
+        log::Debug("[+] Adding descriptor(s): frames={}, layout={}, binding={}",
                    frames, layout, binding);
-        std::vector<DescriptorU> vec { };
+
+        std::vector<DescriptorU> vec;
         vec.reserve(frames);
-        for (size_t frame_idx = 0; frame_idx < frames; ++frame_idx) { 
-            vec.push_back(std::make_unique<DescriptorType>(
-                layout, binding, args...
-            ));
+
+        constexpr bool any_move_only = !(std::is_copy_constructible_v<std::decay_t<Args>> && ...);
+
+        if constexpr (any_move_only) {
+            if (frames > 1) {
+                throw std::logic_error("Cannot create multiple descriptors with move-only arguments.");
+            }
         }
+
+        for (size_t i = 0; i < frames; ++i) {
+            if constexpr (any_move_only) {
+                vec.push_back(std::make_unique<DescriptorType>(
+                    layout, binding, std::forward<Args>(args)...\
+                ));
+                break;
+            } else {
+                vec.push_back(std::make_unique<DescriptorType>(
+                    layout, binding, args...
+                ));
+            }
+        }
+
         Add(layout, binding, std::move(vec));
     }
-    
+
     void CreateLayouts();
     void AllocateSets();
     void UpdateSets();

@@ -59,7 +59,6 @@ struct Descriptor {
 
     std::unique_ptr<Buffer> buffer;
     std::unique_ptr<Image> image;
-    // std::unique_ptr<vk::ImageView> imageView;
     std::unique_ptr<vk::SharedImageView> imageView;
 };
 // clang-format on
