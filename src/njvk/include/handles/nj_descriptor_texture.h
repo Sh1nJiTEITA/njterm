@@ -62,7 +62,7 @@ struct DescriptorTexture : public Descriptor {
                       SamplerH sampler,
                       size_t width,
                       size_t height,
-                      std::unique_ptr<Buffer> buffer);
+                      std::unique_ptr<Buffer>&& buffer);
 
 
     virtual ~DescriptorTexture();

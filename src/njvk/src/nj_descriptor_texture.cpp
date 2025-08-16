@@ -59,7 +59,7 @@ DescriptorTexture::DescriptorTexture(size_t layout, size_t binding,
                                      PhysicalDeviceH physical_device,
                                      SamplerH sampler, size_t width,
                                      size_t height,
-                                     std::unique_ptr<Buffer> buffer)
+                                     std::unique_ptr<Buffer> &&buffer)
     : Descriptor{layout, binding, vk::DescriptorType::eCombinedImageSampler,
                  stages},
       bitmap{}, commandBuffer{command_buffer}, phDevice{physical_device},
@@ -76,7 +76,7 @@ DescriptorTexture::~DescriptorTexture() {
 
 void DescriptorTexture::CreateBuffer(ren::DeviceH device,
                                      ren::AllocatorH allocator) {
-    if (!textureBuffer && !stride) {
+    if (!textureBuffer && stride) {
         using BitType = decltype(bitmap)::value_type;
         const size_t buf_sz = sizeof(BitType) * bitmap.size();
         textureBuffer = std::make_unique<Buffer>(
