@@ -1,5 +1,6 @@
 #include "nj_ft_atlas.h"
 #include "njlog.h"
+#include <algorithm>
 #include <cassert>
 #include <vector>
 
@@ -62,23 +63,35 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
     }
 
     glm::ivec2 top_l { 0, 0 };
-    glm::ivec2 bot_r { 0, 0 };
+    int max_row_height = 0;
+
     auto ptr = static_cast<uint8_t*>(data);
+
     for (size_t code = startCharCode; code < endCharCode; ++code) {
         if (!face->LoadGlyph(code)) {
             log::Error("Loading code={} ... ERROR", code);
             continue;
+        } else {
+            log::Info("Loading code={} (char={})... OK", code, static_cast<char>(code));
         }
-        auto &bitmap = face->Glyph()->bitmap;
-        
-        
-        for (size_t row = 0; row < bitmap.rows; ++row) { 
-            uint8_t* global_start = ptr + (top_l.x + top_l.y * w);
-            uint8_t* local_start = global_start + row * bitmap.width;
-            uint8_t* char_ptr = bitmap.buffer + row * bitmap.pitch;
-            memcpy(local_start, char_ptr, bitmap.width);
+
+        auto& bitmap = face->Glyph()->bitmap;
+
+        // Wrap to next row if needed
+        if (top_l.x + bitmap.width >= static_cast<int>(w)) {
+            top_l.x = 0;
+            top_l.y += max_row_height;
+            max_row_height = 0;
         }
-        
+
+        // Copy glyph bitmap into atlas texture
+        for (int row = 0; row < bitmap.rows; ++row) {
+            size_t dst_offset = (top_l.y + row) * w + top_l.x;
+            uint8_t* dst_ptr = ptr + dst_offset;
+            uint8_t* src_ptr = bitmap.buffer + row * bitmap.pitch;
+            memcpy(dst_ptr, src_ptr, bitmap.width);
+        }
+
         auto [_, status] = charMap.insert({code, CharData{
             .topLeft = top_l,
             .width = bitmap.width,
@@ -90,12 +103,48 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
                            "Cant insert new char data");
         }
 
-        if (top_l.x + bitmap.width >= w) { 
-            top_l = { 0, bitmap.rows };
-        } else {
-            top_l += glm::ivec2{ bitmap.width, 0};
-        }
+        top_l.x += bitmap.width;
+        max_row_height = std::max(static_cast<unsigned int>(max_row_height), bitmap.rows);
     }
+
+    // glm::ivec2 top_l { 0, 0 };
+    // glm::ivec2 bot_r { 0, 0 };
+    // auto ptr = static_cast<uint8_t*>(data);
+    // for (size_t code = startCharCode; code < endCharCode; ++code) {
+    //     if (!face->LoadGlyph(code)) {
+    //         log::Error("Loading code={} ... ERROR", code);
+    //         continue;
+    //     }
+    //     else { 
+    //         log::Info("Loading code={} (char={})... ERROR", code, static_cast<char>(code));
+    //     }
+    //     auto &bitmap = face->Glyph()->bitmap;
+    //     
+    //     
+    //     for (size_t row = 0; row < bitmap.rows; ++row) { 
+    //         uint8_t* global_start = ptr + (top_l.x + top_l.y * w);
+    //         uint8_t* local_start = global_start + row * w;
+    //         uint8_t* char_ptr = bitmap.buffer + row * bitmap.pitch;
+    //         memcpy(local_start, char_ptr, bitmap.width);
+    //     }
+    //     
+    //     auto [_, status] = charMap.insert({code, CharData{
+    //         .topLeft = top_l,
+    //         .width = bitmap.width,
+    //         .height = bitmap.rows,
+    //         .pitch = bitmap.pitch
+    //     }});
+    //     if (!status) {
+    //         log::FatalExit("Internal Atlas::Upload(...) error: "
+    //                        "Cant insert new char data");
+    //     }
+    //
+    //     if (top_l.x + bitmap.width >= w) { 
+    //         top_l = { 0, bitmap.rows };
+    //     } else {
+    //         top_l += glm::ivec2{ bitmap.width, 0};
+    //     }
+    // }
 }
 // clang-format off
 

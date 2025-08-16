@@ -54,7 +54,8 @@ FtContext create_ft_context() {
 
     ft::FaceID id = lib->LoadFace(font_path);
     auto face = lib->GetFace(id);
-    auto atlas = std::make_shared<ft::Atlas>(face, 12, 12, 32, 255);
+    // auto atlas = std::make_shared<ft::Atlas>(face, 12, 12, 32, 255);
+    auto atlas = std::make_shared<ft::Atlas>(face, 0, 300, 32, 255);
     return {.lib = std::move(lib),
             .face = std::move(face),
             .atlas = std::move(atlas)};
@@ -92,8 +93,8 @@ CharData create_char_bitmap(ft::FaceH face, char ch) {
             .stride = static_cast<size_t>(bm.pitch)};
 }
 
-const size_t ATLAS_W = 100;
-const size_t ATLAS_H = 100;
+const size_t ATLAS_W = 4000;
+const size_t ATLAS_H = 4000;
 
 std::unique_ptr<ren::Buffer> create_atlas_buffer(ren::DeviceH device,
                                                  ren::AllocatorH allocator) {
