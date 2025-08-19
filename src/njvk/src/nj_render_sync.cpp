@@ -1,5 +1,6 @@
 
 #include "nj_render_sync.h"
+#include "njlog.h"
 #include <vulkan/vulkan_shared.hpp>
 
 namespace nj::ren {
@@ -14,6 +15,10 @@ SyncData::SyncData(ren::DeviceH device) {
         .setFlags(vk::FenceCreateFlagBits::eSignaled);
 
     frameFence = vk::SharedFence(dev->createFence(fence_info), dev);
+}
+
+SyncData::~SyncData() {
+    log::Debug("Killing sync data..."); 
 }
 // clang-format on
 

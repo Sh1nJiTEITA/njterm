@@ -21,6 +21,7 @@ class WindowGLFW : public win::Window {
     virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR override;
     virtual auto ShouldClose() -> bool override;
     virtual auto Update() -> void override;
+    virtual auto WaitToRecreate() -> void override;
 
   private:
     GLFWwindow *glfwWindowHandle;

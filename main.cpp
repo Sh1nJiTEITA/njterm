@@ -10,10 +10,14 @@
 #include "nj_ft_atlas.h"
 #include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
+#include "nj_instance.h"
 #include "nj_log_char.h"
+#include "nj_physical_device.h"
 #include "nj_pipeline.h"
 #include "nj_render_context.h"
+#include "nj_render_pass.h"
 #include "nj_sampler.h"
+#include "nj_swapchain.h"
 #include "njcon.h"
 #include "njlog.h"
 #include "njvklog.h"
@@ -27,6 +31,7 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
+#include <vulkan/vulkan_shared.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 using namespace nj;
@@ -114,10 +119,64 @@ std::unique_ptr<ren::Buffer> upload_font(std::unique_ptr<ren::Buffer> buf,
     return buf;
 }
 
+// clang-format off
+void recreate_swapchain(ren::InstanceH& instance, 
+                        ren::DeviceH& device,
+                        ren::PhysicalDeviceH& physical_device,
+                        vk::SharedSurfaceKHR& surface, 
+                        ren::SwapchainH& swapchain,
+                        win::Window &window, 
+                        ren::AttachmentColorH& color_att, 
+                        ren::RenderContextH& render_context,
+                        ren::CommandPoolH& command_pool,
+                        ren::RenderPassH render_pass) {
+    log::Debug("Recreating swapchain ... STARTED");
+    log::Debug("Waiting... STARTED");
+    window.WaitToRecreate();
+    device->Handle()->waitIdle();
+    render_context->WaitFences(device, swapchain);
+
+
+    log::Debug("Waiting... DONE");
+
+    log::Debug("Clearing... STARTED");
+    render_context->ClearImageContexts(); 
+    render_context->ClearFrameContexts(); 
+    color_att.reset();
+    swapchain.reset();
+    log::Debug("Clearing... DONE");
+    auto extent = window.Extent();
+    auto vk_extent = vk::Extent2D{static_cast<uint32_t>(extent.x),
+                                  static_cast<uint32_t>(extent.y)};
+    //
+    swapchain = log::MakeSharedWithLog<ren::Swapchain>(
+        physical_device, device, surface, vk_extent,
+        vk::ImageUsageFlagBits::eColorAttachment
+    );
+    swapchain->UpdateImages(device);
+
+    color_att = log::MakeSharedWithLog<ren::AttachmentColor>(
+        "Color attachment", swapchain
+    );
+
+    // render_context->CreateFrameContexts(device, command_pool, swapchain->Images().size());
+    render_context->CreateFrameContexts(device, command_pool, 2);
+    render_context->CreateImageContexts(
+        device, 
+        swapchain, 
+        render_pass, 
+        std::vector< ren::AttachmentH > { color_att } 
+    );
+    //
+    log::Debug("Recreating swapchain ... DONE");
+}
+// clang-format on
+
 int main(int argc, char **argv) {
     // clang-format off
 
-    auto win = win::CreateWindow();
+    auto win = win::CreateWindow({ 800, 800 });
+    auto win_extent = win->Extent();
     auto win_ext = win->VulkanExtensions();
 
     auto inst = log::MakeSharedWithLog<ren::Instance>(win_ext);
@@ -133,11 +192,13 @@ int main(int argc, char **argv) {
     //
     auto allocator = log::MakeSharedWithLog<ren::Allocator>("Allocator", inst, device, physical_device);
     //
+    
     auto swapchain = log::MakeSharedWithLog<ren::Swapchain>(
         physical_device, 
         device,
         surface,
-        vk::Extent2D{ 800, 600 },
+        vk::Extent2D{ static_cast<uint32_t>(win_extent.x), 
+                      static_cast<uint32_t>(win_extent.y) },
         vk::ImageUsageFlagBits::eColorAttachment
     );
     swapchain->UpdateImages(device);
@@ -152,7 +213,9 @@ int main(int argc, char **argv) {
     auto render_pass = log::MakeSharedWithLog<ren::GridRenderPass>(device, color_att);
     auto command_pool = log::MakeSharedWithLog<ren::CommandPool>(device, physical_device);
     // 
-    const size_t frames = swapchain->Images().size();
+    // const size_t frames = con::Frames();
+    const size_t frames = 2;
+    // const size_t frames = swapchain->Images().size();
 
     auto render_context = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, render_pass, command_pool,
@@ -213,11 +276,15 @@ int main(int argc, char **argv) {
     );
 
 
-
+    log::Info("============== Render loop... STARTED ==============");
     while (!win->ShouldClose()) {
         win->Update(); 
-        // log::Debug("Frame={} Image={}", render_context->CurrentFrameIndex(), render_context->CurrentImageIndex());
-        render_context->BeginFrame(device, swapchain);
+        if (render_context->BeginFrame(device, swapchain)) { 
+            recreate_swapchain(inst, device, physical_device, surface,
+                               swapchain, *win, color_att, render_context,
+                               command_pool, render_pass);
+            continue;
+        }
         { 
             auto command_buffer = render_context->CurrentCommandBuffer();
             auto render_area = vk::Rect2D{}
@@ -263,10 +330,15 @@ int main(int argc, char **argv) {
             } // clang-format on:
             command_buffer->Handle()->endRenderPass();
         }
-        render_context->EndFrame(device, physical_device, swapchain);
+        if (render_context->EndFrame(device, physical_device, swapchain)) {
+            recreate_swapchain(inst, device, physical_device, surface,
+                               swapchain, *win, color_att, render_context,
+                               command_pool, render_pass);
+        }
     }
+    log::Info("============== Render loop... ENDED   ==============");
+
     clear_color = {};
     device->Handle()->waitIdle();
-    log::Debug("Render loop ended");
     return 0;
 }

@@ -24,6 +24,7 @@ class Window {
     virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR = 0;
     virtual auto ShouldClose() -> bool = 0;
     virtual auto Update() -> void = 0;
+    virtual auto WaitToRecreate() -> void = 0;
 };
 // clang-format on
 
@@ -33,7 +34,7 @@ class KeyControl {
     virtual auto ToExternal(Key key) -> KeyType = 0;
 };
 
-auto CreateWindow() -> std::unique_ptr<Window>;
+auto CreateWindow(const glm::ivec2 &ext) -> std::unique_ptr<Window>;
 auto CreateKeyControl() -> std::unique_ptr<KeyControl>;
 
 //! FIXME: Supports for now only x11 & wayland

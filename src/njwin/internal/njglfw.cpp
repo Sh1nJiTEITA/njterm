@@ -78,6 +78,16 @@ auto WindowGLFW::ShouldClose() -> bool {
 
 auto WindowGLFW::Update() -> void { glfwPollEvents(); }
 
+auto WindowGLFW::WaitToRecreate() -> void {
+    int width = 0;
+    int height = 0;
+    glfwGetFramebufferSize(glfwWindowHandle, &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(glfwWindowHandle, &width, &height);
+        glfwWaitEvents();
+    }
+}
+
 auto KeyControlGLFW::ToInternal(win::KeyType key) -> win::Key {
     // clang-format off
     switch (key) { 

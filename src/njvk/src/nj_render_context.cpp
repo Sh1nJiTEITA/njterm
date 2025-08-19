@@ -1,10 +1,13 @@
 #include "nj_render_context.h"
 #include "nj_command_buffer.h"
+#include "nj_device.h"
 #include "nj_render_pass.h"
+#include "nj_swapchain.h"
 #include "njcon.h"
 #include "njlog.h"
 #include <limits>
 #include <memory>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
 
@@ -118,23 +121,26 @@ auto RenderContext::CurrentFramebuffer() noexcept -> FramebufferH {
     return image_ctx->framebuffer;
 }
 
-auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> void { 
+auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> bool { 
     const auto timeout = std::numeric_limits<uint64_t>::max();
     auto frame_ctx = GetFrameContext(currentFrameIndex);
-    currentImageIndex = GetNewImage(device, swapchain, frame_ctx, timeout);
-    auto image_ctx = GetImageContext(currentImageIndex);
+    WaitFence(device, frame_ctx, timeout);
+    bool sts = GetNewImage(device, swapchain, frame_ctx, timeout);
+    // auto image_ctx = GetImageContext(currentImageIndex);
     ResetFences(device, frame_ctx);
     BeginCommandBuffer(frame_ctx);
+    return sts;
 }
 
-auto RenderContext::EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain) -> void { 
+auto RenderContext::EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain) -> bool { 
     const auto timeout = std::numeric_limits<uint64_t>::max();
     auto frame_ctx = GetFrameContext(currentFrameIndex);
     EndCommandBuffer(frame_ctx);
     SubmitGraphics(frame_ctx, physical_device);
-    SubmitPresent(frame_ctx, physical_device, swapchain);
-    WaitFences(device, frame_ctx, timeout);
+    bool sts = SubmitPresent(frame_ctx, physical_device, swapchain);
+    // WaitFences(device, frame_ctx, timeout);
     currentFrameIndex = (currentFrameIndex + 1) % framesInFlight;
+    return sts;
 }
 
 // clang-format off
@@ -158,9 +164,14 @@ void RenderContext::CreateFrameContexts(
     }
 }
 
+void RenderContext::ClearFrameContexts() { 
+    frameContexts.clear();
+}
+
 void RenderContext::CreateImageContexts(ren::DeviceH device, ren::SwapchainH swapchain,
                          ren::RenderPassH renderpass,
                          const std::vector<ren::AttachmentH> &attachments) { 
+    imageContexts.clear();
     for (size_t image = 0; image < swapchain->Images().size(); ++image) {  
         std::vector<ren::AttachmentDataH> attachement_datas;
         for (const auto &att : attachments) {
@@ -176,22 +187,45 @@ void RenderContext::CreateImageContexts(ren::DeviceH device, ren::SwapchainH swa
     }
 }
 
-auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout) -> size_t { 
+void RenderContext::ClearImageContexts() { 
+    imageContexts.clear(); 
+}
 
+
+void RenderContext::WaitFences(DeviceH device, SwapchainH swapchain) {
+    for (auto& ctx : frameContexts) { 
+        auto acquire_result = device->Handle()->acquireNextImageKHR(
+            swapchain->CHandle(), 
+            UINT64_MAX,
+            ctx->syncData->availableSemaphore.get(),
+            VK_NULL_HANDLE,
+            &currentImageIndex
+        );
+    }
+
+
+    // for (auto& ctx : frameContexts) { 
+    //     auto _ = device->Handle()->waitForFences(ctx->syncData->frameFence.get(), true, UINT64_MAX);
+    // }
+}
+
+auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout) -> bool { 
     auto acquire_result = device->Handle()->acquireNextImageKHR(
         swapchain->CHandle(), 
         timeout,
-        frame_ctx->syncData->availableSemaphore.get()
+        frame_ctx->syncData->availableSemaphore.get(),
+        VK_NULL_HANDLE,
+        &currentImageIndex
     );
 
-    if (acquire_result.result  == vk::Result::eErrorOutOfDateKHR) { 
-        log::Error("Need to recreate swachain...");
-    } else if (acquire_result.result != vk::Result::eSuccess && 
-               acquire_result.result != vk::Result::eSuboptimalKHR) { 
+    if (acquire_result  == vk::Result::eErrorOutOfDateKHR) { 
+        log::Error("Need to recreate swachain... [1]");
+        return true;
+    } else if (acquire_result != vk::Result::eSuccess && 
+               acquire_result != vk::Result::eSuboptimalKHR) { 
         log::FatalExit("Failed to acquire swapchain image...");
     }
-
-    return static_cast<size_t>(acquire_result.value);
+    return false;
 }
 
 auto RenderContext::ResetFences(DeviceH device, FrameContextH frame_ctx) -> void { 
@@ -224,33 +258,35 @@ void RenderContext::SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH phys
         .setCommandBuffers(command_buffers) 
         .setSignalSemaphores(signal_semaphores)
         ;
-
+    // log::Debug("GraphicsQueue={}", physical_device->QueueIndex(vk::QueueFlagBits::eGraphics));
     auto& graphics_queue = physical_device->GraphicsQueue();
     graphics_queue.submit(submit_info, frame_ctx->syncData->frameFence.get());
 }
 
-void RenderContext::SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, SwapchainH swapchain) { 
+bool RenderContext::SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, SwapchainH swapchain) { 
     auto swapchains = std::array { swapchain->CHandle() };
     auto signal_semaphores = std::array { frame_ctx->syncData->finishSemaphore.get() };
-    auto current_images = std::array { static_cast<uint32_t>( currentImageIndex ) };
     auto present_info = vk::PresentInfoKHR{}
         .setWaitSemaphores(signal_semaphores)
         .setSwapchains(swapchains)
-        .setImageIndices(current_images)
+        .setImageIndices(currentImageIndex)
         ;
 
+    // log::Debug("PresentQueue={}", physical_device->PresentQueueIndex());
     auto& present_queue = physical_device->PresentQueue();
-    auto res_qp = present_queue.presentKHR(present_info);
+    auto res_qp = present_queue.presentKHR(&present_info);
 
     if (res_qp == vk::Result::eErrorOutOfDateKHR || res_qp == vk::Result::eSuboptimalKHR) {
-        log::Error("Need to recreate swachain 2...");
+        log::Info("Need to recreate swachain 2...");
+        return true;
     } else if (res_qp != vk::Result::eSuccess) { 
         log::FatalExit("Failed to present KHR...");
     }
+    return false;
 }
 
-void RenderContext::WaitFences(DeviceH device, FrameContextH frame_ctx, uint64_t timeout) { 
-    device->Handle()->waitForFences(std::array { frame_ctx->syncData->frameFence.get() }, true, timeout);
+void RenderContext::WaitFence(DeviceH device, FrameContextH frame_ctx, uint64_t timeout) { 
+    auto _ = device->Handle()->waitForFences(frame_ctx->syncData->frameFence.get(), true, timeout);
 }
 
 

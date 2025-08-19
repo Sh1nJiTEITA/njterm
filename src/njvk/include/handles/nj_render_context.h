@@ -73,28 +73,32 @@ class RenderContext {
     auto CurrentCommandBuffer() noexcept -> CommandBufferH;
     auto CurrentFramebuffer() noexcept -> FramebufferH;
 
-    void BeginFrame(DeviceH device, SwapchainH swapchain);
-    void EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain);
+    bool BeginFrame(DeviceH device, SwapchainH swapchain);
+    bool EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain);
 
-  private:
     void CreateFrameContexts(DeviceH device, CommandPoolH command_pool, size_t frames);
+    void ClearFrameContexts();
     void CreateImageContexts(DeviceH device, SwapchainH swapchain, RenderPassH renderpass,
                              const std::vector<AttachmentH> &attachments);
-    auto GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, 
-                     uint64_t timeout)-> size_t;
+    void ClearImageContexts();
+ 
+    void WaitFences(DeviceH device, SwapchainH swapchain);
+    
+  private:
+    auto GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout)-> bool;
 
     void ResetFences(DeviceH device, FrameContextH frame_ctx);
     void BeginCommandBuffer(FrameContextH frame_ctx);
     void EndCommandBuffer(FrameContextH frame_ctx);
     void SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH physical_device);
-    void SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, 
+    bool SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, 
                        SwapchainH swapchain);
-    void WaitFences(DeviceH device, FrameContextH frame_ctx, uint64_t timeout);
+    void WaitFence(DeviceH device, FrameContextH frame_ctx, uint64_t timeout);
 
   private:
     const size_t framesInFlight;
-    size_t currentImageIndex;
-    size_t currentFrameIndex;
+    uint32_t currentImageIndex;
+    uint32_t currentFrameIndex;
   
     std::vector<FrameContextH> frameContexts;
     std::vector<ImageContextH> imageContexts;

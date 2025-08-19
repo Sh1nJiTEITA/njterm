@@ -11,6 +11,7 @@ class SyncData {
 
   public:
     SyncData(ren::DeviceH device);
+    virtual ~SyncData();
 
     vk::SharedSemaphore availableSemaphore;
     vk::SharedSemaphore finishSemaphore;
