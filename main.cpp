@@ -121,56 +121,48 @@ std::unique_ptr<ren::Buffer> upload_font(std::unique_ptr<ren::Buffer> buf,
 }
 //
 // // clang-format off
-// void recreate_swapchain(ren::InstanceH& instance,
-//                         ren::DeviceH& device,
-//                         ren::PhysicalDeviceH& physical_device,
-//                         vk::SharedSurfaceKHR& surface,
-//                         ren::SwapchainH& swapchain,
-//                         win::Window &window,
-//                         ren::AttachmentColorH& color_att,
-//                         ren::RenderContextH& render_context,
-//                         ren::CommandPoolH& command_pool,
-//                         ren::RenderPassH render_pass) {
-//     log::Debug("Recreating swapchain ... STARTED");
-//     log::Debug("Waiting... STARTED");
-//     window.WaitToRecreate();
-//     device->Handle()->waitIdle();
-//     render_context->WaitFences(device, swapchain);
-//
-//
-//     log::Debug("Waiting... DONE");
-//
-//     log::Debug("Clearing... STARTED");
-//     render_context->ClearImageContexts();
-//     render_context->ClearFrameContexts();
-//     color_att.reset();
-//     swapchain.reset();
-//     log::Debug("Clearing... DONE");
-//     auto extent = window.Extent();
-//     auto vk_extent = vk::Extent2D{static_cast<uint32_t>(extent.x),
-//                                   static_cast<uint32_t>(extent.y)};
-//     //
-//     swapchain = log::MakeSharedWithLog<ren::Swapchain>(
-//         physical_device, device, surface, vk_extent,
-//         vk::ImageUsageFlagBits::eColorAttachment
-//     );
-//     swapchain->UpdateImages(device);
-//
-//     color_att = log::MakeSharedWithLog<ren::AttachmentColor>(
-//         "Color attachment", swapchain
-//     );
-//
-//     // render_context->CreateFrameContexts(device, command_pool,
-//     swapchain->Images().size()); render_context->CreateFrameContexts(device,
-//     command_pool, 2); render_context->CreateImageContexts(
-//         device,
-//         swapchain,
-//         render_pass,
-//         std::vector< ren::AttachmentH > { color_att }
-//     );
-//     //
-//     log::Debug("Recreating swapchain ... DONE");
-// }
+void recreate_swapchain(ren::InstanceH &instance, ren::DeviceH &device,
+                        ren::PhysicalDeviceH &physical_device,
+                        ren::SurfaceH &surface, ren::SwapchainH &swapchain,
+                        win::Window &window, ren::AttachmentColorH &color_att,
+                        ren::RenderContextH &render_context,
+                        ren::CommandPoolH &command_pool,
+                        ren::RenderPassH render_pass) {
+    log::Debug("Recreating swapchain ... STARTED");
+    log::Debug("Waiting... STARTED");
+    window.WaitToRecreate();
+    device->Handle().waitIdle();
+    render_context->WaitFences(device, swapchain);
+
+    log::Debug("Waiting... DONE");
+
+    log::Debug("Clearing... STARTED");
+    render_context->ClearImageContexts();
+    render_context->ClearFrameContexts();
+    color_att.reset();
+    swapchain.reset();
+    log::Debug("Clearing... DONE");
+    auto extent = window.Extent();
+    auto vk_extent = vk::Extent2D{static_cast<uint32_t>(extent.x),
+                                  static_cast<uint32_t>(extent.y)};
+    //
+    swapchain = log::MakeSharedWithLog<ren::Swapchain>(
+        physical_device, device, surface, vk_extent,
+        vk::ImageUsageFlagBits::eColorAttachment);
+    swapchain->UpdateImages(device);
+
+    color_att = log::MakeSharedWithLog<ren::AttachmentColor>("Color attachment",
+                                                             swapchain);
+
+    render_context->CreateFrameContexts(device, command_pool,
+                                        swapchain->Images().size());
+    render_context->CreateFrameContexts(device, command_pool, 2);
+    render_context->CreateImageContexts(
+        device, swapchain, render_pass,
+        std::vector<ren::AttachmentH>{color_att});
+    //
+    log::Debug("Recreating swapchain ... DONE");
+}
 // // clang-format on
 
 int main(int argc, char **argv) {
@@ -264,7 +256,7 @@ int main(int argc, char **argv) {
     // 
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
     //
-    auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>("Buffer",
+    auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>(
         device, allocator, static_cast<size_t>(200), 
         vk::BufferUsageFlags(vk::BufferUsageFlagBits::eVertexBuffer),
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
@@ -276,9 +268,9 @@ int main(int argc, char **argv) {
     while (!win->ShouldClose()) {
         win->Update(); 
         if (render_context->BeginFrame(device, swapchain)) { 
-            // recreate_swapchain(inst, device, physical_device, surface,
-            //                    swapchain, *win, color_att, render_context,
-            //                    command_pool, render_pass);
+            recreate_swapchain(inst, device, physical_device, surface,
+                               swapchain, *win, color_att, render_context,
+                               command_pool, render_pass);
             continue;
         }
         { 
@@ -327,9 +319,9 @@ int main(int argc, char **argv) {
             command_buffer->Handle().endRenderPass();
         }
         if (render_context->EndFrame(device, physical_device, swapchain)) {
-            // recreate_swapchain(inst, device, physical_device, surface,
-            //                    swapchain, *win, color_att, render_context,
-            //                    command_pool, render_pass);
+            recreate_swapchain(inst, device, physical_device, surface,
+                               swapchain, *win, color_att, render_context,
+                               command_pool, render_pass);
         }
     }
     log::Info("============== Render loop... ENDED   ==============");

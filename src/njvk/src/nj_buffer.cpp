@@ -27,7 +27,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
       .usage = vma_usage
     };
 
-    handle = std::make_shared< vk::Buffer >();
+    handle = std::make_unique< vk::Buffer >();
 
     VkBuffer pBuffer {};
 
