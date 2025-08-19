@@ -3,6 +3,8 @@
 #define NJ_ATTACHMENT_H
 
 #include "nj_device.h"
+#include "nj_image.h"
+#include "nj_image_view.h"
 
 namespace nj::ren {
 
@@ -49,9 +51,9 @@ using AttachmentH = std::shared_ptr<Attachment>;
 //! needed. This case can happen if each frame (on flight) must have 
 //! own pack of vk-handles
 struct AttachmentData {
-    AttachmentData(AttachmentH attachment, vk::SharedImage image, vk::SharedImageView view);
-    const vk::SharedImage image;
-    const vk::SharedImageView imageView;
+    AttachmentData(AttachmentH attachment, ImageH image, ImageViewH view);
+    const ImageH image;
+    const ImageViewH imageView;
     const AttachmentH attachment;
 };
 using AttachmentDataH = std::shared_ptr<AttachmentData>;

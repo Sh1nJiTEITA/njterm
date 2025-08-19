@@ -24,8 +24,7 @@ GridRenderPass::GridRenderPass(DeviceH device, AttachmentColorH colorAtt) {
         .setPDependencies(&cdep)
     ;
 
-    vk::RenderPass raw = device->Handle()->createRenderPass(info); 
-    handle = vk::SharedRenderPass(raw, device->Handle());
+    handle = device->Handle().createRenderPassUnique(info); 
 }
 
 auto GridRenderPass::HandleName() const noexcept -> std::string { 

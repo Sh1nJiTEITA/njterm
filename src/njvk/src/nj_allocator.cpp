@@ -3,6 +3,7 @@
 
 #include "nj_allocator.h"
 #include "njvklog.h"
+#include "njvkutils.h"
 
 namespace nj::ren {
 
@@ -25,12 +26,16 @@ Allocator::Allocator(ren::InstanceH instance, ren::DeviceH device,
     log::CheckCall((vk::Result)vmaCreateAllocator(&info, &tmp),
                    "Cant create Allocator");
 
-    handle = std::make_shared<VmaAllocator>(tmp);
+    handle = std::make_unique<VmaAllocator>(tmp);
 }
 
 Allocator::~Allocator() { vmaDestroyAllocator(*handle.get()); }
+std::string Allocator::HandleName() const noexcept { return "Allocator"; }
 
-std::shared_ptr<VmaAllocator> Allocator::Handle() { return handle; }
-VmaAllocator *Allocator::CHandle() { return handle.get(); }
+AllocationUnit::AllocationUnit(ren::AllocatorH allocator)
+    : allocator{allocator}, id{GenerateId()} {}
+auto AllocationUnit::Allocation() -> VmaAllocation & { return allocation; }
+auto AllocationUnit::Size() -> size_t { return allocationInfo.size; }
+auto AllocationUnit::Id() -> uint32_t { return id; }
 
 } // namespace nj::ren

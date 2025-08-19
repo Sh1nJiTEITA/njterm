@@ -19,7 +19,6 @@ struct DescriptorTest : public ren::Descriptor {
     virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator) override;
     virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator) override;
     virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator) override;
-
 };
 // clang-format on
 

@@ -10,7 +10,7 @@
 namespace nj::ren {
 
 // clang-format off
-class CommandBuffer : public VulkanObject<vk::CommandBuffer> {
+class CommandBuffer : public VulkanObjectNative<vk::CommandBuffer> {
   public:
     CommandBuffer(ren::DeviceH device, ren::CommandPoolH command_pool);
     auto HandleName() const noexcept -> std::string;

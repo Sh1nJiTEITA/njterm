@@ -1,5 +1,5 @@
 #pragma once
-#include <vulkan/vulkan_shared.hpp>
+#include "nj_surface.h"
 #ifndef NJ_PHYSICAL_DEVICE_H
 #define NJ_PHYSICAL_DEVICE_H
 
@@ -8,12 +8,14 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_shared.hpp>
 
 namespace nj::ren {
 
 // clang-format off
-class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
+class PhysicalDevice : public VulkanObjectManual<vk::PhysicalDevice> {
   public:
     PhysicalDevice(ren::InstanceH instance);
 
@@ -32,14 +34,14 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
     //! Not caching results.
     //! @param phDevice Physical device pointer to check comp
     //! @param surface Surface to check comp with
-    auto PickSurfaceFamilyIndex(vk::SharedSurfaceKHR surface) -> std::optional<size_t>;
+    auto PickSurfaceFamilyIndex(SurfaceH surface) -> std::optional<size_t>;
 
     //! Updates and caches needed (from config) queue family indices
     //! WARN: Must be called before using this class for ren::Instance handle
     //! creation
     //! @param surface Surface handle to find present family index for
-    auto UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void; 
-    auto UpdateQueues(vk::SharedDevice device) -> void;
+    auto UpdateQueueIndices(SurfaceH surface) -> void; 
+    auto UpdateQueues(vk::Device device) -> void;
 
     //! @return Found via UpdateQueueIndices PRESENT queue family index
     auto PresentQueueIndex() -> size_t;
@@ -62,6 +64,9 @@ class PhysicalDevice : public VulkanObject<vk::PhysicalDevice> {
 
     //! Caching queue family properties
     std::vector<vk::QueueFamilyProperties> queueProperties;
+   
+        
+
 };
 using PhysicalDeviceH = std::shared_ptr<PhysicalDevice>;
 

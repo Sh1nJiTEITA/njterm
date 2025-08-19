@@ -7,7 +7,7 @@
 
 namespace nj::ren {
 
-class RenderPass : public VulkanObject<vk::RenderPass> {
+class RenderPass : public VulkanObjectNative<vk::RenderPass> {
   public:
     RenderPass() = default;
     auto HandleName() const noexcept -> std::string override;

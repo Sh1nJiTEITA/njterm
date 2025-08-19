@@ -7,7 +7,7 @@
 
 namespace nj::ren {
 
-class Sampler : public VulkanObject<vk::Sampler> {
+class Sampler : public VulkanObjectNative<vk::Sampler> {
   public:
     Sampler(DeviceH device);
 

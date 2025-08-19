@@ -21,7 +21,7 @@ class Window {
     virtual auto Title() -> std::string = 0;
     virtual auto SetTitle(std::string title) -> void = 0;
     virtual auto VulkanExtensions() const -> std::vector<std::string> = 0;
-    virtual auto CreateSurface(vk::SharedInstance inst) -> vk::SharedSurfaceKHR = 0;
+    virtual auto CreateSurface(vk::Instance inst) -> vk::SurfaceKHR = 0;
     virtual auto ShouldClose() -> bool = 0;
     virtual auto Update() -> void = 0;
     virtual auto WaitToRecreate() -> void = 0;

@@ -9,10 +9,12 @@
 
 namespace nj::ren {
 
-class Instance : public VulkanObject<vk::Instance> {
+class Instance : public VulkanObjectNative<vk::Instance> {
   public:
     Instance(const std::set<std::string> &inext);
     Instance(const std::vector<std::string> &inext);
+    virtual ~Instance();
+
     auto HandleName() const noexcept -> std::string override;
 };
 

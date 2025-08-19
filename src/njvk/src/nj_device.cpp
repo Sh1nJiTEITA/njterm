@@ -57,8 +57,7 @@ Device::Device(ren::InstanceH instance, ren::PhysicalDeviceH phDevice) {
         .setPNext( &h.Handle(build::PhysicalDeviceShaderFeatures()) )
     ;
 
-    auto res = phDevice->Handle()->createDevice(info);
-    handle = vk::SharedDevice(res);
+    handle = phDevice->Handle().createDeviceUnique(info);
 }
 
 auto Device::HandleName() const noexcept -> std::string { return "Device"; }

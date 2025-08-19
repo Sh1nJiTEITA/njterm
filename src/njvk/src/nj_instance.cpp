@@ -5,6 +5,7 @@
 #include "njvklog.h"
 #include "njvkutils.h"
 #include <ranges>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace nj::ren {
 
@@ -57,12 +58,15 @@ Instance::Instance(const std::set<std::string> &inext) {
         .setPEnabledLayerNames(validation_layers)
         .setPNext(&h.Handle(FeaturesStruct(h)))
     ;
-    auto raw = vk::createInstance(inst_info);
-    handle = vk::SharedInstance(raw);
+    handle = vk::createInstanceUnique(inst_info);
 }
+
 Instance::Instance(const std::vector<std::string> &inext) 
     : Instance{ inext | std::ranges::to<std::set>() } 
 {
+}
+
+Instance::~Instance() {
 }
 
 auto Instance::HandleName() const noexcept -> std::string { return "Instance"; }

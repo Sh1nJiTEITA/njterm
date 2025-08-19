@@ -1,4 +1,5 @@
 #include "nj_attachment_color.h"
+#include "nj_image_view.h"
 #include "njlog.h"
 
 namespace nj::ren {
@@ -48,7 +49,7 @@ auto AttachmentColor::CreateData(uint32_t image_idx, DeviceH device)
                        "during creation of "
                        "image color attachment");
     }
-    vk::SharedImage image = sc->Images().at(image_idx);
+    ImageH image = sc->Images().at(image_idx);
 
     const auto com = vk::ComponentMapping{
         vk::ComponentSwizzle::eIdentity,
@@ -66,13 +67,13 @@ auto AttachmentColor::CreateData(uint32_t image_idx, DeviceH device)
     };
 
     const auto view_info = vk::ImageViewCreateInfo{}
-                               .setImage(*image)
+                               .setImage(image->Handle())
                                .setFormat(sc->Format())
                                .setViewType(vk::ImageViewType::e2D)
                                .setComponents(com)
                                .setSubresourceRange(sub);
-    vk::ImageView raw_view = device->Handle()->createImageView(view_info);
-    vk::SharedImageView view = vk::SharedImageView(raw_view, device->Handle());
+    auto raw_view = device->Handle().createImageViewUnique(view_info);
+    auto view = std::make_shared<ren::ImageView>(std::move(raw_view));
     return AttachmentData(shared_from_this(), image, view);
 }
 

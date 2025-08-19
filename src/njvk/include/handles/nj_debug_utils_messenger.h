@@ -7,14 +7,15 @@
 #include <memory>
 
 namespace nj::ren {
-
-class DebugUtilsMessenger : public VulkanObject<vk::DebugUtilsMessengerEXT> {
+// clang-format off
+class DebugUtilsMessenger : public VulkanObjectNative<vk::DebugUtilsMessengerEXT> {
   public:
     DebugUtilsMessenger(ren::InstanceH instance);
+    virtual ~DebugUtilsMessenger();
     auto HandleName() const noexcept -> std::string override;
 };
-
-using InstanceH = std::shared_ptr<Instance>;
+// clang-format on
+using DebugUtilsMessengerH = std::shared_ptr<DebugUtilsMessenger>;
 
 } // namespace nj::ren
 

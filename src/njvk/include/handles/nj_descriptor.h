@@ -1,4 +1,5 @@
 #pragma once
+#include "nj_image_view.h"
 #ifndef NJ_DESCRIPTOR_H
 #define NJ_DESCRIPTOR_H
 
@@ -6,6 +7,7 @@
 #include "nj_buffer.h"
 #include "nj_device.h"
 #include "nj_handle.h"
+#include "nj_image.h"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
@@ -13,7 +15,7 @@
 
 namespace nj::ren {
 
-class DescriptorPool : public VulkanObject<vk::DescriptorPool> {
+class DescriptorPool : public VulkanObjectNative<vk::DescriptorPool> {
   public:
     DescriptorPool(ren::DeviceH device);
     auto HandleName() const noexcept -> std::string override;
@@ -59,7 +61,7 @@ struct Descriptor {
 
     std::unique_ptr<Buffer> buffer;
     std::unique_ptr<Image> image;
-    std::unique_ptr<vk::SharedImageView> imageView;
+    std::unique_ptr<ImageView> imageView;
 };
 // clang-format on
 

@@ -7,15 +7,13 @@
 
 // clang-format off
 namespace nj::ren {
-Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
-                     vk::SharedSurfaceKHR surface, vk::Extent2D ext, vk::ImageUsageFlags flags)
+Swapchain::Swapchain(PhysicalDeviceH phDevice, DeviceH device, SurfaceH surface,
+              vk::Extent2D ext, vk::ImageUsageFlags flags)
     : extent{ext} {
     ren::VarHandles h;
 
 
-
-
-    std::vector<vk::SurfaceFormatKHR> surface_formats = phDevice->Handle()->getSurfaceFormatsKHR(*surface); 
+    std::vector<vk::SurfaceFormatKHR> surface_formats = phDevice->Handle().getSurfaceFormatsKHR(surface->Handle()); 
     if ( surface_formats.empty() ) { 
         log::FatalExit("Now window (SurfaceKHR) formats available for current device");
     }
@@ -23,7 +21,7 @@ Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
                ? vk::Format::eB8G8R8A8Unorm 
                : surface_formats[0].format;
 
-    vk::SurfaceCapabilitiesKHR surface_cap = phDevice->Handle()->getSurfaceCapabilitiesKHR(*surface);
+    vk::SurfaceCapabilitiesKHR surface_cap = phDevice->Handle().getSurfaceCapabilitiesKHR(surface->Handle());
     if (surface_cap.currentExtent.width == (std::numeric_limits<uint32_t>::max())) { 
         extent.width = std::clamp( extent.width, surface_cap.minImageExtent.width, surface_cap.maxImageExtent.width );
         extent.height = std::clamp( extent.height, surface_cap.minImageExtent.height, surface_cap.maxImageExtent.height );
@@ -40,7 +38,7 @@ Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
     vk::CompositeAlphaFlagBitsKHR alpha = build::CompositeAlpha(surface_cap);
 
     auto info = vk::SwapchainCreateInfoKHR{}
-        .setSurface(*surface)
+        .setSurface(surface->Handle())
         .setCompositeAlpha(alpha)
         .setPreTransform(pre_transform)
         .setPresentMode(present_mode)
@@ -75,8 +73,7 @@ Swapchain::Swapchain(ren::PhysicalDeviceH phDevice, ren::DeviceH device,
             .setQueueFamilyIndices(indices);
     }
     
-    vk::SwapchainKHR swapchain_raw = device->Handle()->createSwapchainKHR(info);
-    handle = vk::SharedSwapchainKHR(swapchain_raw, device->Handle(), surface);;
+    handle = device->Handle().createSwapchainKHRUnique(info);
 }
 
 auto Swapchain::Extent() -> vk::Extent2D { return extent; }
@@ -85,19 +82,18 @@ auto Swapchain::Format() -> vk::Format { return format; }
 // clang-format off
 auto Swapchain::UpdateImages(ren::DeviceH device) -> void {
     assert(images.empty() && "No need to update swaphacin images ...");
-    std::vector<vk::Image> new_images = device->Handle()->getSwapchainImagesKHR(*handle);
+    std::vector<vk::Image> new_images = device->Handle().getSwapchainImagesKHR(*handle);
     size_t i = 0;
     for (auto &im : new_images) {
-        auto shared_image = vk::SharedImage(im, device->Handle(), vk::SwapchainOwns::yes);
+        // auto shared_image = vk::SharedImage(im, device->Handle(), vk::SwapchainOwns::yes);
+        auto shared_image = std::make_shared<Image>(im);
         nj::log::Debug("Updating swapchain image #{}", i++);
         images.push_back(std::move(shared_image));
     }
 }
 // clang-format on
 
-auto Swapchain::Images() -> const std::vector<vk::SharedImage> & {
-    return images;
-}
+auto Swapchain::Images() -> const std::vector<ImageH> & { return images; }
 
 auto Swapchain::HandleName() const noexcept -> std::string {
     return "Swapchain";

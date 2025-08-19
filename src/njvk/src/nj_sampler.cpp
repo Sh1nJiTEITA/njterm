@@ -32,8 +32,7 @@ Sampler::Sampler(DeviceH device) {
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 0.0f;
 
-    handle = vk::SharedSampler(device->Handle()->createSampler(samplerInfo),
-                               device->Handle());
+    handle = device->Handle().createSamplerUnique(samplerInfo);
 }
 
 std::string Sampler::HandleName() const noexcept { return "Sampler"; }

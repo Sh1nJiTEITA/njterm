@@ -24,7 +24,7 @@ inline auto CheckCall(vk::Result res, fmt::format_string<Args...> str,
 // clang-format off
 template <typename T, typename... Args,
           std::enable_if_t<
-              std::is_base_of_v<ren::VulkanObject<typename T::HandleType>, T>, bool> = true>
+              std::is_base_of_v<ren::VulkanObjectInterface<typename T::HandleType>, T>, bool> = true>
 decltype(auto) MakeSharedWithLog(Args &&...args) {
     auto delete_log = [](auto obj) { 
         log::Info("Deleting shared vk-wrapper-object \"{}\"", obj->HandleName());

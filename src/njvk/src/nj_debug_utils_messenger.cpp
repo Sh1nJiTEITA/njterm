@@ -1,5 +1,6 @@
 #include "nj_debug_utils_messenger.h"
 #include "njvklog.h"
+#include <vulkan/vulkan_handles.hpp>
 
 static PFN_vkCreateDebugUtilsMessengerEXT messenger_create_func;
 static PFN_vkDestroyDebugUtilsMessengerEXT messenger_delete_func;
@@ -24,7 +25,7 @@ DebugUtilsMessenger::DebugUtilsMessenger(ren::InstanceH instance) {
     auto messenger_info = nj::log::VkLogCreateInfo();
     
     messenger_create_func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-        instance->Handle()->getProcAddr("vkCreateDebugUtilsMessengerEXT")
+        instance->Handle().getProcAddr("vkCreateDebugUtilsMessengerEXT")
     );
     if (!messenger_create_func) { 
         log::FatalExit("Cant find create function for vk::DebugUtilsMessengerEXT. "
@@ -32,7 +33,7 @@ DebugUtilsMessenger::DebugUtilsMessenger(ren::InstanceH instance) {
     }
 
     messenger_delete_func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-        instance->Handle()->getProcAddr("vkDestroyDebugUtilsMessengerEXT")
+        instance->Handle().getProcAddr("vkDestroyDebugUtilsMessengerEXT")
     );
 
     if (!messenger_create_func) { 
@@ -40,11 +41,16 @@ DebugUtilsMessenger::DebugUtilsMessenger(ren::InstanceH instance) {
                        "Need to disable validation to work");
     }
     
-    auto raw = instance->Handle()->createDebugUtilsMessengerEXT(messenger_info);
-    handle = vk::SharedDebugUtilsMessengerEXT(raw, instance->Handle());
+    auto raw = instance->Handle().createDebugUtilsMessengerEXT(messenger_info);
+    handle = vk::UniqueDebugUtilsMessengerEXT(raw, instance->Handle());
     // clang-format off
+}
+
+DebugUtilsMessenger::~DebugUtilsMessenger() { 
 
 }
+
+
 
 auto DebugUtilsMessenger::HandleName() const noexcept -> std::string {
     return "DebugUtilsMessenger";

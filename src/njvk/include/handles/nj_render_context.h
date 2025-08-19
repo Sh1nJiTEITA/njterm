@@ -1,11 +1,11 @@
 #pragma once
-#include "nj_physical_device.h"
 #ifndef NJ_RENDER_CONTEXT_H
 #define NJ_RENDER_CONTEXT_H
 
 #include "nj_attachment.h"
 #include "nj_command_buffer.h"
 #include "nj_device.h"
+#include "nj_physical_device.h"
 #include "nj_render_pass.h"
 #include "nj_render_sync.h"
 #include "nj_swapchain.h"
@@ -14,7 +14,7 @@
 
 namespace nj::ren {
 
-class Framebuffer : public VulkanObject<vk::Framebuffer> {
+class Framebuffer : public VulkanObjectNative<vk::Framebuffer> {
   public:
     Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
                 ren::RenderPassH renderpass,
@@ -59,8 +59,8 @@ using FrameContextH = std::shared_ptr<FrameContext>;
 // clang-format off
 class RenderContext {
   public:
-    RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
-                  ren::RenderPassH renderpass, ren::CommandPoolH command_pool,
+    RenderContext(DeviceH device, SwapchainH swapchain,
+                  RenderPassH renderpass, CommandPoolH command_pool,
                   size_t frames, const std::vector<ren::AttachmentH> &att = {});
 
     void CleanUp();

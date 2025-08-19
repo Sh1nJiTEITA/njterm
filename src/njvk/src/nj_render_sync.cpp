@@ -8,13 +8,13 @@ namespace nj::ren {
 // clang-format off
 SyncData::SyncData(ren::DeviceH device) {
     auto dev = device->Handle();
-    availableSemaphore = vk::SharedSemaphore(dev->createSemaphore({}), dev);
-    finishSemaphore = vk::SharedSemaphore(dev->createSemaphore({}), dev);
+    availableSemaphore = dev.createSemaphoreUnique({});
+    finishSemaphore = dev.createSemaphoreUnique({});
     
     auto fence_info = vk::FenceCreateInfo{}
         .setFlags(vk::FenceCreateFlagBits::eSignaled);
 
-    frameFence = vk::SharedFence(dev->createFence(fence_info), dev);
+    frameFence = dev.createFenceUnique(fence_info);
 }
 
 SyncData::~SyncData() {

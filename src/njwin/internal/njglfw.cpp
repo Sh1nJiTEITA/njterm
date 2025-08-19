@@ -65,11 +65,10 @@ auto WindowGLFW::VulkanExtensions() const -> std::vector<std::string> {
     return res;
 }
 
-auto WindowGLFW::CreateSurface(vk::SharedInstance inst)
-    -> vk::SharedSurfaceKHR {
+auto WindowGLFW::CreateSurface(vk::Instance inst) -> vk::SurfaceKHR {
     VkSurfaceKHR surface_;
-    glfwCreateWindowSurface(*inst, glfwWindowHandle, nullptr, &surface_);
-    return vk::SharedSurfaceKHR(surface_, inst);
+    glfwCreateWindowSurface(inst, glfwWindowHandle, nullptr, &surface_);
+    return surface_;
 }
 
 auto WindowGLFW::ShouldClose() -> bool {

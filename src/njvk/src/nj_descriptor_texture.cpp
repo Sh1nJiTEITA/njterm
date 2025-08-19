@@ -126,10 +126,7 @@ void DescriptorTexture::CreateView(ren::DeviceH device,
     info.subresourceRange.levelCount = 1;
     info.subresourceRange.baseArrayLayer = 0;
     info.subresourceRange.layerCount = 1;
-    imageView = std::make_unique<vk::SharedImageView>(
-        device->Handle()->createImageView(info), 
-        device->Handle()
-    );
+    imageView = std::make_unique<ImageView>(device->Handle().createImageViewUnique(info));
 }
 
 auto DescriptorTexture::ImageInfo() -> vk::DescriptorImageInfo { 
@@ -141,7 +138,7 @@ auto DescriptorTexture::ImageInfo() -> vk::DescriptorImageInfo {
 void DescriptorTexture::BeginCommandBufferSingleCommand() {
     auto info = vk::CommandBufferBeginInfo{}.setFlags(
         vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    commandBuffer->Handle()->begin(info);
+    commandBuffer->Handle().begin(info);
 }
 
 void DescriptorTexture::TransitionImageLayout(vk::ImageLayout o,
@@ -184,8 +181,8 @@ void DescriptorTexture::TransitionImageLayout(vk::ImageLayout o,
     } else {
         log::Error("Wrong layouts to translate texture image");
     }
-    commandBuffer->Handle()->pipelineBarrier(src_stage, dst_stage, {}, {}, {},
-                                             std::array{bar});
+    commandBuffer->Handle().pipelineBarrier(src_stage, dst_stage, {}, {}, {},
+                                            std::array{bar});
     EndCommandBufferSingleCommand();
 }
 
@@ -208,7 +205,7 @@ void DescriptorTexture::CopyBufferToImage() {
             1
         })
         ;
-    commandBuffer->Handle()->copyBufferToImage(
+    commandBuffer->Handle().copyBufferToImage(
         textureBuffer->CHandle(), image->CHandle(), 
         vk::ImageLayout::eTransferDstOptimal, info
     );
@@ -217,8 +214,8 @@ void DescriptorTexture::CopyBufferToImage() {
 // clang-format off
 
 void DescriptorTexture::EndCommandBufferSingleCommand() {
-    commandBuffer->Handle()->end();
-    auto command_buffers = std::array{commandBuffer->CHandle()};
+    commandBuffer->Handle().end();
+    auto command_buffers = std::array{commandBuffer->Handle()};
     auto info = vk::SubmitInfo{}.setCommandBuffers(command_buffers);
     auto &queue = phDevice->GraphicsQueue();
     queue.submit(info, {});

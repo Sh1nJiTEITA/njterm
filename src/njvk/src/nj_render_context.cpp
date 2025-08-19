@@ -28,7 +28,7 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
     std::vector<vk::ImageView> views;
     views.reserve(att.size());
     for (const auto &a : attachments) {
-        views.push_back(*a->imageView);
+        views.push_back(a->imageView->Handle());
     }
     vk::Extent2D extent = swapchain->Extent();
     auto info = vk::FramebufferCreateInfo{}
@@ -36,10 +36,9 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
                     .setWidth(extent.width)
                     .setHeight(extent.height)
                     .setLayers(1)
-                    .setRenderPass(*renderpass->Handle());
+                    .setRenderPass(renderpass->Handle());
 
-    vk::Framebuffer frame_buffer = device->Handle()->createFramebuffer(info);
-    handle = vk::SharedFramebuffer(frame_buffer, device->Handle());
+    handle = device->Handle().createFramebufferUnique(info);
 }
 
 Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
@@ -54,7 +53,7 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
     std::vector<vk::ImageView> views;
     views.reserve(att.size());
     for (const auto &a : attachments) {
-        views.push_back(*a->imageView);
+        views.push_back(a->imageView->Handle());
     }
     vk::Extent2D extent = swapchain->Extent();
     auto info = vk::FramebufferCreateInfo{}
@@ -62,10 +61,9 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
                     .setWidth(extent.width)
                     .setHeight(extent.height)
                     .setLayers(1)
-                    .setRenderPass(*renderpass->Handle());
+                    .setRenderPass(renderpass->Handle());
 
-    vk::Framebuffer frame_buffer = device->Handle()->createFramebuffer(info);
-    handle = vk::SharedFramebuffer(frame_buffer, device->Handle());
+    handle = device->Handle().createFramebufferUnique(info);
 }
 
 auto Framebuffer::HandleName() const noexcept -> std::string {
@@ -77,13 +75,6 @@ ImageContext::ImageContext(FramebufferH framebuffer)
 
 FrameContext::FrameContext(CommandBufferH commandBuffer, SyncDataH syncData)
     : commandBuffer{std::move(commandBuffer)}, syncData{std::move(syncData)} {}
-
-// FrameContext::FrameContext(FrameContext &&other) noexcept
-//     : framebuffer{std::move(other.framebuffer)},
-//       commandBuffer{std::move(other.commandBuffer)},
-//       syncData{std::move(other.syncData)} {
-//     log::Debug("Moving frame context");
-// }
 
 // clang-format off
 RenderContext::RenderContext(ren::DeviceH device, ren::SwapchainH swapchain,
@@ -194,7 +185,7 @@ void RenderContext::ClearImageContexts() {
 
 void RenderContext::WaitFences(DeviceH device, SwapchainH swapchain) {
     for (auto& ctx : frameContexts) { 
-        auto acquire_result = device->Handle()->acquireNextImageKHR(
+        auto acquire_result = device->Handle().acquireNextImageKHR(
             swapchain->CHandle(), 
             UINT64_MAX,
             ctx->syncData->availableSemaphore.get(),
@@ -210,7 +201,7 @@ void RenderContext::WaitFences(DeviceH device, SwapchainH swapchain) {
 }
 
 auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout) -> bool { 
-    auto acquire_result = device->Handle()->acquireNextImageKHR(
+    auto acquire_result = device->Handle().acquireNextImageKHR(
         swapchain->CHandle(), 
         timeout,
         frame_ctx->syncData->availableSemaphore.get(),
@@ -229,8 +220,8 @@ auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, FrameConte
 }
 
 auto RenderContext::ResetFences(DeviceH device, FrameContextH frame_ctx) -> void { 
-    frame_ctx->commandBuffer->Handle()->reset();
-    device->Handle()->resetFences(std::vector{ 
+    frame_ctx->commandBuffer->Handle().reset();
+    device->Handle().resetFences(std::vector{ 
         frame_ctx->syncData->frameFence.get()
     });
 }
@@ -239,19 +230,19 @@ void RenderContext::BeginCommandBuffer(FrameContextH frame_ctx) {
     auto command_buffer_begin_info = vk::CommandBufferBeginInfo{} 
         .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)
         ;
-    frame_ctx->commandBuffer->Handle()->begin(command_buffer_begin_info);
+    frame_ctx->commandBuffer->Handle().begin(command_buffer_begin_info);
 }
 
 
 void RenderContext::EndCommandBuffer(FrameContextH frame_ctx) { 
-    frame_ctx->commandBuffer->Handle()->end();  
+    frame_ctx->commandBuffer->Handle().end();  
 }
 
 void RenderContext::SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH physical_device) { 
     auto wait_semaphores = std::array { frame_ctx->syncData->availableSemaphore.get() };
     auto wait_stages = vk::PipelineStageFlags { vk::PipelineStageFlagBits::eColorAttachmentOutput };
     auto signal_semaphores = std::array { frame_ctx->syncData->finishSemaphore.get() };
-    auto command_buffers = std::array { frame_ctx->commandBuffer->CHandle() };
+    auto command_buffers = std::array { frame_ctx->commandBuffer->Handle() };
     auto submit_info = vk::SubmitInfo{}
         .setWaitSemaphores(wait_semaphores)
         .setWaitDstStageMask(wait_stages)
@@ -264,7 +255,7 @@ void RenderContext::SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH phys
 }
 
 bool RenderContext::SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, SwapchainH swapchain) { 
-    auto swapchains = std::array { swapchain->CHandle() };
+    auto swapchains = std::array { swapchain->Handle() };
     auto signal_semaphores = std::array { frame_ctx->syncData->finishSemaphore.get() };
     auto present_info = vk::PresentInfoKHR{}
         .setWaitSemaphores(signal_semaphores)
@@ -286,7 +277,7 @@ bool RenderContext::SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physi
 }
 
 void RenderContext::WaitFence(DeviceH device, FrameContextH frame_ctx, uint64_t timeout) { 
-    auto _ = device->Handle()->waitForFences(frame_ctx->syncData->frameFence.get(), true, timeout);
+    auto _ = device->Handle().waitForFences(frame_ctx->syncData->frameFence.get(), true, timeout);
 }
 
 

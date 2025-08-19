@@ -7,9 +7,8 @@
 namespace nj::ren {
 
 PhysicalDevice::PhysicalDevice(ren::InstanceH instance) {
-    handle = vk::SharedPhysicalDevice(
-        instance->Handle()->enumeratePhysicalDevices().front(),
-        instance->Handle());
+    handle = std::make_unique<HandleType>(
+        instance->Handle().enumeratePhysicalDevices().front());
 }
 
 auto PhysicalDevice::UpdateQueueProperties() -> void {
@@ -31,19 +30,18 @@ auto PhysicalDevice::PickFamilyIndex(vk::QueueFlagBits flag)
     return std::distance(queueProperties.begin(), it);
 }
 
-auto PhysicalDevice::PickSurfaceFamilyIndex(vk::SharedSurfaceKHR surface)
+auto PhysicalDevice::PickSurfaceFamilyIndex(SurfaceH surface)
     -> std::optional<size_t> {
     UpdateQueueProperties();
     for (size_t idx = 0; idx < queueProperties.size(); ++idx) {
-        const bool has_support = handle->getSurfaceSupportKHR(idx, *surface);
-        if (has_support) {
+        if (handle->getSurfaceSupportKHR(idx, surface->Handle())) {
             return idx;
         }
     }
     return std::nullopt;
 }
 
-auto PhysicalDevice::UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void {
+auto PhysicalDevice::UpdateQueueIndices(SurfaceH surface) -> void {
     // Getting needed queue-types from config
     std::vector<vk::QueueFlagBits> needed = build::NeededQueueFamilyTypes();
     log::Info("Searching for queue-family-indices...");
@@ -67,11 +65,11 @@ auto PhysicalDevice::UpdateQueueIndices(vk::SharedSurfaceKHR surface) -> void {
     presentIndex = present_idx.value();
 }
 
-auto PhysicalDevice::UpdateQueues(vk::SharedDevice device) -> void {
+auto PhysicalDevice::UpdateQueues(vk::Device device) -> void {
     for (const auto &[key, idx] : indices) {
-        queues[key] = device->getQueue(idx, 0);
+        queues[key] = device.getQueue(idx, 0);
     }
-    presentQueue = device->getQueue(presentIndex, 0);
+    presentQueue = device.getQueue(presentIndex, 0);
 }
 
 //! @return Found via UpdateQueueIndices PRESENT queue family index

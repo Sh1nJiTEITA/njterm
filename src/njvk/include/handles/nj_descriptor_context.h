@@ -54,8 +54,8 @@ public:
     void CreateLayouts();
     void AllocateSets();
     void UpdateSets();
-    void BindSets(size_t layout, size_t frame, CommandBufferH cb, vk::SharedPipelineLayout pllayout);
-    auto AllLayouts() -> std::vector<vk::SharedDescriptorSetLayout>;
+    void BindSets(size_t layout, size_t frame, CommandBufferH cb, vk::PipelineLayout pllayout);
+    auto AllLayouts() -> std::vector<vk::DescriptorSetLayout>;
     auto Get(size_t frame, size_t layout, size_t binding) -> Descriptor&;
     
     template<typename T> 

@@ -2,16 +2,11 @@
 #include "njlog.h"
 #include "njvklog.h"
 #include "njvkutils.h"
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 namespace nj::ren {
-
-AllocationUnit::AllocationUnit(ren::AllocatorH allocator)
-    : allocator{allocator}, id{GenerateId()} {}
-auto AllocationUnit::Allocation() -> VmaAllocation & { return allocation; }
-auto AllocationUnit::Size() -> size_t { return allocationInfo.size; }
-auto AllocationUnit::Id() -> uint32_t { return id; }
 
 // clang-format off
 Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size,
@@ -37,7 +32,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
     VkBuffer pBuffer {};
 
     auto res = static_cast<vk::Result>(vmaCreateBuffer(
-        *allocator->CHandle(),
+        allocator->Handle(),
         &static_cast<VkBufferCreateInfo&>(buffer_info),
         &vma_info,
         &pBuffer,
@@ -52,69 +47,21 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
 
 Buffer::~Buffer() { 
     log::Debug("Deleting vkBuffer with id={}...", id);
-    vmaDestroyBuffer(*allocator->CHandle(), *handle, allocation);
+    vmaDestroyBuffer(allocator->Handle(), *handle, allocation);
 }
 
 // clang-format on
 
 auto Buffer::Map() -> void * {
     void *p;
-    vmaMapMemory(*allocator->CHandle(), allocation, &p);
+    vmaMapMemory(allocator->Handle(), allocation, &p);
     return p;
 }
 
 auto Buffer::Unmap() -> void {
-    vmaUnmapMemory(*allocator->CHandle(), allocation);
+    vmaUnmapMemory(allocator->Handle(), allocation);
 }
 
 auto Buffer::HandleName() const noexcept -> std::string { return "Buffer"; }
-
-Image::Image(ren::DeviceH device, ren::AllocatorH allocator, size_t width,
-             size_t height, size_t depth, vk::Format format,
-             vk::ImageUsageFlags usage, VmaMemoryUsage memory_usage,
-             VmaAllocationCreateFlags vma_flags, vk::ImageLayout init_layout)
-    : AllocationUnit{allocator}, handle{} {
-
-    vk::Extent3D ext{static_cast<uint32_t>(width),
-                     static_cast<uint32_t>(height),
-                     static_cast<uint32_t>(depth)};
-
-    // FIXME: Find out if image type of (2D or 3D) is related to
-    // existance of depth etc...
-    auto image_info = vk::ImageCreateInfo{}
-                          .setImageType(vk::ImageType::e2D)
-                          .setFormat(format)
-                          .setExtent(ext)
-                          .setMipLevels(1)
-                          .setArrayLayers(1)
-                          .setSamples(vk::SampleCountFlagBits::e1)
-                          .setTiling(vk::ImageTiling::eOptimal)
-                          .setUsage(usage)
-                          .setSharingMode(vk::SharingMode::eExclusive)
-                          .setInitialLayout(init_layout);
-
-    VmaAllocationCreateInfo vmaAllocInfo{
-        .flags = vma_flags,
-        .usage = memory_usage,
-    };
-
-    VkImage image{};
-    auto res = static_cast<vk::Result>(vmaCreateImage(
-        *allocator->CHandle(), &static_cast<VkImageCreateInfo &>(image_info),
-        &vmaAllocInfo, &image, &allocation, &allocationInfo));
-
-    log::CheckCall(res, "Cant create vulkan image");
-    handle = std::make_shared<vk::Image>(image);
-}
-
-Image::~Image() {
-    log::Debug("Deleting vkImage with id={}...", id);
-    vmaDestroyImage(*allocator->CHandle(), *handle, allocation);
-}
-
-auto Image::Layout() -> vk::ImageLayout & { return layout; }
-auto Image::Width() -> size_t { return width; }
-auto Image::Height() -> size_t { return height; }
-auto Image::HandleName() const noexcept -> std::string { return "Image"; }
 
 } // namespace nj::ren

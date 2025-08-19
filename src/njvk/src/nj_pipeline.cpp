@@ -15,25 +15,25 @@
 namespace nj::ren {
 
 // clang-format off
-auto Pipeline::LayoutHandle() -> vk::SharedPipelineLayout { return layout; }
+auto Pipeline::LayoutHandle() -> vk::PipelineLayout { return *layout; }
 
 auto Pipeline::HandleName() const noexcept -> std::string {
     return "Pipeline";
 }
 
 Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
-                   PipelineBuilderInterfaceH builder,
-                   const std::vector<vk::SharedDescriptorSetLayout> &layouts,
-                   const fs::path &shader_directory) {
+             PipelineBuilderInterfaceH builder,
+             const std::vector<vk::DescriptorSetLayout> &layouts,
+             const fs::path &shader_directory) {
     ren::VarHandles h{};
 
-    auto ll = layouts | std::views::transform([](const auto& l){ return l.get(); }) 
-                      | std::ranges::to<std::vector>() 
-                      ;
+    // auto ll = layouts | std::views::transform([](const auto& l){ return l.get(); }) 
+    //                   | std::ranges::to<std::vector>() 
+    //                   ;
 
-    layout = builder->PipelineLayout(device, ll);
+    layout = builder->PipelineLayout(device, layouts);
 
-    std::vector< vk::SharedShaderModule > modules;
+    std::vector< vk::UniqueShaderModule > modules;
     auto pipeline_info = vk::GraphicsPipelineCreateInfo{}
         .setPVertexInputState( &h.Handle(builder->VertexInputState()) )
         .setPInputAssemblyState( &h.Handle(builder->InputAssemblyState()) )
@@ -42,15 +42,15 @@ Pipeline::Pipeline(DeviceH device, RenderPassH render_pass,
         .setPRasterizationState( &h.Handle(builder->RasterizationState()) )
         .setPMultisampleState( &h.Handle(builder->MultisampleState()) )
         .setPColorBlendState( &h.Handle(builder->ColorBlendState()) )
-        .setRenderPass( render_pass->Handle().get() )
+        .setRenderPass( render_pass->Handle() )
         .setSubpass( 0 )
         .setBasePipelineHandle( VK_NULL_HANDLE )
         .setLayout( *layout )
         .setStages( h.Handle(CreateShaderCreateInfos(device, shader_directory, modules)) )
         ;
-    auto result = device->Handle()->createGraphicsPipeline({}, pipeline_info);
+    auto result = device->Handle().createGraphicsPipelineUnique({}, pipeline_info);
     log::CheckCall(result.result, "Creating pipeline failed...");
-    handle = vk::SharedPipeline(result.value, device->Handle());
+    handle = std::move(result.value);
 }
 
 Pipeline::~Pipeline() { 
@@ -84,23 +84,22 @@ auto ReadShaderFile(const fs::path &path) -> std::vector<char> {
 
 // clang-format off
 auto CreateShaderModule(ren::DeviceH device, const std::vector<char> &data)
-    -> vk::SharedShaderModule {
+    -> vk::UniqueShaderModule {
     
     auto info = vk::ShaderModuleCreateInfo{}
         .setPCode( reinterpret_cast<const uint32_t*>(data.data()) )
         .setCodeSize( data.size() );
 
-    auto shader_module = device->Handle()->createShaderModule(info);
-    return vk::SharedShaderModule(shader_module, device->Handle());
+    return device->Handle().createShaderModuleUnique(info);
 }
 
 
-auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::SharedShaderModule { 
+auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::UniqueShaderModule { 
     auto data = ReadShaderFile(path);
     return CreateShaderModule(device, data);
 }
 
-auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::SharedShaderModule >& modules) -> std::vector<vk::PipelineShaderStageCreateInfo> {
+auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::UniqueShaderModule >& modules) -> std::vector<vk::PipelineShaderStageCreateInfo> {
 
     static std::unordered_map<std::string, vk::ShaderStageFlagBits> stage_bits = {
         {"vert", vk::ShaderStageFlagBits::eVertex},
@@ -128,14 +127,15 @@ auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vec
     log::Info("Total filenames count={}", filenames.size());
     for (size_t i = 0; i < filenames.size(); ++i) {
         log::Debug("Processing file with index={} and path={} and stage={}", i, filenames[i].string(), filenames[i].stem().string());
-        vk::SharedShaderModule module = CreateShaderModule(device, filenames[i]);
-        modules.push_back(module);
+        vk::UniqueShaderModule module = CreateShaderModule(device, filenames[i]);
         // auto& info = *infos.insert(infos.end(), vk::PipelineShaderStageCreateInfo{});
         infos.push_back(vk::PipelineShaderStageCreateInfo{}
             .setPName("main")
             .setModule(module.get())
             .setStage(stage_bits[filenames[i].stem()])
         );
+
+        modules.push_back(std::move(module));
     }
     log::Info("Total count of stages={}", infos.size());
     return infos;
@@ -222,14 +222,11 @@ auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreat
     ;
 }
 
-auto PipelineBuilderTest::PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout { 
+auto PipelineBuilderTest::PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::UniquePipelineLayout { 
     auto info = vk::PipelineLayoutCreateInfo{}
         .setSetLayouts(layouts)
         ;
-    return vk::SharedPipelineLayout(
-        device->Handle()->createPipelineLayout(info), 
-        device->Handle()
-    );
+    return device->Handle().createPipelineLayoutUnique(info);
 }
 
 // clang-format on

@@ -13,15 +13,11 @@ CommandBuffer::CommandBuffer(ren::DeviceH device,
                              ren::CommandPoolH command_pool)
 {
     auto info = vk::CommandBufferAllocateInfo{}
-                    .setCommandPool(command_pool->Handle().get())
+                    .setCommandPool(command_pool->Handle())
                     .setLevel(vk::CommandBufferLevel::ePrimary)
                     .setCommandBufferCount(1);
 
-    handle = vk::SharedCommandBuffer(
-        device->Handle()->allocateCommandBuffers(info).front(),
-        device->Handle(), 
-        command_pool->Handle()
-    );
+    handle = std::move(device->Handle().allocateCommandBuffersUnique(info).front());
 }
 
 auto CommandBuffer::HandleName() const noexcept -> std::string {

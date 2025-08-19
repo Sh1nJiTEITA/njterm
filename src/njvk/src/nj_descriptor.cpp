@@ -19,7 +19,7 @@ DescriptorPool::DescriptorPool(ren::DeviceH device) {
         .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
         ;
 
-    handle = vk::SharedDescriptorPool(device->Handle()->createDescriptorPool(info), device->Handle());
+    handle = device->Handle().createDescriptorPoolUnique(info);
 }
 // clang-format off
 
@@ -53,7 +53,7 @@ auto Descriptor::BufferInfo() -> vk::DescriptorBufferInfo {
 auto Descriptor::ImageInfo() -> vk::DescriptorImageInfo {
     if (image) { 
         return vk::DescriptorImageInfo{}
-            .setImageView(**imageView)
+            .setImageView(imageView->Handle())
             .setImageLayout(image->Layout())
             ;
     }

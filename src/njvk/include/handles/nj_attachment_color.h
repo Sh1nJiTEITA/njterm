@@ -17,7 +17,7 @@ class AttachmentColor : public Attachment {
     auto CreateData(uint32_t image_idx, DeviceH device) -> AttachmentData override;
 
   protected:
-    std::weak_ptr<ren::Swapchain> swapchainWeak;
+    std::weak_ptr<Swapchain> swapchainWeak;
 };
 using AttachmentColorH = std::shared_ptr<AttachmentColor>;
 // clang-format on

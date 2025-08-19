@@ -26,7 +26,7 @@ public:
     //! Each pack can have multiple descriptors -> storing
     //! them inside for each binding in vector
     struct FrameDescriptorSetPack {
-        vk::SharedDescriptorSet set;
+        vk::UniqueDescriptorSet set;
         //! Index => binding
         std::vector<DescriptorU> descriptors;
     };
@@ -66,11 +66,10 @@ public:
             .setBindings(bindings)
             ;
 
-        vk::DescriptorSetLayout res = device->Handle()->createDescriptorSetLayout(layout_create_info);
-        layout = vk::SharedDescriptorSetLayout(res, device->Handle());
+        layout = device->Handle().createDescriptorSetLayoutUnique(layout_create_info);
     }
 
-    auto Layout() noexcept -> vk::SharedDescriptorSetLayout { return layout; }
+    auto Layout() noexcept -> vk::DescriptorSetLayout& { return *layout; }
 
     void Allocate(ren::DeviceH device, ren::DescriptorPoolH pool) { 
         log::Debug("Allocating descriptor set...");
@@ -84,11 +83,9 @@ public:
                 .setDescriptorSetCount(descriptorSetCountPerClass)
                 .setSetLayouts(layouts)
                 ;
-            auto res = device->Handle()->allocateDescriptorSets(info);
+            auto res = device->Handle().allocateDescriptorSetsUnique(info);
             assert(res.size() == descriptorSetCountPerClass);
-            framePacks[frame_idx].set = vk::SharedDescriptorSet(
-                res.front(), device->Handle(), pool->Handle()
-            );
+            framePacks[frame_idx].set = std::move(res.front());
         }
     }
 
@@ -137,13 +134,14 @@ public:
         return *framePacks[frame].descriptors[binding];
     }
 
-    auto DescriptorSetHandle(size_t frame) -> vk::SharedDescriptorSet { 
+    auto DescriptorSetHandle(size_t frame) -> vk::DescriptorSet& { 
         assert(framePacks.size() > frame && "Frame index is too big");
-        return framePacks[frame].set;
+        return *framePacks[frame].set;
     }
 
 private:
-    vk::SharedDescriptorSetLayout layout;
+    // vk::SharedDescriptorSetLayout layout;
+    vk::UniqueDescriptorSetLayout layout;
     //! Holding frame packs continuously in memory
     //! Index => Frame number 
     std::vector< FrameDescriptorSetPack > framePacks;
@@ -294,22 +292,22 @@ public:
                           std::back_inserter(writes));
             }
             log::Debug("==> Calling vk-update func for frame={}", frame);
-            device->Handle()->updateDescriptorSets(writes.size(), writes.data(),
-                                                   0, nullptr);
+            device->Handle().updateDescriptorSets(writes.size(), writes.data(),
+                                                  0, nullptr);
         }
         log::Debug("Updating descriptor sets... DONE");
     }
 
     void BindSets(size_t layout, size_t frame, CommandBufferH cb,
-                  vk::SharedPipelineLayout pllayout) {
-        cb->Handle()->bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pllayout,
+                  vk::PipelineLayout pllayout) {
+        cb->Handle().bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, pllayout,
             static_cast<uint32_t>(layout),
-            std::vector{*sets[layout]->DescriptorSetHandle(frame)}, {});
+            std::vector{sets[layout]->DescriptorSetHandle(frame)}, {});
     }
 
-    auto AllLayouts() -> std::vector<vk::SharedDescriptorSetLayout> {
-        std::vector<vk::SharedDescriptorSetLayout> l;
+    auto AllLayouts() -> std::vector<vk::DescriptorSetLayout> {
+        std::vector<vk::DescriptorSetLayout> l;
         for (auto &[layout, set] : sets) {
             l.push_back(set->Layout());
         }
@@ -353,8 +351,8 @@ DescriptorContext::~DescriptorContext() {
 void DescriptorContext::CreateLayouts() { impl->CreateLayouts(); }
 void DescriptorContext::AllocateSets() { impl->AllocateSets(); } 
 void DescriptorContext::UpdateSets() { impl->UpdateSets(); } 
-void DescriptorContext::BindSets(size_t layout, size_t frame, CommandBufferH cb, vk::SharedPipelineLayout pllayout) { impl->BindSets(layout, frame, cb,  pllayout); } 
-auto DescriptorContext::AllLayouts() -> std::vector<vk::SharedDescriptorSetLayout> { return impl->AllLayouts(); }
+void DescriptorContext::BindSets(size_t layout, size_t frame, CommandBufferH cb, vk::PipelineLayout pllayout) { impl->BindSets(layout, frame, cb,  pllayout); } 
+auto DescriptorContext::AllLayouts() -> std::vector<vk::DescriptorSetLayout> { return impl->AllLayouts(); }
 auto DescriptorContext::Get(size_t frame, size_t layout, size_t binding) -> Descriptor&{ return impl->Get(frame, layout, binding); }
 
 

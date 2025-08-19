@@ -25,31 +25,31 @@ class PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo = 0;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo = 0;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo = 0;
-    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout = 0;
+    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::UniquePipelineLayout = 0;
 };
 using PipelineBuilderInterfaceH = std::shared_ptr< PipelineBuilderInterface >;
 
 // clang-format on
-class Pipeline : public ren::VulkanObject<vk::Pipeline> {
+class Pipeline : public ren::VulkanObjectNative<vk::Pipeline> {
   public:
     Pipeline(DeviceH device, RenderPassH render_pass,
              PipelineBuilderInterfaceH builder,
-             const std::vector<vk::SharedDescriptorSetLayout> &layouts,
+             const std::vector<vk::DescriptorSetLayout> &layouts,
              const fs::path &shader_directory);
     virtual ~Pipeline();
 
-    auto LayoutHandle() -> vk::SharedPipelineLayout;
+    auto LayoutHandle() -> vk::PipelineLayout;
     auto HandleName() const noexcept -> std::string override;
 
-    // private:
-    vk::SharedPipelineLayout layout;
+  private:
+    vk::UniquePipelineLayout layout;
 };
 // clang-format off
 
 auto ReadShaderFile(const fs::path& path) -> std::vector<char>;
-auto CreateShaderModule(ren::DeviceH device, const std::vector<char>& data) -> vk::SharedShaderModule;
-auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::SharedShaderModule;
-auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::SharedShaderModule >& modules) -> std::vector< vk::PipelineShaderStageCreateInfo >;
+auto CreateShaderModule(ren::DeviceH device, const std::vector<char>& data) -> vk::UniqueShaderModule;
+auto CreateShaderModule(ren::DeviceH device, const fs::path& path) -> vk::UniqueShaderModule;
+auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vector< vk::UniqueShaderModule >& modules) -> std::vector< vk::PipelineShaderStageCreateInfo >;
 
 class PipelineBuilderTest : public PipelineBuilderInterface {
   public:
@@ -60,7 +60,7 @@ class PipelineBuilderTest : public PipelineBuilderInterface {
     virtual auto RasterizationState() -> vk::PipelineRasterizationStateCreateInfo override;
     virtual auto MultisampleState() -> vk::PipelineMultisampleStateCreateInfo override;
     virtual auto ColorBlendState() -> vk::PipelineColorBlendStateCreateInfo override;
-    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::SharedPipelineLayout override;
+    virtual auto PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::UniquePipelineLayout override;
   private:
     ren::VarHandles h;
 };
