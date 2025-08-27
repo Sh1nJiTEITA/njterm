@@ -34,8 +34,8 @@ class KeyControl {
     virtual auto ToExternal(Key key) -> KeyType = 0;
 };
 
-auto CreateWindow(const glm::ivec2 &ext) -> std::unique_ptr<Window>;
-auto CreateKeyControl() -> std::unique_ptr<KeyControl>;
+auto CreateWindow(const glm::ivec2 &ext) -> std::shared_ptr<Window>;
+auto CreateKeyControl() -> std::shared_ptr<KeyControl>;
 
 //! FIXME: Supports for now only x11 & wayland
 auto DisplayServer() -> int;

@@ -11,11 +11,11 @@ namespace win {
 
 Window::~Window() {}
 
-auto CreateWindow(const glm::ivec2 &ext) -> std::unique_ptr<Window> {
-    std::unique_ptr<Window> win;
+auto CreateWindow(const glm::ivec2 &ext) -> std::shared_ptr<Window> {
+    std::shared_ptr<Window> win;
 #if defined(NJ_USE_IMPL_GLFW)
     nj::log::Info("Creating window with impl GLFW");
-    win = std::make_unique<glfw::WindowGLFW>("njterm", ext);
+    win = std::make_shared<glfw::WindowGLFW>("njterm", ext);
 #elif
     static_assert(false, "No window impl is chosen");
 #endif
@@ -23,10 +23,10 @@ auto CreateWindow(const glm::ivec2 &ext) -> std::unique_ptr<Window> {
     return win;
 }
 
-auto CreateKeyControl() -> std::unique_ptr<KeyControl> {
+auto CreateKeyControl() -> std::shared_ptr<KeyControl> {
 #if defined(NJ_USE_IMPL_GLFW)
     nj::log::Info("Creating key control with impl GLFW");
-    return std::make_unique<glfw::KeyControlGLFW>();
+    return std::make_shared<glfw::KeyControlGLFW>();
 #elif
     static_assert(false, "No window impl is chosen");
 #endif

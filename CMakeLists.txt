@@ -5,6 +5,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_options(-ftime-trace)
+endif()
+
 # CMAKE ADDS
 include("cmake/find_dep.cmake")
 include("cmake/compile_shaders.cmake")
@@ -33,14 +38,17 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njwin")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njcon")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njft")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njapp")
 
 # EXE
 add_executable(njterm ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-target_link_libraries(njterm PRIVATE njpt)
-target_link_libraries(njterm PRIVATE njvk)
-target_link_libraries(njterm PRIVATE njwin)
-target_link_libraries(njterm PRIVATE njcon)
-target_link_libraries(njterm PRIVATE njft)
+target_link_libraries(njterm PRIVATE njapp)
+
+# target_link_libraries(njterm PRIVATE njpt)
+# target_link_libraries(njterm PRIVATE njvk)
+# target_link_libraries(njterm PRIVATE njwin)
+# target_link_libraries(njterm PRIVATE njcon)
+# target_link_libraries(njterm PRIVATE njft)
 
 target_compile_definitions(
   njterm

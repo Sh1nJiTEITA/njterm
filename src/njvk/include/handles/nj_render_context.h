@@ -46,7 +46,6 @@ using ImageContextH = std::shared_ptr<ImageContext>;
 class FrameContext {
   public:
     FrameContext(CommandBufferH, SyncDataH);
-    FrameContext(FrameContext &&) noexcept = default;
 
     CommandBufferH commandBuffer;
     SyncDataH syncData;
@@ -61,47 +60,50 @@ class RenderContext {
   public:
     RenderContext(DeviceH device, SwapchainH swapchain,
                   RenderPassH renderpass, CommandPoolH command_pool,
-                  size_t frames, const std::vector<ren::AttachmentH> &att = {});
-
-    void CleanUp();
-
-    auto GetFrameContext(size_t frame) -> FrameContextH ;
-    auto GetImageContext(size_t image) -> ImageContextH ;
+                  size_t frames, size_t frame_objects_mode, 
+                  const std::vector<ren::AttachmentH> &att = {});
 
     auto CurrentImageIndex() const noexcept -> size_t;
     auto CurrentFrameIndex() const noexcept -> size_t;
     auto CurrentCommandBuffer() noexcept -> CommandBufferH;
     auto CurrentFramebuffer() noexcept -> FramebufferH;
+    auto CurrentSyncData() noexcept -> SyncDataH;
 
     bool BeginFrame(DeviceH device, SwapchainH swapchain);
     bool EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain);
 
-    void CreateFrameContexts(DeviceH device, CommandPoolH command_pool, size_t frames);
-    void ClearFrameContexts();
-    void CreateImageContexts(DeviceH device, SwapchainH swapchain, RenderPassH renderpass,
+    void CreateCmds(DeviceH device, CommandPoolH command_pool);
+    void ClearCmds();
+    void CreateSyncDatas(ren::DeviceH device);
+    void ClearSyncDatas();
+
+    void CreateFramebuffers(DeviceH device, SwapchainH swapchain, RenderPassH renderpass,
                              const std::vector<AttachmentH> &attachments);
-    void ClearImageContexts();
+    void ClearFramebuffers();
  
-    void WaitFences(DeviceH device, SwapchainH swapchain);
     
   private:
-    auto GetNewImage(DeviceH device, SwapchainH swapchain, FrameContextH frame_ctx, uint64_t timeout)-> bool;
+    auto GetNewImage(DeviceH device, SwapchainH swapchain, uint64_t timeout)-> bool;
 
-    void ResetFences(DeviceH device, FrameContextH frame_ctx);
-    void BeginCommandBuffer(FrameContextH frame_ctx);
-    void EndCommandBuffer(FrameContextH frame_ctx);
-    void SubmitGraphics(FrameContextH frame_ctx, PhysicalDeviceH physical_device);
-    bool SubmitPresent(FrameContextH frame_ctx, PhysicalDeviceH physical_device, 
-                       SwapchainH swapchain);
-    void WaitFence(DeviceH device, FrameContextH frame_ctx, uint64_t timeout);
+    void ResetFences(DeviceH device);
+    void BeginCommandBuffer();
+    void EndCommandBuffer();
+    void SubmitGraphics(PhysicalDeviceH physical_device);
+    bool SubmitPresent(PhysicalDeviceH physical_device, SwapchainH swapchain);
+    void WaitFence(DeviceH device, uint64_t timeout);
+    void UpdateFrameValue();
 
   private:
+    const size_t frameObjectsMode;
     const size_t framesInFlight;
+    size_t swapchainImages;
+
     uint32_t currentImageIndex;
     uint32_t currentFrameIndex;
   
-    std::vector<FrameContextH> frameContexts;
-    std::vector<ImageContextH> imageContexts;
+    std::vector<FramebufferH> framebuffers;
+    std::vector<SyncDataH> syncDatas;
+    std::vector<CommandBufferH> cmds;
 };
 using RenderContextH = std::shared_ptr<RenderContext>;
 

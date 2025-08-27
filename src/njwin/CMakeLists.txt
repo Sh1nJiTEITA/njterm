@@ -26,3 +26,4 @@ target_link_libraries(njwin PRIVATE njlog)
 
 find_package(Vulkan REQUIRED)
 target_link_libraries(njwin PRIVATE ${Vulkan_LIBRARY})
+target_include_directories(njwin PRIVATE ${Vulkan_INCLUDE_DIRS})

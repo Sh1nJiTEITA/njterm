@@ -44,8 +44,9 @@ target_include_directories(
 find_package(Vulkan REQUIRED)
 
 target_link_libraries(njvk PRIVATE ${Vulkan_LIBRARY})
+target_include_directories(njvk PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(
-  njvk PRIVATE njlog njcon vulkan-memory-allocator::vulkan-memory-allocator)
+  njvk PRIVATE njlog njcon #[[ vulkan-memory-allocator ]])
 
 target_compile_definitions(
   njvk

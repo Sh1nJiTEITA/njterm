@@ -45,6 +45,7 @@ auto ValidationExtensions() -> std::vector<std::string>;
 auto ValidationFeatures() -> std::vector<int>;
 auto Buffering() -> uint32_t;
 auto Frames() -> uint32_t;
+auto FrameObjectsMode() -> uint32_t;
 
 } // namespace nj::con
 

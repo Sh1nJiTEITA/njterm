@@ -15,12 +15,22 @@ class CompressorRecipe(ConanFile):
 
     def requirements(self):
         assert self.requires is not None
+        assert self.tool_requires is not None
         self.requires("fmt/11.2.0")
         self.requires("lua/5.4.7")
         self.requires("glfw/3.4")
         self.requires("glm/1.0.1")
         # self.requires("vulkan-headers/1.4.309.0", override=True)
         # self.requires("vulkan-loader/1.4.309.0", override=True)
-        self.requires("vulkan-memory-allocator/3.0.1")
+        # self.requires("vulkan-memory-allocator/3.0.1")
         self.requires("freetype/2.13.2")
         self.requires("fontconfig/2.15.0")
+        #
+        # self.tool_requires("vulkan-headers/system")
+        # self.tool_requires("vulkan-loader/system")
+
+    def package_info(self):
+        # Remove any transitive links to Conan Vulkan
+        self.cpp_info.requires = [
+            r for r in self.cpp_info.requires if not r.startswith("vulkan")
+        ]
