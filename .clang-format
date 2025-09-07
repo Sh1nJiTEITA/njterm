@@ -7,7 +7,9 @@ AlignAfterOpenBracket: BlockIndent
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
 ReferenceAlignment: Left
-BinPackParameters: OnePerLine
+IndentCaseLabels: true
+AccessModifierOffset: -4
+# BinPackParameters: OnePerLine
 
 #
 # # BreakBeforeDefinitionKeywords: Always

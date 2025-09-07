@@ -140,8 +140,7 @@ void Context::InitPresentHandles() {
     cmdPool = log::MakeSharedWithLog<ren::CommandPool>(device, phDevice);
     renderContext = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, gridRenderPass, cmdPool,
-        con::Frames(), con::FrameObjectsMode(),
-        std::vector<ren::AttachmentH>{attColor}
+        con::Frames(), std::vector<ren::AttachmentH>{attColor}
     );
 }
 

@@ -25,9 +25,6 @@ const char* stdConfigFile = R"lua(
             buffering = 2,
             frames = 2,
             -- TODO: Does not work for now...
-
-            ---@type "per_frame" | "per_image"
-            frame_objects_mode = "per_frame"
         }, -- vk
         test = { 
             field = 1488,
@@ -119,16 +116,5 @@ auto ValidationFeatures() -> std::vector<int> {
 auto Buffering() -> uint32_t { return Get("vk.buffering").As<uint32_t>(); }
 
 auto Frames() -> uint32_t { return Get("vk.frames").As<uint32_t>(); }
-
-auto FrameObjectsMode() -> uint32_t {
-    auto v = Get("vk.frame_objects_mode").As<std::string>();
-    if (v == "per_frame") {
-        return 0;
-    } else if (v == "per_image") {
-        return 1;
-    } else {
-        return 1;
-    }
-}
 
 } // namespace nj::con

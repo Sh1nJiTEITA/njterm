@@ -18,9 +18,7 @@ auto Framebuffer::Attachement(size_t idx) -> const ren::AttachmentDataH& {
 }
 
 Framebuffer::Framebuffer(
-    ren::DeviceH device,
-    ren::SwapchainH swapchain,
-    ren::RenderPassH renderpass,
+    ren::DeviceH device, ren::SwapchainH swapchain, ren::RenderPassH renderpass,
     const std::vector<ren::AttachmentDataH>& att
 )
     : attachments{att} {
@@ -45,9 +43,7 @@ Framebuffer::Framebuffer(
 }
 
 Framebuffer::Framebuffer(
-    ren::DeviceH device,
-    ren::SwapchainH swapchain,
-    ren::RenderPassH renderpass,
+    ren::DeviceH device, ren::SwapchainH swapchain, ren::RenderPassH renderpass,
     std::vector<ren::AttachmentDataH>&& att
 )
     : attachments{std::move(att)} {
@@ -83,18 +79,13 @@ FrameContext::FrameContext(CommandBufferH commandBuffer, SyncDataH syncData)
     : commandBuffer{std::move(commandBuffer)}, syncData{std::move(syncData)} {}
 
 RenderContext::RenderContext(
-    DeviceH device,
-    SwapchainH swapchain,
-    RenderPassH renderpass,
-    CommandPoolH command_pool,
-    size_t frames,
-    size_t frame_objects_mode,
+    DeviceH device, SwapchainH swapchain, RenderPassH renderpass,
+    CommandPoolH command_pool, size_t frames,
     const std::vector<ren::AttachmentH>& att
 )
     : currentImageIndex{0},
       currentFrameIndex{0},
       framesInFlight{frames},
-      frameObjectsMode{frame_objects_mode},
       swapchainImages{swapchain->Images().size()} {
 
     log::Debug("Creating RenderContext...");
@@ -121,27 +112,26 @@ auto RenderContext::CurrentFrameIndex() const noexcept -> size_t {
     return currentFrameIndex;
 }
 auto RenderContext::CurrentCommandBuffer() noexcept -> CommandBufferH {
-    // switch (frameObjectsMode) {
-    //     case 0: return cmds[currentFrameIndex]; break;
-    //     case 1: return cmds[currentImageIndex]; break;
-    //     default: _NJ_CANT_GET_CURRENT("CommandBuffer");
-    // };
     return cmds[currentFrameIndex];
 }
+
 auto RenderContext::CurrentFramebuffer() noexcept -> FramebufferH {
     return framebuffers[currentImageIndex];
 }
-auto RenderContext::CurrentSyncData() noexcept -> SyncDataH {
-    switch (frameObjectsMode) {
-    case 0:
-        return syncDatas[currentFrameIndex];
-        break;
-    case 1:
-        return syncDatas[currentImageIndex];
-        break;
-    default:
-        _NJ_CANT_GET_CURRENT("SyncData");
-    };
+
+auto RenderContext::CurrentAcquireSemaphore() noexcept -> vk::Semaphore {
+    auto sync_data = syncDatas[currentFrameIndex];
+    return sync_data->availableSemaphore.get();
+}
+
+auto RenderContext::CurrentSubmitSemaphore() noexcept -> vk::Semaphore {
+    auto sync_data = syncDatas[currentImageIndex];
+    return sync_data->finishSemaphore.get();
+}
+
+auto RenderContext::CurrentFrameFence() noexcept -> vk::Fence {
+    auto sync_data = syncDatas[currentFrameIndex];
+    return sync_data->frameFence.get();
 }
 
 auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> bool {
@@ -166,32 +156,16 @@ auto RenderContext::EndFrame(
 
 // clang-format off
 void RenderContext::CreateCmds(ren::DeviceH device, ren::CommandPoolH command_pool) {
-    size_t count;
-    switch (frameObjectsMode) {
-        case 0: count = framesInFlight; break;
-        case 1: count = framesInFlight; break;
-        default: _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
-    };
-
-    cmds.reserve(count);
-
-    for (size_t i = 0; i < count; ++i) {
+    cmds.reserve(framesInFlight);
+    for (size_t i = 0; i < framesInFlight; ++i) {
         log::Debug("[{}] Creating command_buffer", i);
         cmds.push_back(std::make_shared<ren::CommandBuffer>(device, command_pool));
     }
 }
 
 void RenderContext::CreateSyncDatas(ren::DeviceH device) {
-    size_t count;
-    switch (frameObjectsMode) {
-        case 0: count = swapchainImages; break;
-        case 1: count = swapchainImages; break;
-        default: _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
-    };
-
-    syncDatas.reserve(count);
-
-    for (size_t i = 0; i < count; ++i) {
+    syncDatas.reserve(swapchainImages);
+    for (size_t i = 0; i < swapchainImages; ++i) {
         log::Debug("[{}] Creating sync-data", i);
         syncDatas.push_back(std::make_shared<ren::SyncData>(device));
     }
@@ -231,23 +205,9 @@ void RenderContext::ClearFramebuffers() {
 auto RenderContext::GetNewImage(
     DeviceH device, SwapchainH swapchain, uint64_t timeout
 ) -> bool {
-    switch (frameObjectsMode) {
-    case 0:
-        return GetNewImageForPerFrame(device, swapchain, timeout);
-    case 1:
-        return GetNewImageForPerFrame(device, swapchain, timeout);
-    default:
-        _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
-    };
-    return false;
-}
 
-auto RenderContext::GetNewImageForPerFrame(
-    DeviceH device, SwapchainH swapchain, uint64_t timeout
-) -> bool {
-    auto sync_data = syncDatas[currentFrameIndex];
     auto acquire_result = device->Handle().acquireNextImageKHR(
-        swapchain->CHandle(), timeout, sync_data->availableSemaphore.get(),
+        swapchain->CHandle(), timeout, CurrentAcquireSemaphore(),
         VK_NULL_HANDLE, &currentImageIndex
     );
     if (acquire_result == vk::Result::eErrorOutOfDateKHR) {
@@ -260,33 +220,8 @@ auto RenderContext::GetNewImageForPerFrame(
     return false;
 }
 
-auto RenderContext::GetNewImageForPerImage(
-    DeviceH device, SwapchainH swapchain, uint64_t timeout
-) -> bool {
-    if (!std::numeric_limits<uint32_t>::max()) {
-        auto sync_data = CurrentSyncData();
-        auto acquire_result = device->Handle().acquireNextImageKHR(
-            swapchain->CHandle(), timeout, sync_data->availableSemaphore.get(),
-            VK_NULL_HANDLE, &currentImageIndex
-        );
-        if (acquire_result == vk::Result::eErrorOutOfDateKHR) {
-            log::Error("Need to recreate swachain... [1]");
-            return true;
-        } else if (acquire_result != vk::Result::eSuccess &&
-                   acquire_result != vk::Result::eSuboptimalKHR) {
-            log::FatalExit("Failed to acquire swapchain image...");
-        }
-    }
-
-    return false;
-}
-
 auto RenderContext::ResetFences(DeviceH device) -> void {
-    // auto cmd = CurrentCommandBuffer();
-    // cmd->Handle().reset();
-    // auto sync_data = CurrentSyncData();
-    auto sd = syncDatas[currentFrameIndex];
-    device->Handle().resetFences(std::vector{sd->frameFence.get()});
+    device->Handle().resetFences(std::vector{CurrentFrameFence()});
 }
 
 void RenderContext::BeginCommandBuffer() {
@@ -303,39 +238,33 @@ void RenderContext::EndCommandBuffer() {
 }
 
 void RenderContext::SubmitGraphics(PhysicalDeviceH physical_device) {
-    auto sd_per_frame = syncDatas[currentFrameIndex];
-    auto sd_per_image = syncDatas[currentImageIndex];
     auto cmd = CurrentCommandBuffer();
-    auto wait_semaphores = std::array{sd_per_frame->availableSemaphore.get()};
+    auto wait_semaphores = std::array{CurrentAcquireSemaphore()};
     auto wait_stages = vk::PipelineStageFlags{
         vk::PipelineStageFlagBits::eColorAttachmentOutput
     };
-    auto signal_semaphores = std::array{sd_per_image->finishSemaphore.get()};
+    auto signal_semaphores = std::array{CurrentSubmitSemaphore()};
     auto command_buffers = std::array{cmd->Handle()};
     auto submit_info = vk::SubmitInfo{}
                            .setWaitSemaphores(wait_semaphores)
                            .setWaitDstStageMask(wait_stages)
                            .setCommandBuffers(command_buffers)
                            .setSignalSemaphores(signal_semaphores);
-    // log::Debug("GraphicsQueue={}",
-    // physical_device->QueueIndex(vk::QueueFlagBits::eGraphics));
+
     auto& graphics_queue = physical_device->GraphicsQueue();
-    graphics_queue.submit(submit_info, sd_per_frame->frameFence.get());
+    graphics_queue.submit(submit_info, CurrentFrameFence());
 }
 
 bool RenderContext::SubmitPresent(
     PhysicalDeviceH physical_device, SwapchainH swapchain
 ) {
-    auto sd_per_frame = syncDatas[currentFrameIndex];
-    auto sd_per_image = syncDatas[currentImageIndex];
     auto swapchains = std::array{swapchain->Handle()};
-    auto signal_semaphores = std::array{sd_per_image->finishSemaphore.get()};
+    auto signal_semaphores = std::array{CurrentSubmitSemaphore()};
     auto present_info = vk::PresentInfoKHR{}
                             .setWaitSemaphores(signal_semaphores)
                             .setSwapchains(swapchains)
                             .setImageIndices(currentImageIndex);
 
-    // log::Debug("PresentQueue={}", physical_device->PresentQueueIndex());
     auto& present_queue = physical_device->PresentQueue();
     auto res_qp = present_queue.presentKHR(&present_info);
 
@@ -350,10 +279,7 @@ bool RenderContext::SubmitPresent(
 }
 
 void RenderContext::WaitFence(DeviceH device, uint64_t timeout) {
-    // auto sync_data = CurrentSyncData();
-    auto sd = syncDatas[currentFrameIndex];
-    auto _ =
-        device->Handle().waitForFences(sd->frameFence.get(), true, timeout);
+    auto _ = device->Handle().waitForFences(CurrentFrameFence(), true, timeout);
 }
 
 void RenderContext::UpdateFrameValue() {
