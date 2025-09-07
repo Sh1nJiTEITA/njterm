@@ -16,15 +16,21 @@ namespace nj::ren {
 
 class Framebuffer : public VulkanObjectNative<vk::Framebuffer> {
   public:
-    Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
-                ren::RenderPassH renderpass,
-                const std::vector<ren::AttachmentDataH> &att);
+    Framebuffer(
+        ren::DeviceH device,
+        ren::SwapchainH swapchain,
+        ren::RenderPassH renderpass,
+        const std::vector<ren::AttachmentDataH>& att
+    );
 
-    Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
-                ren::RenderPassH renderpass,
-                std::vector<ren::AttachmentDataH> &&att);
+    Framebuffer(
+        ren::DeviceH device,
+        ren::SwapchainH swapchain,
+        ren::RenderPassH renderpass,
+        std::vector<ren::AttachmentDataH>&& att
+    );
 
-    auto Attachement(size_t idx) -> const ren::AttachmentDataH &;
+    auto Attachement(size_t idx) -> const ren::AttachmentDataH&;
     auto HandleName() const noexcept -> std::string override;
 
   private:
@@ -84,6 +90,8 @@ class RenderContext {
     
   private:
     auto GetNewImage(DeviceH device, SwapchainH swapchain, uint64_t timeout)-> bool;
+    auto GetNewImageForPerFrame(DeviceH device, SwapchainH swapchain, uint64_t timeout) -> bool;
+    auto GetNewImageForPerImage(DeviceH device, SwapchainH swapchain, uint64_t timeout) -> bool;
 
     void ResetFences(DeviceH device);
     void BeginCommandBuffer();

@@ -13,13 +13,16 @@
 
 namespace nj::ren {
 
-auto Framebuffer::Attachement(size_t idx) -> const ren::AttachmentDataH & {
+auto Framebuffer::Attachement(size_t idx) -> const ren::AttachmentDataH& {
     return attachments.at(idx);
 }
 
-Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
-                         ren::RenderPassH renderpass,
-                         const std::vector<ren::AttachmentDataH> &att)
+Framebuffer::Framebuffer(
+    ren::DeviceH device,
+    ren::SwapchainH swapchain,
+    ren::RenderPassH renderpass,
+    const std::vector<ren::AttachmentDataH>& att
+)
     : attachments{att} {
     if (attachments.empty()) {
         log::Warn("Empty attachments array inside framebuffer ctor");
@@ -27,7 +30,7 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
     }
     std::vector<vk::ImageView> views;
     views.reserve(att.size());
-    for (const auto &a : attachments) {
+    for (const auto& a : attachments) {
         views.push_back(a->imageView->Handle());
     }
     vk::Extent2D extent = swapchain->Extent();
@@ -41,9 +44,12 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
     handle = device->Handle().createFramebufferUnique(info);
 }
 
-Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
-                         ren::RenderPassH renderpass,
-                         std::vector<ren::AttachmentDataH> &&att)
+Framebuffer::Framebuffer(
+    ren::DeviceH device,
+    ren::SwapchainH swapchain,
+    ren::RenderPassH renderpass,
+    std::vector<ren::AttachmentDataH>&& att
+)
     : attachments{std::move(att)} {
     log::Debug("Framebuffer creation with move");
     if (attachments.empty()) {
@@ -52,7 +58,7 @@ Framebuffer::Framebuffer(ren::DeviceH device, ren::SwapchainH swapchain,
     }
     std::vector<vk::ImageView> views;
     views.reserve(att.size());
-    for (const auto &a : attachments) {
+    for (const auto& a : attachments) {
         views.push_back(a->imageView->Handle());
     }
     vk::Extent2D extent = swapchain->Extent();
@@ -76,18 +82,21 @@ ImageContext::ImageContext(FramebufferH framebuffer)
 FrameContext::FrameContext(CommandBufferH commandBuffer, SyncDataH syncData)
     : commandBuffer{std::move(commandBuffer)}, syncData{std::move(syncData)} {}
 
-// clang-format off
-RenderContext::RenderContext(DeviceH device, SwapchainH swapchain,
-                             RenderPassH renderpass, CommandPoolH command_pool,
-                             size_t frames, size_t frame_objects_mode, 
-                             const std::vector<ren::AttachmentH> &att) 
-    : currentImageIndex{ 0 } 
-    , currentFrameIndex{ 0 } 
-    , framesInFlight{ frames } 
-    , frameObjectsMode{ frame_objects_mode } 
-    , swapchainImages{ swapchain->Images().size() } 
-{
-    
+RenderContext::RenderContext(
+    DeviceH device,
+    SwapchainH swapchain,
+    RenderPassH renderpass,
+    CommandPoolH command_pool,
+    size_t frames,
+    size_t frame_objects_mode,
+    const std::vector<ren::AttachmentH>& att
+)
+    : currentImageIndex{0},
+      currentFrameIndex{0},
+      framesInFlight{frames},
+      frameObjectsMode{frame_objects_mode},
+      swapchainImages{swapchain->Images().size()} {
+
     log::Debug("Creating RenderContext...");
     CreateCmds(device, command_pool);
     CreateSyncDatas(device);
@@ -95,12 +104,23 @@ RenderContext::RenderContext(DeviceH device, SwapchainH swapchain,
     log::Debug("Context was build");
 }
 
-#define _NJ_CANT_GET_CURRENT(NAME) { log::FatalExit("Cant get current" NAME ". Invalid frameObjectsMode"); return 0; } 
-#define _NJ_CANT_GET_CURRENT_2(NAME) { log::FatalExit("Cant get current" NAME ". Invalid frameObjectsMode"); } 
+#define _NJ_CANT_GET_CURRENT(NAME)                                             \
+    {                                                                          \
+        log::FatalExit("Cant get current" NAME ". Invalid frameObjectsMode");  \
+        return 0;                                                              \
+    }
+#define _NJ_CANT_GET_CURRENT_2(NAME)                                           \
+    {                                                                          \
+        log::FatalExit("Cant get current" NAME ". Invalid frameObjectsMode");  \
+    }
 
-auto RenderContext::CurrentImageIndex() const noexcept -> size_t { return currentImageIndex; }
-auto RenderContext::CurrentFrameIndex() const noexcept -> size_t { return currentFrameIndex; }
-auto RenderContext::CurrentCommandBuffer() noexcept -> CommandBufferH { 
+auto RenderContext::CurrentImageIndex() const noexcept -> size_t {
+    return currentImageIndex;
+}
+auto RenderContext::CurrentFrameIndex() const noexcept -> size_t {
+    return currentFrameIndex;
+}
+auto RenderContext::CurrentCommandBuffer() noexcept -> CommandBufferH {
     // switch (frameObjectsMode) {
     //     case 0: return cmds[currentFrameIndex]; break;
     //     case 1: return cmds[currentImageIndex]; break;
@@ -108,33 +128,38 @@ auto RenderContext::CurrentCommandBuffer() noexcept -> CommandBufferH {
     // };
     return cmds[currentFrameIndex];
 }
-auto RenderContext::CurrentFramebuffer() noexcept -> FramebufferH { 
+auto RenderContext::CurrentFramebuffer() noexcept -> FramebufferH {
     return framebuffers[currentImageIndex];
 }
-auto RenderContext::CurrentSyncData() noexcept -> SyncDataH { 
+auto RenderContext::CurrentSyncData() noexcept -> SyncDataH {
     switch (frameObjectsMode) {
-        case 0: return syncDatas[currentFrameIndex]; break;
-        case 1: return syncDatas[currentImageIndex]; break;
-        default: _NJ_CANT_GET_CURRENT("SyncData");
+    case 0:
+        return syncDatas[currentFrameIndex];
+        break;
+    case 1:
+        return syncDatas[currentImageIndex];
+        break;
+    default:
+        _NJ_CANT_GET_CURRENT("SyncData");
     };
 }
 
-auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> bool { 
+auto RenderContext::BeginFrame(DeviceH device, SwapchainH swapchain) -> bool {
     constexpr auto timeout = std::numeric_limits<uint64_t>::max();
-    // WaitFence(device, timeout);
-    bool sts = GetNewImage(device, swapchain, timeout);
+    WaitFence(device, timeout);
     ResetFences(device);
+    bool sts = GetNewImage(device, swapchain, timeout);
     BeginCommandBuffer();
     return sts;
 }
 
-auto RenderContext::EndFrame(DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain) -> bool { 
+auto RenderContext::EndFrame(
+    DeviceH device, PhysicalDeviceH physical_device, SwapchainH swapchain
+) -> bool {
     constexpr auto timeout = std::numeric_limits<uint64_t>::max();
     EndCommandBuffer();
     SubmitGraphics(physical_device);
     bool sts = SubmitPresent(physical_device, swapchain);
-    // WaitFences(device, frame_ctx, timeout);
-    WaitFence(device, timeout);
     UpdateFrameValue();
     return sts;
 }
@@ -144,7 +169,7 @@ void RenderContext::CreateCmds(ren::DeviceH device, ren::CommandPoolH command_po
     size_t count;
     switch (frameObjectsMode) {
         case 0: count = framesInFlight; break;
-        case 1: count = swapchainImages; break;
+        case 1: count = framesInFlight; break;
         default: _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
     };
 
@@ -159,7 +184,7 @@ void RenderContext::CreateCmds(ren::DeviceH device, ren::CommandPoolH command_po
 void RenderContext::CreateSyncDatas(ren::DeviceH device) {
     size_t count;
     switch (frameObjectsMode) {
-        case 0: count = framesInFlight; break;
+        case 0: count = swapchainImages; break;
         case 1: count = swapchainImages; break;
         default: _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
     };
@@ -202,97 +227,137 @@ void RenderContext::ClearFramebuffers() {
     framebuffers.clear();
 }
 
-auto RenderContext::GetNewImage(DeviceH device, SwapchainH swapchain, uint64_t timeout) -> bool { 
-    auto sync_data = CurrentSyncData();
+// clang-format on
+auto RenderContext::GetNewImage(
+    DeviceH device, SwapchainH swapchain, uint64_t timeout
+) -> bool {
+    switch (frameObjectsMode) {
+    case 0:
+        return GetNewImageForPerFrame(device, swapchain, timeout);
+    case 1:
+        return GetNewImageForPerFrame(device, swapchain, timeout);
+    default:
+        _NJ_CANT_GET_CURRENT_2("CreateFrameContexts.count");
+    };
+    return false;
+}
+
+auto RenderContext::GetNewImageForPerFrame(
+    DeviceH device, SwapchainH swapchain, uint64_t timeout
+) -> bool {
+    auto sync_data = syncDatas[currentFrameIndex];
     auto acquire_result = device->Handle().acquireNextImageKHR(
-        swapchain->CHandle(), 
-        timeout,
-        sync_data->availableSemaphore.get(),
-        VK_NULL_HANDLE,
-        &currentImageIndex
+        swapchain->CHandle(), timeout, sync_data->availableSemaphore.get(),
+        VK_NULL_HANDLE, &currentImageIndex
     );
-    if (acquire_result  == vk::Result::eErrorOutOfDateKHR) { 
+    if (acquire_result == vk::Result::eErrorOutOfDateKHR) {
         log::Error("Need to recreate swachain... [1]");
         return true;
-    } else if (acquire_result != vk::Result::eSuccess && 
-               acquire_result != vk::Result::eSuboptimalKHR) { 
+    } else if (acquire_result != vk::Result::eSuccess &&
+               acquire_result != vk::Result::eSuboptimalKHR) {
         log::FatalExit("Failed to acquire swapchain image...");
     }
     return false;
 }
 
-auto RenderContext::ResetFences(DeviceH device) -> void { 
-    auto cmd = CurrentCommandBuffer();
-    cmd->Handle().reset();
-    auto sync_data = CurrentSyncData();
-    device->Handle().resetFences(std::vector{ 
-        sync_data->frameFence.get()
-    });
+auto RenderContext::GetNewImageForPerImage(
+    DeviceH device, SwapchainH swapchain, uint64_t timeout
+) -> bool {
+    if (!std::numeric_limits<uint32_t>::max()) {
+        auto sync_data = CurrentSyncData();
+        auto acquire_result = device->Handle().acquireNextImageKHR(
+            swapchain->CHandle(), timeout, sync_data->availableSemaphore.get(),
+            VK_NULL_HANDLE, &currentImageIndex
+        );
+        if (acquire_result == vk::Result::eErrorOutOfDateKHR) {
+            log::Error("Need to recreate swachain... [1]");
+            return true;
+        } else if (acquire_result != vk::Result::eSuccess &&
+                   acquire_result != vk::Result::eSuboptimalKHR) {
+            log::FatalExit("Failed to acquire swapchain image...");
+        }
+    }
+
+    return false;
 }
 
-void RenderContext::BeginCommandBuffer() { 
+auto RenderContext::ResetFences(DeviceH device) -> void {
+    // auto cmd = CurrentCommandBuffer();
+    // cmd->Handle().reset();
+    // auto sync_data = CurrentSyncData();
+    auto sd = syncDatas[currentFrameIndex];
+    device->Handle().resetFences(std::vector{sd->frameFence.get()});
+}
+
+void RenderContext::BeginCommandBuffer() {
     auto cmd = CurrentCommandBuffer();
-    auto command_buffer_begin_info = vk::CommandBufferBeginInfo{} 
-        .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)
-        ;
+    auto command_buffer_begin_info = vk::CommandBufferBeginInfo{}.setFlags(
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    );
     cmd->Handle().begin(command_buffer_begin_info);
 }
 
-
-void RenderContext::EndCommandBuffer() { 
+void RenderContext::EndCommandBuffer() {
     auto cmd = CurrentCommandBuffer();
-    cmd->Handle().end();  
+    cmd->Handle().end();
 }
 
-void RenderContext::SubmitGraphics(PhysicalDeviceH physical_device) { 
-    auto sync_data = CurrentSyncData();
+void RenderContext::SubmitGraphics(PhysicalDeviceH physical_device) {
+    auto sd_per_frame = syncDatas[currentFrameIndex];
+    auto sd_per_image = syncDatas[currentImageIndex];
     auto cmd = CurrentCommandBuffer();
-    auto wait_semaphores = std::array { sync_data->availableSemaphore.get() };
-    auto wait_stages = vk::PipelineStageFlags { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    auto signal_semaphores = std::array { sync_data->finishSemaphore.get() };
-    auto command_buffers = std::array { cmd->Handle() };
+    auto wait_semaphores = std::array{sd_per_frame->availableSemaphore.get()};
+    auto wait_stages = vk::PipelineStageFlags{
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
+    auto signal_semaphores = std::array{sd_per_image->finishSemaphore.get()};
+    auto command_buffers = std::array{cmd->Handle()};
     auto submit_info = vk::SubmitInfo{}
-        .setWaitSemaphores(wait_semaphores)
-        .setWaitDstStageMask(wait_stages)
-        .setCommandBuffers(command_buffers) 
-        .setSignalSemaphores(signal_semaphores)
-        ;
-    // log::Debug("GraphicsQueue={}", physical_device->QueueIndex(vk::QueueFlagBits::eGraphics));
+                           .setWaitSemaphores(wait_semaphores)
+                           .setWaitDstStageMask(wait_stages)
+                           .setCommandBuffers(command_buffers)
+                           .setSignalSemaphores(signal_semaphores);
+    // log::Debug("GraphicsQueue={}",
+    // physical_device->QueueIndex(vk::QueueFlagBits::eGraphics));
     auto& graphics_queue = physical_device->GraphicsQueue();
-    graphics_queue.submit(submit_info, sync_data->frameFence.get());
+    graphics_queue.submit(submit_info, sd_per_frame->frameFence.get());
 }
 
-bool RenderContext::SubmitPresent(PhysicalDeviceH physical_device, SwapchainH swapchain) { 
-    auto sync_data = CurrentSyncData();
-    auto swapchains = std::array { swapchain->Handle() };
-    auto signal_semaphores = std::array { sync_data->finishSemaphore.get() };
+bool RenderContext::SubmitPresent(
+    PhysicalDeviceH physical_device, SwapchainH swapchain
+) {
+    auto sd_per_frame = syncDatas[currentFrameIndex];
+    auto sd_per_image = syncDatas[currentImageIndex];
+    auto swapchains = std::array{swapchain->Handle()};
+    auto signal_semaphores = std::array{sd_per_image->finishSemaphore.get()};
     auto present_info = vk::PresentInfoKHR{}
-        .setWaitSemaphores(signal_semaphores)
-        .setSwapchains(swapchains)
-        .setImageIndices(currentImageIndex)
-        ;
+                            .setWaitSemaphores(signal_semaphores)
+                            .setSwapchains(swapchains)
+                            .setImageIndices(currentImageIndex);
 
     // log::Debug("PresentQueue={}", physical_device->PresentQueueIndex());
     auto& present_queue = physical_device->PresentQueue();
     auto res_qp = present_queue.presentKHR(&present_info);
 
-    if (res_qp == vk::Result::eErrorOutOfDateKHR || res_qp == vk::Result::eSuboptimalKHR) {
+    if (res_qp == vk::Result::eErrorOutOfDateKHR ||
+        res_qp == vk::Result::eSuboptimalKHR) {
         log::Info("Need to recreate swachain 2...");
         return true;
-    } else if (res_qp != vk::Result::eSuccess) { 
+    } else if (res_qp != vk::Result::eSuccess) {
         log::FatalExit("Failed to present KHR...");
     }
     return false;
 }
 
-void RenderContext::WaitFence(DeviceH device, uint64_t timeout) { 
-    auto sync_data = CurrentSyncData();
-    auto _ = device->Handle().waitForFences(sync_data->frameFence.get(), true, timeout);
+void RenderContext::WaitFence(DeviceH device, uint64_t timeout) {
+    // auto sync_data = CurrentSyncData();
+    auto sd = syncDatas[currentFrameIndex];
+    auto _ =
+        device->Handle().waitForFences(sd->frameFence.get(), true, timeout);
 }
 
-void RenderContext::UpdateFrameValue() { 
+void RenderContext::UpdateFrameValue() {
     currentFrameIndex = (currentFrameIndex + 1) % framesInFlight;
 }
-
 
 } // namespace nj::ren

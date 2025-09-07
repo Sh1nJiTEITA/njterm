@@ -54,6 +54,8 @@ class Context {
     void InitPipelineHandles();
     void InitFontLoaderHandles();
 
+    void RecreateSwapchain();
+
   private:
     win::WindowH win;
     win::KeyControlH keyCtl;

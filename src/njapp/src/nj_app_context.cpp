@@ -22,6 +22,8 @@
 #include "nj_sampler.h"
 #include "nj_surface.h"
 #include "nj_swapchain.h"
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace nj::app {
 
@@ -48,9 +50,7 @@ void Context::Run() {
     while (!win->ShouldClose()) {
         win->Update();
         if (renderContext->BeginFrame(device, swapchain)) {
-            // recreate_swapchain(inst, device, phDevice, surface,
-            //                    swapchain, *win, color_att, render_context,
-            //                    command_pool, render_pass);
+            RecreateSwapchain();
             continue;
         }
         {
@@ -98,11 +98,9 @@ void Context::Run() {
                 command_buffer->Handle().draw(6, 1, 0, 0);
             } // clang-format on:
             command_buffer->Handle().endRenderPass();
-        }
-        if (renderContext->EndFrame(device, phDevice, swapchain)) {
-            // recreate_swapchain(inst, device, physical_device, surface,
-            //                    swapchain, *win, color_att, render_context,
-            //                    command_pool, render_pass);
+            if (renderContext->EndFrame(device, phDevice, swapchain)) {
+                RecreateSwapchain();
+            }
         }
     }
     log::Info("============== Render loop... ENDED   ==============");
@@ -204,6 +202,36 @@ void Context::InitFontLoaderHandles() {
     ft::FaceID id = library->LoadFace(font_path);
     face = library->GetFace(id);
     atlas = std::make_shared<ft::Atlas>(face, 0, 300, 32, 255);
+}
+
+void Context::RecreateSwapchain() {
+    log::Debug("Recreating swapchain ... STARTED");
+    log::Debug("Waiting... STARTED");
+    win->WaitToRecreate();
+    device->Handle().waitIdle();
+    renderContext->ClearFramebuffers();
+    renderContext->ClearSyncDatas();
+    renderContext->ClearCmds();
+    attColor.reset();
+    swapchain.reset();
+    auto extent = win->Extent();
+    auto vk_extent = vk::Extent2D{
+        static_cast<uint32_t>(extent.x), static_cast<uint32_t>(extent.y)
+    };
+    swapchain = log::MakeSharedWithLog<ren::Swapchain>(
+        phDevice, device, surface, vk_extent,
+        vk::ImageUsageFlagBits::eColorAttachment
+    );
+    swapchain->UpdateImages(device);
+    attColor = log::MakeSharedWithLog<ren::AttachmentColor>(
+        "Color attachment", swapchain
+    );
+    renderContext->CreateFramebuffers(
+        device, swapchain, gridRenderPass, {attColor}
+    );
+    renderContext->CreateSyncDatas(device);
+    renderContext->CreateCmds(device, cmdPool);
+    log::Debug("Recreating swapchain ... DONE");
 }
 
 // clang-format on

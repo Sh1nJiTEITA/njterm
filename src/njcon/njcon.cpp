@@ -6,7 +6,7 @@
 
 namespace nj::con {
 // DEFAULT CONFIG VALUES
-const char *stdConfigFile = R"lua( 
+const char* stdConfigFile = R"lua( 
     return { 
         vk = { 
             validation = { 
@@ -41,23 +41,23 @@ Config::Config()
       defaultState{std::string_view(stdConfigFile)} {
     nj::log::Debug("Loading default config");
 }
-Config::Config(const std::string &config_data)
+Config::Config(const std::string& config_data)
     : state{config_data}, defaultState{std::string_view(stdConfigFile)} {
     nj::log::Debug("Loading not default config");
 }
-Config::Config(std::string &&config_data) noexcept
+Config::Config(std::string&& config_data) noexcept
     : state{std::move(config_data)},
       defaultState{std::string_view(stdConfigFile)} {
     nj::log::Debug("Loading not default config");
 }
 
-auto Config::Load(const std::string &config_data) -> void {
+auto Config::Load(const std::string& config_data) -> void {
     state.ResetExec(config_data);
 }
-auto Config::Load(std::string &&config_data) noexcept -> void {
+auto Config::Load(std::string&& config_data) noexcept -> void {
     state.ResetExec(config_data);
 }
-auto Config::Load(const std::filesystem::path &path) -> void {
+auto Config::Load(const std::filesystem::path& path) -> void {
     // TODO: IMPLEMENT
 }
 auto Config::Get(std::string_view path) -> nj::lua::Value {
@@ -67,34 +67,36 @@ auto Config::Get(std::string_view path) -> nj::lua::Value {
         auto std_table = defaultState.ReturnTable();
         auto std_val = std_table.PathMaybe(path);
         if (!std_val.has_value()) {
-            log::FatalExit("Internal. Cant get standart "
-                           "config value with path: {}",
-                           path);
+            log::FatalExit(
+                "Internal. Cant get standart "
+                "config value with path: {}",
+                path
+            );
         }
         return std_val.value();
     }
     return val.value();
 }
 
-static Config &ConfigInstance() {
+static Config& ConfigInstance() {
     static Config conf{};
     return conf;
 }
 
-auto Load(const std::string &config_data) -> void {
-    auto &self = ConfigInstance();
+auto Load(const std::string& config_data) -> void {
+    auto& self = ConfigInstance();
     self.Load(config_data);
 }
-auto Load(std::string &&config_data) noexcept -> void {
-    auto &self = ConfigInstance();
+auto Load(std::string&& config_data) noexcept -> void {
+    auto& self = ConfigInstance();
     self.Load(config_data);
 }
-auto Load(const std::filesystem::path &path) -> void {
+auto Load(const std::filesystem::path& path) -> void {
     // IMPLEMENT
 }
 
 auto Get(std::string_view path) -> lua::Value {
-    auto &self = ConfigInstance();
+    auto& self = ConfigInstance();
     return self.Get(path);
 }
 
