@@ -10,7 +10,10 @@
 #include "nj_descriptor.h"
 #include "nj_descriptor_context.h"
 #include "nj_descriptor_test.h"
+#include "nj_descriptor_texture.h"
 #include "nj_device.h"
+#include "nj_ft_atlas.h"
+#include "nj_ft_library.h"
 #include "nj_grid_render_pass.h"
 #include "nj_instance.h"
 #include "nj_physical_device.h"
@@ -25,6 +28,7 @@ namespace nj::app {
 // clang-format off
 Context::Context() {
     win = win::CreateWindow({400, 500});
+    InitFontLoaderHandles();
     InitBaseHandles();
     InitPresentHandles();
     InitDescHandles(); 
@@ -87,9 +91,7 @@ void Context::Run() {
                 vertex_buffer->CHandle() }; auto offsets =
                 std::array<vk::DeviceSize, 1>{ {} };
 
-                command_buffer->Handle().bindVertexBuffers(
-                    0, buffers, offsets
-                );
+                command_buffer->Handle().bindVertexBuffers( 0, buffers, offsets);
 
                 command_buffer->Handle().bindPipeline(
                 vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
@@ -112,7 +114,8 @@ void Context::InitBaseHandles() {
     inst = log::MakeSharedWithLog<ren::Instance>(win->VulkanExtensions());
     messenger = log::MakeSharedWithLog<ren::DebugUtilsMessenger>(inst);
     surface = log::MakeSharedWithLog<ren::Surface>(
-        inst, win->CreateSurface(inst->Handle()));
+        inst, win->CreateSurface(inst->Handle())
+    );
     phDevice = log::MakeSharedWithLog<ren::PhysicalDevice>(inst);
     phDevice->UpdateQueueIndices(surface);
     phDevice->UpdateQueueProperties();
@@ -124,27 +127,59 @@ void Context::InitBaseHandles() {
 void Context::InitPresentHandles() {
     swapchain = log::MakeSharedWithLog<ren::Swapchain>(
         phDevice, device, surface,
-        vk::Extent2D{static_cast<uint32_t>(win->Extent().x),
-                     static_cast<uint32_t>(win->Extent().y)},
-        vk::ImageUsageFlagBits::eColorAttachment);
+        vk::Extent2D{
+            static_cast<uint32_t>(win->Extent().x),
+            static_cast<uint32_t>(win->Extent().y)
+        },
+        vk::ImageUsageFlagBits::eColorAttachment
+    );
     swapchain->UpdateImages(device);
-    attColor = log::MakeSharedWithLog<ren::AttachmentColor>("Color attachment",
-                                                            swapchain);
+    attColor = log::MakeSharedWithLog<ren::AttachmentColor>(
+        "Color attachment", swapchain
+    );
     gridRenderPass =
         log::MakeSharedWithLog<ren::GridRenderPass>(device, attColor);
     cmdPool = log::MakeSharedWithLog<ren::CommandPool>(device, phDevice);
     renderContext = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, gridRenderPass, cmdPool,
         con::Frames(), con::FrameObjectsMode(),
-        std::vector<ren::AttachmentH>{attColor});
+        std::vector<ren::AttachmentH>{attColor}
+    );
 }
 
 void Context::InitDescHandles() {
     sampler = log::MakeSharedWithLog<ren::Sampler>(device);
     descPool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
     descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
-        "Descriptor context", device, descPool, allocator, con::Frames());
+        "Descriptor context", device, descPool, allocator, con::Frames()
+    );
     descContext->Add<ren::DescriptorTest>(con::Frames(), 0, 0);
+
+    const size_t ATLAS_W = 4000;
+    const size_t ATLAS_H = 4000;
+
+    const size_t buf_sz{ATLAS_W * ATLAS_H};
+    auto atlas_buf = std::make_unique<ren::Buffer>(
+        device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+    );
+
+    void* data = atlas_buf->Map();
+    atlas->Upload(data, ATLAS_W, ATLAS_H);
+    atlas_buf->Unmap();
+
+    descContext->Add<ren::DescriptorTexture>(
+        1, 0, 1, vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
+        renderContext->CurrentCommandBuffer(), phDevice, sampler, ATLAS_W,
+        ATLAS_H, std::move(atlas_buf)
+        // char_bm.rows, char_bm.cols, char_bm.stride,
+        // char_bm.data
+        // atlas.Side(), atlas.Side(),
+        // atlas.Bitmap()
+    );
+
     descContext->CreateLayouts();
     descContext->AllocateSets();
     descContext->UpdateSets();
@@ -153,11 +188,22 @@ void Context::InitDescHandles() {
 void Context::InitPipelineHandles() {
     auto all_layouts = descContext->AllLayouts();
     log::Debug("Descriptor layout count={}", all_layouts.size());
-    pipelineBuilderTest =
+    pipelineBuilder =
         log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
     pipeline = log::MakeSharedWithLog<ren::Pipeline>(
-        device, gridRenderPass, pipelineBuilderTest, all_layouts,
-        fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/"));
+        device, gridRenderPass, pipelineBuilder, all_layouts,
+        fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
+    );
+}
+
+void Context::InitFontLoaderHandles() {
+    const fs::path font_path{
+        "/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"
+    };
+    library = std::make_shared<ft::Library>();
+    ft::FaceID id = library->LoadFace(font_path);
+    face = library->GetFace(id);
+    atlas = std::make_shared<ft::Atlas>(face, 0, 300, 32, 255);
 }
 
 // clang-format on

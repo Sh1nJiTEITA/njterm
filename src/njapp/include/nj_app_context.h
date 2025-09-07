@@ -30,6 +30,11 @@ namespace nj::win {
     NJ_HANDLE( Window );
     NJ_HANDLE( KeyControl );
 }
+namespace nj::ft { 
+    NJ_HANDLE( Library );
+    NJ_HANDLE( Atlas );
+    NJ_HANDLE( Face );
+}
 
 #undef NJ_HANDLE
 
@@ -47,6 +52,7 @@ class Context {
     void InitPresentHandles();
     void InitDescHandles();
     void InitPipelineHandles();
+    void InitFontLoaderHandles();
 
   private:
     win::WindowH win;
@@ -67,8 +73,12 @@ class Context {
     ren::DescriptorContextH descContext;
     ren::DescriptorTestH descTest;
     ren::DescriptorTextureH descTexture;
-    ren::PipelineBuilderTestH pipelineBuilderTest;
+    ren::PipelineBuilderTestH pipelineBuilder;
     ren::PipelineH pipeline;
+
+    ft::LibraryH library;
+    ft::AtlasH atlas;
+    ft::FaceH face;
 };
 
 }; // namespace nj::app

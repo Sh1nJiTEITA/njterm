@@ -103,14 +103,9 @@
 // const size_t ATLAS_W = 4000;
 // const size_t ATLAS_H = 4000;
 //
-// std::unique_ptr<ren::Buffer> create_atlas_buffer(ren::DeviceH device,
-//                                                  ren::AllocatorH allocator) {
-//     const size_t buf_sz{ATLAS_W * ATLAS_H};
-//     return std::make_unique<ren::Buffer>(
-//         device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
-//         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-//         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-//             VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
+// std::unique_ptr<ren::Buffer>
+// create_atlas_buffer(ren::DeviceH device, ren::AllocatorH allocator) {
+//
 // };
 //
 // std::unique_ptr<ren::Buffer> upload_font(std::unique_ptr<ren::Buffer> buf,
@@ -166,7 +161,7 @@
 // // clang-format on
 
 #include "nj_app_context.h"
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     nj::app::Context context{};
     context.Run();
 

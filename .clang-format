@@ -1,9 +1,17 @@
-BasedOnStyle: LLVM 
+---
+BasedOnStyle: LLVM
 IndentWidth: 4
 Language: Cpp
+# BracketAlignmentStyle: BlockIndent
+AlignAfterOpenBracket: BlockIndent
+PackConstructorInitializers: NextLine
+PointerAlignment: Left
+ReferenceAlignment: Left
+BinPackParameters: OnePerLine
+
 #
 # # BreakBeforeDefinitionKeywords: Always
-# BreakTemplateDeclarations: Yes
+# BreakTemplateDeclarations: true
 # PointerAlignment: Left
 # ReferenceAlignment: Left 
 # AccessModifierOffset: -3
