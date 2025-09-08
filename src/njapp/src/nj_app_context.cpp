@@ -1,4 +1,5 @@
 #include "nj_app_context.h"
+#include "nj_pipeline_guidelines.h"
 #include "njcon.h"
 #include "njvklog.h"
 #include "njwin.h"
@@ -22,6 +23,7 @@
 #include "nj_sampler.h"
 #include "nj_surface.h"
 #include "nj_swapchain.h"
+#include <glm/fwd.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -29,7 +31,7 @@ namespace nj::app {
 
 // clang-format off
 Context::Context() {
-    win = win::CreateWindow({400, 500});
+    win = win::CreateWindow({400, 1440});
     InitFontLoaderHandles();
     InitBaseHandles();
     InitPresentHandles();
@@ -54,7 +56,7 @@ void Context::Run() {
             continue;
         }
         {
-            auto command_buffer = renderContext->CurrentCommandBuffer();
+            auto cmd = renderContext->CurrentCommandBuffer();
             auto render_area = vk::Rect2D{}
                 .setOffset({0, 0})
                 .setExtent(swapchain->Extent())
@@ -66,9 +68,9 @@ void Context::Run() {
                 .setRenderArea(render_area)
                 .setClearValues(clear_color)
                 ;
-            command_buffer->Handle().beginRenderPass(render_pass_info,
+            cmd->Handle().beginRenderPass(render_pass_info,
             vk::SubpassContents::eInline); { // clang-format off
-                descContext->BindSets(0, renderContext->CurrentFrameIndex(), command_buffer,
+                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd,
                 pipeline->LayoutHandle());
 
                 auto viewport = vk::Viewport{}
@@ -77,7 +79,7 @@ void Context::Run() {
                                     .setHeight(swapchain->Extent().height)
                                     .setWidth(swapchain->Extent().width);
 
-                command_buffer->Handle().setViewport(0, 1, &viewport);
+                cmd->Handle().setViewport(0, 1, &viewport);
 
                 vk::Rect2D scissor{};
                 scissor.offset = vk::Offset2D{static_cast<int32_t>(0),
@@ -85,19 +87,21 @@ void Context::Run() {
                     static_cast<uint32_t>(swapchain->Extent().width),
                     static_cast<uint32_t>(swapchain->Extent().height)
                 };
-                command_buffer->Handle().setScissor(0, 1, &scissor);
+                cmd->Handle().setScissor(0, 1, &scissor);
 
                 auto buffers = std::array<vk::Buffer, 1>{
                 vertex_buffer->CHandle() }; auto offsets =
                 std::array<vk::DeviceSize, 1>{ {} };
 
-                command_buffer->Handle().bindVertexBuffers( 0, buffers, offsets);
+                cmd->Handle().bindVertexBuffers( 0, buffers, offsets);
 
-                command_buffer->Handle().bindPipeline(
+                cmd->Handle().bindPipeline(
                 vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
-                command_buffer->Handle().draw(6, 1, 0, 0);
+                cmd->Handle().draw(6, 1, 0, 0);
+
+                gridRenderPass->RenderGuidelines(cmd, guidelinesPipeline);
             } // clang-format on:
-            command_buffer->Handle().endRenderPass();
+            cmd->Handle().endRenderPass();
             if (renderContext->EndFrame(device, phDevice, swapchain)) {
                 RecreateSwapchain();
             }
@@ -159,8 +163,8 @@ void Context::InitDescHandles() {
     auto atlas_buf = std::make_unique<ren::Buffer>(
         device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-            VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT
+            | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
     );
 
     void* data = atlas_buf->Map();
@@ -185,11 +189,25 @@ void Context::InitDescHandles() {
 void Context::InitPipelineHandles() {
     auto all_layouts = descContext->AllLayouts();
     log::Debug("Descriptor layout count={}", all_layouts.size());
-    pipelineBuilder =
-        log::MakeSharedWithLog<ren::PipelineBuilderTest>("PipelineBuilderTest");
+    auto pp_builder_base =
+        log::MakeSharedWithLog<ren::PipelineBuilderBase>("PipelineBuilderBase");
     pipeline = log::MakeSharedWithLog<ren::Pipeline>(
-        device, gridRenderPass, pipelineBuilder, all_layouts,
+        device, gridRenderPass, pp_builder_base, all_layouts,
         fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
+    );
+
+    auto pp_builder_guidelines =
+        log::MakeSharedWithLog<ren::PipelineBuilderGuidelines>(
+            "PipelineBuilderGuidelines"
+        );
+    guidelinesPipeline = log::MakeSharedWithLog<ren::Pipeline>(
+        device, gridRenderPass, pp_builder_guidelines, all_layouts,
+        fs::path("/home/snj/Code/Other/njterm/build/shaders/guidelines/")
+    );
+    gridRenderPass->CreateGuidelinesBuffer(
+        device, allocator,
+        glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+        atlas->FontSize()
     );
 }
 
@@ -200,7 +218,7 @@ void Context::InitFontLoaderHandles() {
     library = std::make_shared<ft::Library>();
     ft::FaceID id = library->LoadFace(font_path);
     face = library->GetFace(id);
-    atlas = std::make_shared<ft::Atlas>(face, 0, 300, 32, 255);
+    atlas = std::make_shared<ft::Atlas>(face, 0, 20, 32, 255);
 }
 
 void Context::RecreateSwapchain() {
@@ -213,6 +231,7 @@ void Context::RecreateSwapchain() {
     renderContext->ClearCmds();
     attColor.reset();
     swapchain.reset();
+    gridRenderPass->DestroyGuidelinesBuffer();
     auto extent = win->Extent();
     auto vk_extent = vk::Extent2D{
         static_cast<uint32_t>(extent.x), static_cast<uint32_t>(extent.y)
@@ -230,6 +249,11 @@ void Context::RecreateSwapchain() {
     );
     renderContext->CreateSyncDatas(device);
     renderContext->CreateCmds(device, cmdPool);
+    gridRenderPass->CreateGuidelinesBuffer(
+        device, allocator,
+        glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+        atlas->FontSize()
+    );
     log::Debug("Recreating swapchain ... DONE");
 }
 

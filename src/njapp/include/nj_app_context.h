@@ -23,7 +23,7 @@ namespace nj::ren {
     NJ_HANDLE( DescriptorContext );
     NJ_HANDLE( DescriptorTest );
     NJ_HANDLE( DescriptorTexture );
-    NJ_HANDLE( PipelineBuilderTest );
+    NJ_HANDLE( PipelineBuilderBase );
     NJ_HANDLE( Pipeline );
 };
 namespace nj::win {
@@ -43,11 +43,11 @@ namespace nj::ft {
 namespace nj::app {
 
 class Context {
-  public:
+public:
     Context();
     void Run();
 
-  private:
+private:
     void InitBaseHandles();
     void InitPresentHandles();
     void InitDescHandles();
@@ -56,7 +56,7 @@ class Context {
 
     void RecreateSwapchain();
 
-  private:
+private:
     win::WindowH win;
     win::KeyControlH keyCtl;
     ren::InstanceH inst;
@@ -75,8 +75,9 @@ class Context {
     ren::DescriptorContextH descContext;
     ren::DescriptorTestH descTest;
     ren::DescriptorTextureH descTexture;
-    ren::PipelineBuilderTestH pipelineBuilder;
+    // ren::PipelineBuilderBaseH pipelineBuilder;
     ren::PipelineH pipeline;
+    ren::PipelineH guidelinesPipeline;
 
     ft::LibraryH library;
     ft::AtlasH atlas;

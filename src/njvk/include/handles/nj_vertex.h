@@ -11,7 +11,7 @@ namespace nj::ren {
 // clang-format off
 struct Vertex {
     glm::vec2 pos;
-    glm::vec2 col;
+    glm::vec3 col;
 
     static auto BindingDescription() -> vk::VertexInputBindingDescription;
     static auto AttributeDescriptions() -> std::vector<vk::VertexInputAttributeDescription>;

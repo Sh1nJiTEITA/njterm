@@ -52,8 +52,8 @@ Buffer::~Buffer() {
 
 // clang-format on
 
-auto Buffer::Map() -> void * {
-    void *p;
+auto Buffer::Map() -> void* {
+    void* p;
     vmaMapMemory(allocator->Handle(), allocation, &p);
     return p;
 }
@@ -63,5 +63,9 @@ auto Buffer::Unmap() -> void {
 }
 
 auto Buffer::HandleName() const noexcept -> std::string { return "Buffer"; }
+
+auto Buffer::InitialSize() const noexcept -> size_t {
+    return initialAllocationSize;
+}
 
 } // namespace nj::ren

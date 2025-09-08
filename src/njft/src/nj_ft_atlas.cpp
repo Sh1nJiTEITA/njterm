@@ -6,9 +6,13 @@
 
 namespace nj::ft {
 
-Atlas::Atlas(FaceH face, size_t face_w, size_t face_h, size_t start_char,
-             size_t end_char)
-    : face{face}, width{face_w}, height{face_h}, startCharCode{start_char},
+Atlas::Atlas(
+    FaceH face, size_t face_w, size_t face_h, size_t start_char, size_t end_char
+)
+    : face{face},
+      width{face_w},
+      height{face_h},
+      startCharCode{start_char},
       endCharCode{end_char} {
     // log::Info("Atlas creation of face=\"{}\"... STARTED",
     // face->FamilyName()); log::Debug("Setting face size...");
@@ -106,51 +110,15 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
         top_l.x += bitmap.width;
         max_row_height = std::max(static_cast<unsigned int>(max_row_height), bitmap.rows);
     }
-
-    // glm::ivec2 top_l { 0, 0 };
-    // glm::ivec2 bot_r { 0, 0 };
-    // auto ptr = static_cast<uint8_t*>(data);
-    // for (size_t code = startCharCode; code < endCharCode; ++code) {
-    //     if (!face->LoadGlyph(code)) {
-    //         log::Error("Loading code={} ... ERROR", code);
-    //         continue;
-    //     }
-    //     else { 
-    //         log::Info("Loading code={} (char={})... ERROR", code, static_cast<char>(code));
-    //     }
-    //     auto &bitmap = face->Glyph()->bitmap;
-    //     
-    //     
-    //     for (size_t row = 0; row < bitmap.rows; ++row) { 
-    //         uint8_t* global_start = ptr + (top_l.x + top_l.y * w);
-    //         uint8_t* local_start = global_start + row * w;
-    //         uint8_t* char_ptr = bitmap.buffer + row * bitmap.pitch;
-    //         memcpy(local_start, char_ptr, bitmap.width);
-    //     }
-    //     
-    //     auto [_, status] = charMap.insert({code, CharData{
-    //         .topLeft = top_l,
-    //         .width = bitmap.width,
-    //         .height = bitmap.rows,
-    //         .pitch = bitmap.pitch
-    //     }});
-    //     if (!status) {
-    //         log::FatalExit("Internal Atlas::Upload(...) error: "
-    //                        "Cant insert new char data");
-    //     }
-    //
-    //     if (top_l.x + bitmap.width >= w) { 
-    //         top_l = { 0, bitmap.rows };
-    //     } else {
-    //         top_l += glm::ivec2{ bitmap.width, 0};
-    //     }
-    // }
 }
 // clang-format off
 
 size_t Atlas::Side() const noexcept { return atlasSide; }
 bool Atlas::IsAllocated() const noexcept { return !charMap.empty(); }
 void Upload(void *data) {}
+glm::ivec2 Atlas::FontSize() const noexcept {
+    return { width, height };
+}
 
 // clang-format off
 // auto CreateAtlas(Face &face, size_t face_sz, size_t start_char, size_t end_char) {

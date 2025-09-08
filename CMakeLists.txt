@@ -68,6 +68,9 @@ set(CMAKE_BUILD_TYPE Debug)
 # CPP-23 standart
 set_property(TARGET njterm PROPERTY CXX_STANDART 23)
 
-set(SHADER_PACK_PATHS "${CMAKE_SOURCE_DIR}/shaders/basic")
+set(SHADER_PACK_PATHS 
+"${CMAKE_SOURCE_DIR}/shaders/basic"
+"${CMAKE_SOURCE_DIR}/shaders/guidelines"
+)
 
 compile_shaders(${SHADER_PACK_PATHS})

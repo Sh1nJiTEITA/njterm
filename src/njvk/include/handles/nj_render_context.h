@@ -105,18 +105,18 @@ public:
     //! @defgroup currents RenderContext Current-methods
     //! There are some current-getters which provides
     //! access to per image or per frame resources
-    //! described in \ref nj::ren::RenderContext()
+    //! described in \ref ::RenderContext()
     //! @{
 
     //! Returns current image index.
     //! @note Values are changed by calling vkAcquireNextImageKHR(...)
-    //! inside \ref nj::ren::RenderContext::BeginFrame()
+    //! inside \ref ::BeginFrame()
     //! @return Index from range [0..swapchain images count - 1]
     auto CurrentImageIndex() const noexcept -> size_t;
 
     //! Returns current frame index.
     //! @note Values are changed by the end of each frame render call
-    //! inside \ref nj::ren::RenderContext::EndFrame()
+    //! inside \ref ::EndFrame()
     //! @return Index from range [0..frames in flight count - 1]
     auto CurrentFrameIndex() const noexcept -> size_t;
 
@@ -155,12 +155,12 @@ public:
     //!
     //! @details As this class provides methods for constructing
     //! render loop logic Waits for fence accessed via current
-    //! frame index \ref ::RenderContext::CurrentFrameIndex() then
+    //! frame index \ref ::CurrentFrameIndex() then
     //! resets ! it and acquires new swapchain image. This move
     //! gives new value for current image index
-    //! \ref ::RenderContext::CurrentImageIndex() and begins
+    //! \ref ::CurrentImageIndex() and begins
     //! command buffer which can be recorded for draw calls and
-    //! accessed via \ref ::RenderContext::CurrentCommandBuffer()
+    //! accessed via \ref ::CurrentCommandBuffer()
     //!
     //! @param device Device to begin frame for
     //! @param swapchain Swappchain to begin frame for
@@ -191,7 +191,7 @@ private:
     void SubmitGraphics(PhysicalDeviceH physical_device);
     bool SubmitPresent(PhysicalDeviceH physical_device, SwapchainH swapchain);
     void WaitFence(DeviceH device, uint64_t timeout);
-    void UpdateFrameValue();
+    void UpdateFrameIndex();
 
 private:
     const size_t framesInFlight; //!< Frames running on cpu

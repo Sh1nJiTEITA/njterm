@@ -58,17 +58,19 @@ Pipeline::~Pipeline() {
 }
 // clang-format on
 
-auto ReadShaderFile(const fs::path &path) -> std::vector<char> {
+auto ReadShaderFile(const fs::path& path) -> std::vector<char> {
 
     if (!fs::exists(path)) {
-        log::FatalExit("Shader file with path={} does not exist",
-                       path.string());
+        log::FatalExit(
+            "Shader file with path={} does not exist", path.string()
+        );
     }
 
     if (!fs::is_regular_file(path)) {
         log::FatalExit(
             "Input path={} for shader file leads not to regular file",
-            path.string());
+            path.string()
+        );
     }
 
     std::ifstream file(path, std::ios::ate | std::ios::binary);
@@ -144,7 +146,7 @@ auto CreateShaderCreateInfos(ren::DeviceH device, const fs::path &path, std::vec
 
 
 
-auto PipelineBuilderTest::VertexInputState() -> vk::PipelineVertexInputStateCreateInfo {
+auto PipelineBuilderBase::VertexInputState() -> vk::PipelineVertexInputStateCreateInfo {
     auto& binding_description = h.Handle( Vertex::BindingDescription() );
     auto& attribute_descriptions = h.Handle( Vertex::AttributeDescriptions() );
 
@@ -153,14 +155,14 @@ auto PipelineBuilderTest::VertexInputState() -> vk::PipelineVertexInputStateCrea
         .setVertexAttributeDescriptions( attribute_descriptions )
     ;
 }
-auto PipelineBuilderTest::InputAssemblyState()  -> vk::PipelineInputAssemblyStateCreateInfo {
+auto PipelineBuilderBase::InputAssemblyState()  -> vk::PipelineInputAssemblyStateCreateInfo {
     return vk::PipelineInputAssemblyStateCreateInfo{}
         .setTopology( vk::PrimitiveTopology::eTriangleList )
         .setPrimitiveRestartEnable( false )
     ;
     
 }
-auto PipelineBuilderTest::DynamicState()  -> vk::PipelineDynamicStateCreateInfo {
+auto PipelineBuilderBase::DynamicState()  -> vk::PipelineDynamicStateCreateInfo {
     auto& states = h.Handle( std::array { 
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor
@@ -170,7 +172,7 @@ auto PipelineBuilderTest::DynamicState()  -> vk::PipelineDynamicStateCreateInfo 
         .setDynamicStates(states)
     ;
 }
-auto PipelineBuilderTest::ViewportState() -> vk::PipelineViewportStateCreateInfo {
+auto PipelineBuilderBase::ViewportState() -> vk::PipelineViewportStateCreateInfo {
 
     return vk::PipelineViewportStateCreateInfo{}
         .setViewportCount(1)
@@ -178,7 +180,7 @@ auto PipelineBuilderTest::ViewportState() -> vk::PipelineViewportStateCreateInfo
     ;
 
 }
-auto PipelineBuilderTest::RasterizationState() -> vk::PipelineRasterizationStateCreateInfo {
+auto PipelineBuilderBase::RasterizationState() -> vk::PipelineRasterizationStateCreateInfo {
     return vk::PipelineRasterizationStateCreateInfo{}
         .setDepthClampEnable(false)
         .setRasterizerDiscardEnable(false)
@@ -188,7 +190,7 @@ auto PipelineBuilderTest::RasterizationState() -> vk::PipelineRasterizationState
         .setLineWidth(1.) // NOTE: MUST BE PRESENT!
         ;
 }
-auto PipelineBuilderTest::MultisampleState() -> vk::PipelineMultisampleStateCreateInfo {
+auto PipelineBuilderBase::MultisampleState() -> vk::PipelineMultisampleStateCreateInfo {
     return vk::PipelineMultisampleStateCreateInfo{}
         .setSampleShadingEnable(false)
         .setRasterizationSamples(vk::SampleCountFlagBits::e1)
@@ -199,7 +201,7 @@ auto PipelineBuilderTest::MultisampleState() -> vk::PipelineMultisampleStateCrea
         ;
 
 }
-auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreateInfo {
+auto PipelineBuilderBase::ColorBlendState()  -> vk::PipelineColorBlendStateCreateInfo {
     auto& color_att = h.Handle(
         vk::PipelineColorBlendAttachmentState{}
             .setColorWriteMask(vk::ColorComponentFlagBits::eA | 
@@ -222,7 +224,7 @@ auto PipelineBuilderTest::ColorBlendState()  -> vk::PipelineColorBlendStateCreat
     ;
 }
 
-auto PipelineBuilderTest::PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::UniquePipelineLayout { 
+auto PipelineBuilderBase::PipelineLayout(DeviceH device, const std::vector<vk::DescriptorSetLayout>& layouts) -> vk::UniquePipelineLayout { 
     auto info = vk::PipelineLayoutCreateInfo{}
         .setSetLayouts(layouts)
         ;

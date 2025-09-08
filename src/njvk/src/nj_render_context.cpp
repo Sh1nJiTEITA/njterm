@@ -150,7 +150,7 @@ auto RenderContext::EndFrame(
     EndCommandBuffer();
     SubmitGraphics(physical_device);
     bool sts = SubmitPresent(physical_device, swapchain);
-    UpdateFrameValue();
+    UpdateFrameIndex();
     return sts;
 }
 
@@ -282,7 +282,7 @@ void RenderContext::WaitFence(DeviceH device, uint64_t timeout) {
     auto _ = device->Handle().waitForFences(CurrentFrameFence(), true, timeout);
 }
 
-void RenderContext::UpdateFrameValue() {
+void RenderContext::UpdateFrameIndex() {
     currentFrameIndex = (currentFrameIndex + 1) % framesInFlight;
 }
 

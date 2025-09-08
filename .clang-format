@@ -9,6 +9,8 @@ PointerAlignment: Left
 ReferenceAlignment: Left
 IndentCaseLabels: true
 AccessModifierOffset: -4
+AlignOperands: AlignAfterOperator
+BreakBeforeBinaryOperators: NonAssignment
 # BinPackParameters: OnePerLine
 
 #

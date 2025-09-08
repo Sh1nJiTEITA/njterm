@@ -55,15 +55,23 @@ function(compile_shaders SHADER_DIRS)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         RESULT_VARIABLE command_result
         OUTPUT_VARIABLE command_output)
+
+      string(ASCII 27 ESC)  # ESC char
+
+      set(GREEN "${ESC}[32m")
+      set(RED   "${ESC}[31m")
+      set(YELLOW "${ESC}[33m")
+      set(RESET "${ESC}[0m")
+
       if(command_result EQUAL 0)
         message(
-          "-- [SHADER_COMPILE_SUCCESS] Shader file ${SHADER_FILE} was compiled to ${NEW_FILE_DIR}/${NEW_FILE_EXT}.spv"
+            "-- ${GREEN}[SHADER_COMPILE_SUCCESS]${RESET} Shader file ${SHADER_FILE} was compiled to ${NEW_FILE_DIR}/${NEW_FILE_EXT}.spv"
         )
       else()
         message(
-          "-- [SHADER_COMPILE_ERROR] Shader compile failed with error code: ${command_result}"
+            "-- ${RED}[SHADER_COMPILE_ERROR]${RESET} Shader compile failed with error code: ${command_result}"
         )
-        message("-- [SHADER_COMPILE_ERROR] Shader output: ${command_output}")
+        message("-- ${RED}[SHADER_COMPILE_ERROR]${RESET} Shader output: ${command_output}")
       endif()
 
       # file(COPY ${NEW_FILE_DIR}/${NEW_FILE_EXT}.spv DESTINATION

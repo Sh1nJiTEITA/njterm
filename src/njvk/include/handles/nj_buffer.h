@@ -11,22 +11,24 @@
 namespace nj::ren {
 
 class Buffer : public AllocationUnit, public VulkanObjectManual<vk::Buffer> {
-  public:
-    Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size,
-           vk::BufferUsageFlags vk_flags, VmaMemoryUsage vma_usage,
-           VmaAllocationCreateFlags flags);
+public:
+    Buffer(
+        ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size,
+        vk::BufferUsageFlags vk_flags, VmaMemoryUsage vma_usage,
+        VmaAllocationCreateFlags flags
+    );
     ~Buffer();
 
-    auto Map() -> void *;
+    [[nodiscard]] auto Map() -> void*;
     auto Unmap() -> void;
     auto HandleName() const noexcept -> std::string override;
-    auto InitialSize() const noexcept -> size_t {
-        return initialAllocationSize;
-    }
+    auto InitialSize() const noexcept -> size_t;
 
-  protected:
+protected:
     const size_t initialAllocationSize;
 };
+using BufferU = std::unique_ptr<Buffer>;
+using BufferH = std::shared_ptr<Buffer>;
 
 } // namespace nj::ren
 
