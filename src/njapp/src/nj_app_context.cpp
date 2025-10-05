@@ -1,4 +1,5 @@
 #include "nj_app_context.h"
+#include "nj_descriptor_cells.h"
 #include "nj_descriptor_grid.h"
 #include "nj_pipeline_guidelines.h"
 #include "njcon.h"
@@ -24,6 +25,7 @@
 #include "nj_sampler.h"
 #include "nj_surface.h"
 #include "nj_swapchain.h"
+#include "nj_text_buffer.h"
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -36,6 +38,7 @@ Context::Context() {
     InitFontLoaderHandles();
     InitBaseHandles();
     InitPresentHandles();
+    InitTextBuffer();
     InitDescHandles(); 
     InitPipelineHandles();
 }
@@ -117,17 +120,16 @@ void Context::Run() {
 void Context::Update() {
     win->Update();
 
-    const auto current_frame = renderContext->CurrentFrameIndex();
+    const auto frame = renderContext->CurrentFrameIndex();
 
-    auto& grid_desc =
-        descContext->Get<ren::DescriptorGrid>(current_frame, 0, 2);
-    // .Update(
-    //     glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-    //     atlas->FontSize()
-    // );
+    auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 2);
+    grid_desc.Update(
+        glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+        atlas->FontSize()
+    );
 
-    // auto& test_desc =
-    //     descContext->Get<ren::DescriptorTest>(current_frame, 0, 0);
+    auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 3);
+    cells_desc.Update();
 }
 
 void Context::InitBaseHandles() {
@@ -202,6 +204,7 @@ void Context::InitDescHandles() {
     );
 
     descContext->Add<ren::DescriptorGrid>(con::Frames(), 0, 2);
+    descContext->Add<ren::DescriptorCells>(con::Frames(), 0, 3, textBuffer);
 
     descContext->CreateLayouts();
     descContext->AllocateSets();
@@ -241,6 +244,12 @@ void Context::InitFontLoaderHandles() {
     ft::FaceID id = library->LoadFace(font_path);
     face = library->GetFace(id);
     atlas = std::make_shared<ft::Atlas>(face, 0, 20, 32, 255);
+}
+
+void Context::InitTextBuffer() {
+    textBuffer = log::MakeSharedWithLog<buf::TextBuffer>(
+        "Text buffer", con::TextBufferSize()
+    );
 }
 
 void Context::RecreateSwapchain() {

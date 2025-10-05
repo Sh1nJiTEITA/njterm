@@ -38,6 +38,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njwin")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njcon")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njft")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njbuf")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njapp")
 
 # EXE
@@ -71,6 +72,7 @@ set_property(TARGET njterm PROPERTY CXX_STANDART 23)
 set(SHADER_PACK_PATHS 
 "${CMAKE_SOURCE_DIR}/shaders/basic"
 "${CMAKE_SOURCE_DIR}/shaders/guidelines"
+"${CMAKE_SOURCE_DIR}/shaders/cells"
 )
 
 compile_shaders(${SHADER_PACK_PATHS})

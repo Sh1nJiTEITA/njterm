@@ -30,6 +30,7 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_test.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_grid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_texture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_cells.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_buffer.cpp"
 )
 
@@ -48,7 +49,7 @@ find_package(Vulkan REQUIRED)
 target_link_libraries(njvk PRIVATE ${Vulkan_LIBRARY})
 target_include_directories(njvk PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(
-  njvk PRIVATE njlog njcon #[[ vulkan-memory-allocator ]])
+  njvk PRIVATE njlog njcon njbuf#[[ vulkan-memory-allocator ]])
 
 target_compile_definitions(
   njvk

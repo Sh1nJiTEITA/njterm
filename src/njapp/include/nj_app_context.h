@@ -35,6 +35,9 @@ namespace nj::ft {
     NJ_HANDLE( Atlas );
     NJ_HANDLE( Face );
 }
+namespace nj::buf {
+    NJ_HANDLE( TextBuffer );
+}
 
 #undef NJ_HANDLE
 
@@ -54,6 +57,7 @@ private:
     void InitDescHandles();
     void InitPipelineHandles();
     void InitFontLoaderHandles();
+    void InitTextBuffer();
 
     void RecreateSwapchain();
 
@@ -72,13 +76,15 @@ private:
     ren::CommandPoolH cmdPool;
     ren::RenderContextH renderContext;
     ren::SamplerH sampler;
+
     ren::DescriptorPoolH descPool;
     ren::DescriptorContextH descContext;
-    ren::DescriptorTestH descTest;
-    ren::DescriptorTextureH descTexture;
-    // ren::PipelineBuilderBaseH pipelineBuilder;
+
     ren::PipelineH pipeline;
     ren::PipelineH guidelinesPipeline;
+    ren::PipelineH cellsPipeline;
+
+    buf::TextBufferH textBuffer;
 
     ft::LibraryH library;
     ft::AtlasH atlas;

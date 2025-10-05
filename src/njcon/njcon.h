@@ -9,7 +9,7 @@
 namespace nj::con {
 
 class Config {
-  public:
+public:
     Config();
     Config(const std::string& config_data);
     Config(std::string&& config_data) noexcept;
@@ -23,10 +23,10 @@ class Config {
     auto Load(std::string&& config_data) noexcept -> void;
     auto Load(const std::filesystem::path& path) -> void;
 
-  public: // export
+public: // export
     auto Get(std::string_view path) -> nj::lua::Value;
 
-  private:
+private:
     lua::State state;
     lua::State defaultState;
 };
@@ -45,6 +45,8 @@ auto ValidationExtensions() -> std::vector<std::string>;
 auto ValidationFeatures() -> std::vector<int>;
 auto Buffering() -> uint32_t;
 auto Frames() -> uint32_t;
+
+auto TextBufferSize() -> size_t;
 
 } // namespace nj::con
 

@@ -28,7 +28,10 @@ const char* stdConfigFile = R"lua(
         }, -- vk
         test = { 
             field = 1488,
-        }
+        },
+        buf = { 
+            size = 10000
+        },
     } -- END
 
 )lua";
@@ -114,7 +117,7 @@ auto ValidationFeatures() -> std::vector<int> {
 }
 
 auto Buffering() -> uint32_t { return Get("vk.buffering").As<uint32_t>(); }
-
 auto Frames() -> uint32_t { return Get("vk.frames").As<uint32_t>(); }
+auto TextBufferSize() -> size_t { return Get("buf.size").As<size_t>(); }
 
 } // namespace nj::con

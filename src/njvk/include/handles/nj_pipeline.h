@@ -1,4 +1,5 @@
 #pragma once
+#include "njvklog.h"
 #ifndef NJ_PIPELINE_H
 #define NJ_PIPELINE_H
 
@@ -68,7 +69,13 @@ class PipelineBuilderBase : public PipelineBuilderInterface {
   private:
     ren::VarHandles h;
 };
-                             
+
+
+template <typename BuilderType>
+PipelineH CreatePipeline(DeviceH device, RenderPassH render_pass, const std::vector<vk::DescriptorSetLayout>& layouts, const fs::path& shader_directory) {
+    auto builder_handle = log::MakeSharedWithLog<BuilderType>("Pipeline builder");
+    return log::MakeSharedWithLog<ren::Pipeline>(device, render_pass, builder_handle, layouts, shader_directory); 
+}
 
 }; // namespace nj::ren
 

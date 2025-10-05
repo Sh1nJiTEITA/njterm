@@ -2,6 +2,7 @@
 #include "nj_allocator.h"
 #include "nj_vertex.h"
 #include "njlog.h"
+#include <glm/fwd.hpp>
 #include <vulkan/vulkan_enums.hpp>
 
 namespace nj::ren {
@@ -81,13 +82,68 @@ auto GridRenderPass::DestroyGuidelinesBuffer() -> void {
     guidelinesBuffer.reset();
 }
 
+const uint32_t CELL_VERT_COUNT = 6;
+
+auto GridRenderPass::CreateCellsBuffer(
+    DeviceH device, AllocatorH allocator, size_t cells, const glm::ivec2& ext,
+    const glm::ivec2& face_sz
+) -> void {
+    log::Debug("Creating cells buffer for extent: ({}, {})", ext.x, ext.y);
+    log::Debug(
+        "Creating cells buffer for face size: ({}, {})", face_sz.x, face_sz.y
+    );
+    const size_t face_height = face_sz.y;
+    const size_t face_width = face_sz.x;
+
+    rows = ext.y / face_height;
+    cols = ext.x / face_width;
+
+    log::Debug("Rows count={} with height={}", rows, face_width);
+    log::Debug("Cols count={} with width={}", cols, face_height);
+
+    const glm::ivec2 begin_pos{0, face_height};
+    const size_t vertices_count = CELL_VERT_COUNT;
+    const size_t allocation_sz = vertices_count * sizeof(Vertex);
+    cellsBuffer = std::make_unique<Buffer>(
+        device, allocator, allocation_sz,
+        vk::BufferUsageFlagBits::eVertexBuffer,
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+            | VMA_ALLOCATION_CREATE_MAPPED_BIT
+    );
+    void* raw_data = cellsBuffer->Map();
+    Vertex* data = static_cast<Vertex*>(raw_data);
+
+    const glm::vec3 bgcol{0.f};
+
+    data[0] = Vertex{glm::vec2(0.0f, 0.0f), bgcol};
+    data[1] = Vertex{glm::vec2(face_width, 0.0f), bgcol};
+    data[2] = Vertex{glm::vec2(0.f, face_height), bgcol};
+
+    data[3] = Vertex{glm::vec2(face_width, 0.0f), bgcol};
+    data[4] = Vertex{glm::vec2(0.f, face_height), bgcol};
+    data[5] = Vertex{glm::vec2(face_width, face_height), bgcol};
+
+    cellsBuffer->Unmap();
+}
+
+auto GridRenderPass::DestroyCellsBuffer() -> void { cellsBuffer.reset(); }
+
+auto GridRenderPass::RenderCells(CommandBufferH cmd, PipelineH pipeline)
+    -> void {
+    cmd->Handle().bindVertexBuffers(0, {cellsBuffer->Handle()}, {0});
+    cmd->Handle().bindPipeline(
+        vk::PipelineBindPoint::eGraphics, pipeline->Handle()
+    );
+    cmd->Handle().draw(guidelinesCount * 2, 1, 0, 0);
+}
+
 auto GridRenderPass::RenderGuidelines(CommandBufferH cmd, PipelineH pipeline)
     -> void {
     cmd->Handle().bindVertexBuffers(0, {guidelinesBuffer->Handle()}, {0});
     cmd->Handle().bindPipeline(
         vk::PipelineBindPoint::eGraphics, pipeline->Handle()
     );
-    // log::Debug("Guidelines count={}", guidelinesCount);
     cmd->Handle().draw(guidelinesCount * 2, 1, 0, 0);
 }
 
