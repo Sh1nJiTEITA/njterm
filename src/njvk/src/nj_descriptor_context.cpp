@@ -10,6 +10,7 @@
 #include <memory>
 #include <stack>
 #include <unordered_map>
+#include <utility>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
@@ -28,7 +29,7 @@ public:
     struct FrameDescriptorSetPack {
         vk::UniqueDescriptorSet set;
         //! Index => binding
-        std::vector<DescriptorU> descriptors;
+        std::unordered_map<size_t, DescriptorU> descriptors;
     };
 
     static size_t descriptorSetCountPerClass;
@@ -57,7 +58,7 @@ public:
         };
 
         for (size_t frame_index = 0; frame_index < framePacks.size(); ++frame_index) {
-            for (auto &desc : framePacks[frame_index].descriptors) { add(desc); }
+            for (auto &[bindind, desc] : framePacks[frame_index].descriptors) { add(desc); }
         }
         log::Debug("Searching for unique bindings inside single descriptor list");
         for (auto& single_desc : singleDescriptors) { add(single_desc); }
@@ -94,9 +95,8 @@ public:
         log::Debug("------> Make writes for frame={}", frame);
         std::vector<vk::WriteDescriptorSet> writes;
         const auto& frame_pack = framePacks[frame];
-        for (size_t desc_idx = 0; desc_idx < frame_pack.descriptors.size(); ++desc_idx) { 
-            const auto& desc = frame_pack.descriptors[desc_idx];
-            log::Debug("--------> Adding write for descriptor with index (binding)={} and hasBuffer={}, hasImage={}", desc_idx, desc->HasBuffer(), desc->HasImage());
+        for (auto& [binding, desc] : frame_pack.descriptors) { 
+            log::Debug("--------> Adding write for descriptor with index (binding)={} and hasBuffer={}, hasImage={}", binding, desc->HasBuffer(), desc->HasImage());
             const auto& buffer_info_it = *buffer_infos.insert(buffer_infos.end(), desc->BufferInfo());
             const auto& image_info_it = *image_infos.insert(image_infos.end(), desc->ImageInfo());
             auto write_info = vk::WriteDescriptorSet{}
@@ -130,7 +130,7 @@ public:
     
     auto Descriptor(size_t frame, size_t binding) -> Descriptor& { 
         assert(framePacks.size() > frame && "Frame index is too big");
-        assert(framePacks[frame].descriptors.size() > binding && "Binding index is too big");
+        assert(framePacks[frame].descriptors.contains(binding) && "Binding does not exist");
         return *framePacks[frame].descriptors[binding];
     }
 
@@ -172,7 +172,7 @@ public:
 
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptors) {
         log::Debug(
-            "Adding new descriptor with layout={} & binding={} for num frames={}", 
+            "-> Inner add new descriptor with layout={} binding={} frames={}", 
             layout, binding, frames
         );
         for (auto& desc : descriptors) { 
@@ -201,7 +201,7 @@ public:
             const size_t layout = desc.layout;
             const size_t binding = desc.binding;
 
-            log::Debug("Processing descriptor with layout={}, binding={}", layout, binding);
+            log::Debug("Processing descriptor with [layout={} binding={}]", layout, binding);
 
             auto& set = m[layout];
             if (set.empty()) { 
@@ -237,16 +237,19 @@ public:
                                "for each frame SEPARETLY", binding);
                     for (size_t pack_index = 0; pack_index < packs_count; ++pack_index) {
                         log::Debug("------> Going through packs with pack={} as frame", pack_index);
-                        current_packs[pack_index].descriptors.push_back(
-                            std::move(tmpStorage.descriptorPerFrame[pack_index])
-                        );
+                        // FIXME: ... 
+                        //============================================
+                        auto& pack = current_packs[pack_index];
+                        auto [it, success]  = pack.descriptors.insert(std::make_pair(binding, std::move(tmpStorage.descriptorPerFrame[pack_index])));
+                        if (!success) { 
+                            log::FatalExit("Cant assign tmp storage to binding key");
+                        }
                     }
                 } else { 
                     log::Debug("----> Descriptor resources are allocated "
                                "for each frame SHAREDLY", binding);
                     single_desc.push_back(std::move(tmpStorage.descriptorPerFrame[0]));
                 }
-                // log::Debug("current_packs[pack_index].descriptors={}", current_packs[pack_index].descriptors.size());
             }
             for (size_t frame = 0; frame < frames; ++frame) { 
                 log::Debug("==> In frame pack with index={} as frame descriptor count={}", frame, current_packs[frame].descriptors.size());
@@ -265,10 +268,12 @@ public:
     // clang-format on
     void AllocateSets() {
         log::Debug(
-            "Allocating descriptor sets for descriptor context... STARTED");
-        for (auto &[layout_index, set] : sets) {
-            log::Debug("Allocating sets for layout={}",
-                       static_cast<int>(layout_index));
+            "Allocating descriptor sets for descriptor context... STARTED"
+        );
+        for (auto& [layout_index, set] : sets) {
+            log::Debug(
+                "Allocating sets for layout={}", static_cast<int>(layout_index)
+            );
             set->Allocate(device, pool);
         }
         log::Debug("Allocating descriptor sets for descriptor context... DONE");
@@ -285,37 +290,43 @@ public:
             std::list<vk::DescriptorBufferInfo> binfos;
             std::list<vk::DescriptorImageInfo> iinfos;
             // FIXME: Missing texel ...
-            for (auto &[layout, pset] : sets) {
+            for (auto& [layout, pset] : sets) {
                 log::Debug("----> Updating set with layout={}", layout);
                 auto new_writes = pset->Write(frame, binfos, iinfos);
-                std::copy(new_writes.begin(), new_writes.end(),
-                          std::back_inserter(writes));
+                std::copy(
+                    new_writes.begin(), new_writes.end(),
+                    std::back_inserter(writes)
+                );
             }
             log::Debug("==> Calling vk-update func for frame={}", frame);
-            device->Handle().updateDescriptorSets(writes.size(), writes.data(),
-                                                  0, nullptr);
+            device->Handle().updateDescriptorSets(
+                writes.size(), writes.data(), 0, nullptr
+            );
         }
         log::Debug("Updating descriptor sets... DONE");
     }
 
-    void BindSets(size_t layout, size_t frame, CommandBufferH cb,
-                  vk::PipelineLayout pllayout) {
+    void BindSets(
+        size_t layout, size_t frame, CommandBufferH cb,
+        vk::PipelineLayout pllayout
+    ) {
         cb->Handle().bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics, pllayout,
             static_cast<uint32_t>(layout),
-            std::vector{sets[layout]->DescriptorSetHandle(frame)}, {});
+            std::vector{sets[layout]->DescriptorSetHandle(frame)}, {}
+        );
     }
 
     auto AllLayouts() -> std::vector<vk::DescriptorSetLayout> {
         std::vector<vk::DescriptorSetLayout> l;
-        for (auto &[layout, set] : sets) {
+        for (auto& [layout, set] : sets) {
             l.push_back(set->Layout());
         }
         // std::reverse(l.begin(), l.end());
         return l;
     }
 
-    auto Get(size_t frame, size_t layout, size_t binding) -> Descriptor & {
+    auto Get(size_t frame, size_t layout, size_t binding) -> Descriptor& {
         return sets[layout]->Descriptor(frame, binding);
     };
 

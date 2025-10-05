@@ -1,4 +1,5 @@
 #include "nj_descriptor.h"
+#include "njlog.h"
 #include "njvkutils.h"
 #include <vulkan/vulkan_shared.hpp>
 
@@ -59,6 +60,18 @@ auto Descriptor::ImageInfo() -> vk::DescriptorImageInfo {
     }
     return {};
 }
+
+auto Descriptor::MapBuffer() -> void* { 
+    if (!buffer) { 
+        log::FatalExit("Cant map descriptor buffer. Buffer has invalid handle");
+    }
+    return buffer->Map();
+}
+
+auto Descriptor::UnmapBuffer() -> void {
+    buffer->Unmap();
+}
+
 
 auto Descriptor::Layout() const noexcept -> size_t { return layout; }
 auto Descriptor::Binding() const noexcept -> size_t {return binding; } 

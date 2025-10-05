@@ -1,12 +1,13 @@
-#include "nj_descriptor_test.h"
+#include "nj_descriptor_grid.h"
+#include <cstring>
 
 namespace nj::ren {
 
-DescriptorTest::DescriptorTest(size_t layout, size_t binding)
+DescriptorGrid::DescriptorGrid(size_t layout, size_t binding)
     : Descriptor(layout, binding, vk::DescriptorType::eUniformBuffer) {}
 
 // clang-format off
-void DescriptorTest::CreateBuffer(ren::DeviceH device,
+void DescriptorGrid::CreateBuffer(ren::DeviceH device,
                                   ren::AllocatorH allocator) {
     buffer = std::make_unique<Buffer>(
         device, 
@@ -18,18 +19,25 @@ void DescriptorTest::CreateBuffer(ren::DeviceH device,
     );
 
     void* data = buffer->Map();
-    Data tmp { .color = { 1.f, 0.f, 0.f } };
-    memcpy(data, &tmp, sizeof(tmp));
+    // Data tmp { .color = { 1.f, 0.f, 0.f } };
+    // memcpy(data, &tmp, sizeof(tmp));
     buffer->Unmap();
 }
 // clang-format on
 
-void DescriptorTest::CreateImage(
+void DescriptorGrid::CreateImage(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 
-void DescriptorTest::CreateView(
+void DescriptorGrid::CreateView(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
+
+void DescriptorGrid::Update(const glm::ivec2& ext, const glm::ivec2 face_size) {
+    void* data = MapBuffer();
+    Data tmp{.extent = ext, .faceSize = face_size};
+    memcpy(data, &tmp, sizeof(Data));
+    UnmapBuffer();
+}
 
 } // namespace nj::ren

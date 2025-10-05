@@ -23,6 +23,8 @@ public:
     ) -> void;
     auto DestroyGuidelinesBuffer() -> void;
     auto RenderGuidelines(CommandBufferH cmd, PipelineH pipeline) -> void;
+    auto CreateMonoSpaceGrid() -> void;
+    auto DestroyMonoSpaceGrid() -> void;
 
 private:
     size_t guidelinesCount;

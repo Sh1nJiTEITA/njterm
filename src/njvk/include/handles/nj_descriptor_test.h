@@ -7,8 +7,6 @@ namespace nj::ren {
 
 // clang-format off
 
-
-
 struct DescriptorTest : public ren::Descriptor {
     DescriptorTest(size_t layout, size_t binding);
 

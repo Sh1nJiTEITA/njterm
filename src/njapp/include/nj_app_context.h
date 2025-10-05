@@ -46,6 +46,7 @@ class Context {
 public:
     Context();
     void Run();
+    void Update();
 
 private:
     void InitBaseHandles();

@@ -2,7 +2,6 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 Language: Cpp
-# BracketAlignmentStyle: BlockIndent
 AlignAfterOpenBracket: BlockIndent
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
@@ -11,47 +10,3 @@ IndentCaseLabels: true
 AccessModifierOffset: -4
 AlignOperands: AlignAfterOperator
 BreakBeforeBinaryOperators: NonAssignment
-# BinPackParameters: OnePerLine
-
-#
-# # BreakBeforeDefinitionKeywords: Always
-# BreakTemplateDeclarations: true
-# PointerAlignment: Left
-# ReferenceAlignment: Left 
-# AccessModifierOffset: -3
-# DisableFormat: false
-#
-# BreakBeforeBraces: Custom
-# BraceWrapping:
-#   AfterClass: true
-#   AfterControlStatement: true
-#   AfterEnum: true
-#   AfterFunction: true
-#   AfterNamespace: true
-#   AfterObjCDeclaration: true
-#   AfterStruct: true
-#   AfterUnion: true
-#   BeforeCatch: true
-#   BeforeElse: true
-#   IndentBraces: false
-#
-# AllowAllArgumentsOnNextLine: false
-# AllowAllParametersOfDeclarationOnNextLine: true
-# BinPackArguments: false
-# BinPackParameters: false
-# SpacesInAngles: true
-# PackConstructorInitializers: NextLineOnly
-# AllowShortBlocksOnASingleLine: false
-# ColumnLimit: 80
-# SpaceBeforeParens: ControlStatements
-# BreakBeforeConceptDeclarations: Always
-# RequiresClausePosition: SingleLine
-# BreakBeforeTernaryOperators: true
-#
-# Cpp11BracedListStyle: true
-# SpacesInContainerLiterals: true
-#
-# AlignAfterOpenBracket: BlockIndent
-#
-# BreakConstructorInitializers: BeforeComma
-# AlwaysBreakAfterReturnType: TopLevelDefinitions

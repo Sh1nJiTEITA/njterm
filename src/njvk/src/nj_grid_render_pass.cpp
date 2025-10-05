@@ -53,7 +53,6 @@ auto GridRenderPass::CreateGuidelinesBuffer(
         device, allocator, allocation_sz,
         vk::BufferUsageFlagBits::eVertexBuffer,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-        // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
         VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
             | VMA_ALLOCATION_CREATE_MAPPED_BIT
     );
@@ -66,8 +65,9 @@ auto GridRenderPass::CreateGuidelinesBuffer(
         const float relative_height = static_cast<float>(height) / ext.y;
         const float norm_height = 2.0f * relative_height - 1.0f;
 
-        data[l_idx] = Vertex{.pos = {-1, norm_height}, .col = {}};
-        data[r_idx] = Vertex{.pos = {+1, norm_height}, .col = {}};
+        data[l_idx] = Vertex{.pos = {-1, norm_height}};
+        data[r_idx] = Vertex{.pos = {+1, norm_height}};
+
         log::Debug(
             "Guideline {} : HEIGHT={} LEFT=( x={}, y={} ) RIGHT=( x={}, y={} )",
             line_idx, height, data[l_idx].pos.x, data[l_idx].pos.y,
@@ -90,6 +90,10 @@ auto GridRenderPass::RenderGuidelines(CommandBufferH cmd, PipelineH pipeline)
     // log::Debug("Guidelines count={}", guidelinesCount);
     cmd->Handle().draw(guidelinesCount * 2, 1, 0, 0);
 }
+
+auto CreateMonoSpaceGrid() -> void {}
+
+auto DestroyMonoSpaceGrid() -> void {}
 
 // clang-format on
 

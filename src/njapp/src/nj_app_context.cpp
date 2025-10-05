@@ -1,4 +1,5 @@
 #include "nj_app_context.h"
+#include "nj_descriptor_grid.h"
 #include "nj_pipeline_guidelines.h"
 #include "njcon.h"
 #include "njvklog.h"
@@ -51,6 +52,7 @@ void Context::Run() {
     log::Info("============== Render loop... STARTED ==============");
     while (!win->ShouldClose()) {
         win->Update();
+        Update();
         if (renderContext->BeginFrame(device, swapchain)) {
             RecreateSwapchain();
             continue;
@@ -112,6 +114,22 @@ void Context::Run() {
     device->Handle().waitIdle();
 }
 
+void Context::Update() {
+    win->Update();
+
+    const auto current_frame = renderContext->CurrentFrameIndex();
+
+    auto& grid_desc =
+        descContext->Get<ren::DescriptorGrid>(current_frame, 0, 2);
+    // .Update(
+    //     glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+    //     atlas->FontSize()
+    // );
+
+    // auto& test_desc =
+    //     descContext->Get<ren::DescriptorTest>(current_frame, 0, 0);
+}
+
 void Context::InitBaseHandles() {
     inst = log::MakeSharedWithLog<ren::Instance>(win->VulkanExtensions());
     messenger = log::MakeSharedWithLog<ren::DebugUtilsMessenger>(inst);
@@ -154,12 +172,14 @@ void Context::InitDescHandles() {
     descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
         "Descriptor context", device, descPool, allocator, con::Frames()
     );
+
     descContext->Add<ren::DescriptorTest>(con::Frames(), 0, 0);
 
     const size_t ATLAS_W = 4000;
     const size_t ATLAS_H = 4000;
 
     const size_t buf_sz{ATLAS_W * ATLAS_H};
+
     auto atlas_buf = std::make_unique<ren::Buffer>(
         device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
         VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
@@ -167,9 +187,9 @@ void Context::InitDescHandles() {
             | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
     );
 
-    void* data = atlas_buf->Map();
-    atlas->Upload(data, ATLAS_W, ATLAS_H);
-    atlas_buf->Unmap();
+    // void* data = atlas_buf->Map();
+    // atlas->Upload(data, ATLAS_W, ATLAS_H);
+    // atlas_buf->Unmap();
 
     descContext->Add<ren::DescriptorTexture>(
         1, 0, 1, vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
@@ -180,6 +200,8 @@ void Context::InitDescHandles() {
         // atlas.Side(), atlas.Side(),
         // atlas.Bitmap()
     );
+
+    descContext->Add<ren::DescriptorGrid>(con::Frames(), 0, 2);
 
     descContext->CreateLayouts();
     descContext->AllocateSets();
