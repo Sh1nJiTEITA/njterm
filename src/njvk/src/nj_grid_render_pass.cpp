@@ -37,16 +37,16 @@ auto GridRenderPass::CreateGuidelinesBuffer(
     DeviceH device, AllocatorH allocator, const glm::ivec2& ext,
     const glm::ivec2& face_sz
 ) -> void {
-    log::Debug("Creating guidelines buffer for extent: ({}, {})", ext.x, ext.y);
-    log::Debug(
-        "Creating guidelines buffer for face size: ({}, {})", face_sz.x,
-        face_sz.y
-    );
+    // log::Debug("Creating guidelines buffer for extent: ({}, {})", ext.x,
+    // ext.y); log::Debug(
+    //     "Creating guidelines buffer for face size: ({}, {})", face_sz.x,
+    //     face_sz.y
+    // );
     const size_t face_height = face_sz.y;
     guidelinesCount = ext.y / face_height;
-    log::Debug(
-        "guidelinesCount = {} / {} = {}", ext.y, face_height, guidelinesCount
-    );
+    // log::Debug(
+    //     "guidelinesCount = {} / {} = {}", ext.y, face_height, guidelinesCount
+    // );
     const glm::ivec2 begin_pos{0, face_height};
     const size_t vertices_count = guidelinesCount * 2;
     const size_t allocation_sz = vertices_count * sizeof(Vertex);
@@ -69,11 +69,11 @@ auto GridRenderPass::CreateGuidelinesBuffer(
         data[l_idx] = Vertex{.pos = {-1, norm_height}};
         data[r_idx] = Vertex{.pos = {+1, norm_height}};
 
-        log::Debug(
-            "Guideline {} : HEIGHT={} LEFT=( x={}, y={} ) RIGHT=( x={}, y={} )",
-            line_idx, height, data[l_idx].pos.x, data[l_idx].pos.y,
-            data[r_idx].pos.x, data[r_idx].pos.y
-        );
+        // log::Debug(
+        //     "Guideline {} : HEIGHT={} LEFT=( x={}, y={} ) RIGHT=( x={}, y={}
+        //     )", line_idx, height, data[l_idx].pos.x, data[l_idx].pos.y,
+        //     data[r_idx].pos.x, data[r_idx].pos.y
+        // );
     }
     guidelinesBuffer->Unmap();
 }
@@ -95,11 +95,11 @@ auto GridRenderPass::CreateCellsBuffer(
     const size_t face_height = face_sz.y;
     const size_t face_width = face_sz.x;
 
-    rows = ext.y / face_height;
-    cols = ext.x / face_width;
+    rows = static_cast<size_t>(ext.y / static_cast<float>(face_height));
+    cols = static_cast<size_t>(ext.x / static_cast<float>(face_width));
 
-    log::Debug("Rows count={} with height={}", rows, face_width);
-    log::Debug("Cols count={} with width={}", cols, face_height);
+    log::Debug("Rows={}/{}={}", ext.y, face_height, rows);
+    log::Debug("Cols={}/{}={}", ext.x, face_width, cols);
 
     const glm::ivec2 begin_pos{0, face_height};
     const size_t vertices_count = CELL_VERT_COUNT;
@@ -115,6 +115,24 @@ auto GridRenderPass::CreateCellsBuffer(
     Vertex* data = static_cast<Vertex*>(raw_data);
 
     const glm::vec3 bgcol{0.f};
+
+    /*
+    auto pixel_to_ndc = [ext](float x, float y) -> glm::vec2 {
+        float ndc_x = 2.0f * x / float(ext.x) - 1.0f;
+        float ndc_y = 1.0f - 2.0f * y / float(ext.y); // flip Y
+        return {ndc_x, ndc_y};
+    };
+
+    // Define quad in NDC
+    data[0] = Vertex{pixel_to_ndc(0.0f, 0.0f), bgcol};
+    data[1] = Vertex{pixel_to_ndc(float(face_width), 0.0f), bgcol};
+    data[2] = Vertex{pixel_to_ndc(0.0f, float(face_height)), bgcol};
+
+    data[3] = Vertex{pixel_to_ndc(float(face_width), 0.0f), bgcol};
+    data[4] = Vertex{pixel_to_ndc(0.0f, float(face_height)), bgcol};
+    data[5] =
+        Vertex{pixel_to_ndc(float(face_width), float(face_height)), bgcol};
+    */
 
     data[0] = Vertex{glm::vec2(0.0f, 0.0f), bgcol};
     data[1] = Vertex{glm::vec2(face_width, 0.0f), bgcol};
@@ -135,7 +153,7 @@ auto GridRenderPass::RenderCells(CommandBufferH cmd, PipelineH pipeline)
     cmd->Handle().bindPipeline(
         vk::PipelineBindPoint::eGraphics, pipeline->Handle()
     );
-    cmd->Handle().draw(guidelinesCount * 2, 1, 0, 0);
+    cmd->Handle().draw(CELL_VERT_COUNT, cols * rows, 0, 0);
 }
 
 auto GridRenderPass::RenderGuidelines(CommandBufferH cmd, PipelineH pipeline)

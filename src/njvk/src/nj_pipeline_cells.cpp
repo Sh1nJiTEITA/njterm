@@ -22,6 +22,7 @@ auto PipelineBuilderCells::RasterizationState() -> vk::PipelineRasterizationStat
         .setPolygonMode(vk::PolygonMode::eFill)
         .setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise)
+        .setLineWidth(1.) // NOTE: MUST BE PRESENT!
         ;
 }
 

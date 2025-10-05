@@ -14,6 +14,8 @@ Atlas::Atlas(
       height{face_h},
       startCharCode{start_char},
       endCharCode{end_char} {
+
+    face->SetPixelSize(width, height);
     // log::Info("Atlas creation of face=\"{}\"... STARTED",
     // face->FamilyName()); log::Debug("Setting face size...");
     // face->SetPixelSize(0, face_sz);

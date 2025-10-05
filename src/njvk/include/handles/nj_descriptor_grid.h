@@ -14,9 +14,9 @@ struct DescriptorGrid : public Descriptor {
 
     //! Must be aligned for std140 -> each vecN field is
     //! aligned to 16 bytes
-    struct Data { 
-        alignas(16) glm::ivec2 extent;      //!< size is 4 * 2 = 8
-        alignas(16) glm::ivec2 faceSize;    //!< size is 4 * 2 = 8
+    struct alignas(16) Data { 
+        glm::ivec2 extent;      //!< size is 4 * 2 = 8
+        glm::ivec2 faceSize;    //!< size is 4 * 2 = 8
     };
 
     virtual void CreateBuffer(DeviceH device, AllocatorH allocator) override;

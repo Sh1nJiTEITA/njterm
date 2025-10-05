@@ -68,9 +68,37 @@ size_t TextBuffer::CalcColsResidualCount(size_t rows) const {
 
 size_t TextBuffer::GetCursor() const noexcept { return cursor1d; }
 
+void TextBuffer::FillWithRainbow() {
+    uint8_t r = 0, g = 0, b = 0;
+    // for (auto& cell : cells) {
+    //     cell.bgColor = PackColor(r, g, b, static_cast<uint8_t>(256));
+    //     if (r < 255) {
+    //         r++;
+    //     } else {
+    //         if (g < 255) {
+    //             g++;
+    //         } else {
+    //             if (b < 255) {
+    //                 b++;
+    //             }
+    //         }
+    //     }
+    // }
+    for (auto& cell : cells) {
+        cell.bgColor = PackColor(r, g, b, 255);
+
+        r += 1;
+        g += 2;
+        b += 3;
+        // wrap-around at 256
+        r %= 256;
+        g %= 256;
+        b %= 256;
+    }
+}
+
 void TextBuffer::MapDataTo(void* data) const {
     memcpy(data, cells.data(), sizeof(Cell) * cells.size());
-    return;
 }
 
 } // namespace nj::buf

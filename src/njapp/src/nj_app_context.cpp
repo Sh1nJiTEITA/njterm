@@ -1,6 +1,7 @@
 #include "nj_app_context.h"
 #include "nj_descriptor_cells.h"
 #include "nj_descriptor_grid.h"
+#include "nj_pipeline_cells.h"
 #include "nj_pipeline_guidelines.h"
 #include "njcon.h"
 #include "njvklog.h"
@@ -73,10 +74,8 @@ void Context::Run() {
                 .setRenderArea(render_area)
                 .setClearValues(clear_color)
                 ;
-            cmd->Handle().beginRenderPass(render_pass_info,
-            vk::SubpassContents::eInline); { // clang-format off
-                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd,
-                pipeline->LayoutHandle());
+            cmd->Handle().beginRenderPass(render_pass_info, vk::SubpassContents::eInline); { // clang-format off
+                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, pipeline->LayoutHandle());
 
                 auto viewport = vk::Viewport{}
                                     .setX(0)
@@ -105,6 +104,7 @@ void Context::Run() {
                 cmd->Handle().draw(6, 1, 0, 0);
 
                 gridRenderPass->RenderGuidelines(cmd, guidelinesPipeline);
+                gridRenderPass->RenderCells(cmd, cellsPipeline);
             } // clang-format on:
             cmd->Handle().endRenderPass();
             if (renderContext->EndFrame(device, phDevice, swapchain)) {
@@ -123,9 +123,11 @@ void Context::Update() {
     const auto frame = renderContext->CurrentFrameIndex();
 
     auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 2);
+    auto ext = swapchain->Extent();
+    log::Debug("ext: {} | {}", ext.width, ext.height);
     grid_desc.Update(
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
+        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
     );
 
     auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 3);
@@ -189,9 +191,9 @@ void Context::InitDescHandles() {
             | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
     );
 
-    // void* data = atlas_buf->Map();
-    // atlas->Upload(data, ATLAS_W, ATLAS_H);
-    // atlas_buf->Unmap();
+    void* data = atlas_buf->Map();
+    atlas->Upload(data, ATLAS_W, ATLAS_H);
+    atlas_buf->Unmap();
 
     descContext->Add<ren::DescriptorTexture>(
         1, 0, 1, vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
@@ -214,25 +216,33 @@ void Context::InitDescHandles() {
 void Context::InitPipelineHandles() {
     auto all_layouts = descContext->AllLayouts();
     log::Debug("Descriptor layout count={}", all_layouts.size());
-    auto pp_builder_base =
-        log::MakeSharedWithLog<ren::PipelineBuilderBase>("PipelineBuilderBase");
-    pipeline = log::MakeSharedWithLog<ren::Pipeline>(
-        device, gridRenderPass, pp_builder_base, all_layouts,
+
+    pipeline = ren::CreatePipeline<ren::PipelineBuilderBase>(
+        device, gridRenderPass, all_layouts,
         fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
     );
 
-    auto pp_builder_guidelines =
-        log::MakeSharedWithLog<ren::PipelineBuilderGuidelines>(
-            "PipelineBuilderGuidelines"
-        );
-    guidelinesPipeline = log::MakeSharedWithLog<ren::Pipeline>(
-        device, gridRenderPass, pp_builder_guidelines, all_layouts,
+    guidelinesPipeline = ren::CreatePipeline<ren::PipelineBuilderGuidelines>(
+        device, gridRenderPass, all_layouts,
         fs::path("/home/snj/Code/Other/njterm/build/shaders/guidelines/")
     );
+
+    cellsPipeline = ren::CreatePipeline<ren::PipelineBuilderCells>(
+        device, gridRenderPass, all_layouts,
+        fs::path("/home/snj/Code/Other/njterm/build/shaders/cells/")
+    );
+
     gridRenderPass->CreateGuidelinesBuffer(
         device, allocator,
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
+        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
+    );
+
+    face->LoadGlyph('M');
+    gridRenderPass->CreateCellsBuffer(
+        device, allocator, textBuffer->Size(),
+        glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
     );
 }
 
@@ -250,6 +260,7 @@ void Context::InitTextBuffer() {
     textBuffer = log::MakeSharedWithLog<buf::TextBuffer>(
         "Text buffer", con::TextBufferSize()
     );
+    textBuffer->FillWithRainbow();
 }
 
 void Context::RecreateSwapchain() {

@@ -75,6 +75,7 @@ struct TextBuffer {
 
     size_t GetCursor() const noexcept;
 
+    void FillWithRainbow();
     void MapDataTo(void* data) const;
 
 private:
