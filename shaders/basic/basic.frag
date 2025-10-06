@@ -12,5 +12,5 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     vec4 tex = texture(texSampler, fragUV); // tex.a will now be the red channel
-    outColor = vec4(1.0, 1.0, 1.0, tex.a);
+    outColor = vec4(1.0, 1.0, 1.0, tex.r);
 }

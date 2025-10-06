@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #ifndef NJ_FT_ATLAS_H
 #define NJ_FT_ATLAS_H
 
@@ -7,18 +8,20 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 
-namespace nj::ft {
+namespace nj {
+#ifndef NJ_CHAR_STRUCT
+#define NJ_CHAR_STRUCT
+
+struct alignas(16) SingleCharTextureData {
+    glm::vec4 uv; // 4 * 4 = 16 Bytes
+};
+
+#endif
+
+namespace ft {
 
 class Atlas {
 public:
-    using CharIndex = size_t;
-    struct CharData {
-        const glm::ivec2 topLeft;
-        const size_t width;
-        const size_t height;
-        const int32_t pitch;
-    };
-
 public:
     Atlas(
         FaceH face, size_t face_w, size_t face_h, size_t start_char,
@@ -31,18 +34,22 @@ public:
     size_t Side() const noexcept;
 
     glm::ivec2 FontSize() const noexcept;
+    const std::vector<SingleCharTextureData>& CharMap() const noexcept;
+    size_t CharsCount() const noexcept;
 
 private:
     FaceH face;
-    const size_t width;
-    const size_t height;
+    size_t width;
+    size_t height;
     const size_t startCharCode;
     const size_t endCharCode;
     size_t atlasSide;
 
-    std::unordered_map<CharIndex, CharData> charMap;
+    std::vector<SingleCharTextureData> charMap;
 };
 using AtlasH = std::shared_ptr<Atlas>;
 
-} // namespace nj::ft
+} // namespace ft
+} // namespace nj
+
 #endif

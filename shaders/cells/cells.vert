@@ -10,7 +10,8 @@ layout(location = 0) in vec2 pos;
 layout(location = 1) in vec3 col;
 
 layout(location = 0) out flat uint instance;
-layout(location = 1) out vec2 newPos;
+layout(location = 1) out flat uint vert;
+layout(location = 2) out vec2 newPos;
 
 void main() {
     vec2 sz = vec2(
@@ -40,6 +41,7 @@ void main() {
     gl_Position = vec4(ndc_pos, 0.0, 1.0);
     newPos = ndc_pos; // useful for fragment shader
     instance = uint(gl_InstanceIndex);
+    vert = uint(gl_VertexIndex % 6);
 
     // Optional debug print
     // debugPrintfEXT("NDC: %f, %f | Instance: %u\n", ndc_pos.x, ndc_pos.y, instance);

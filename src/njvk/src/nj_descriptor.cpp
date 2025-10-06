@@ -13,6 +13,7 @@ DescriptorPool::DescriptorPool(ren::DeviceH device) {
         .setPoolSizes(
             h.Handle(std::vector{ 
                 vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, 10},
+                vk::DescriptorPoolSize{vk::DescriptorType::eStorageBuffer, 10},
                 vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 10},
             })
         )

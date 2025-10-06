@@ -55,7 +55,6 @@ void Context::Run() {
     device->Handle().waitIdle();
     log::Info("============== Render loop... STARTED ==============");
     while (!win->ShouldClose()) {
-        win->Update();
         Update();
         if (renderContext->BeginFrame(device, swapchain)) {
             RecreateSwapchain();
@@ -124,7 +123,6 @@ void Context::Update() {
 
     auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 2);
     auto ext = swapchain->Extent();
-    log::Debug("ext: {} | {}", ext.width, ext.height);
     grid_desc.Update(
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
         {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
@@ -208,6 +206,13 @@ void Context::InitDescHandles() {
     descContext->Add<ren::DescriptorGrid>(con::Frames(), 0, 2);
     descContext->Add<ren::DescriptorCells>(con::Frames(), 0, 3, textBuffer);
 
+    auto chars_buf =
+        ren::CreateCharactersMetaBuffer(device, allocator, atlas->CharMap());
+
+    descContext->Add<ren::DescriptorCharactersMeta>(
+        1, 0, 4, std::move(chars_buf)
+    );
+
     descContext->CreateLayouts();
     descContext->AllocateSets();
     descContext->UpdateSets();
@@ -253,7 +258,7 @@ void Context::InitFontLoaderHandles() {
     library = std::make_shared<ft::Library>();
     ft::FaceID id = library->LoadFace(font_path);
     face = library->GetFace(id);
-    atlas = std::make_shared<ft::Atlas>(face, 0, 20, 32, 255);
+    atlas = std::make_shared<ft::Atlas>(face, 0, 150, 32, 255);
 }
 
 void Context::InitTextBuffer() {

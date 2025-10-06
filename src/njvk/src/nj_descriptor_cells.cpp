@@ -40,4 +40,55 @@ void DescriptorCells::Update() {
     UnmapBuffer();
 }
 
+DescriptorCharactersMeta::DescriptorCharactersMeta(
+    size_t layout, size_t binding, BufferU&& buf
+)
+    : Descriptor(
+          layout, binding, vk::DescriptorType::eStorageBuffer,
+          vk::ShaderStageFlagBits::eAll
+      ) {
+    buffer = std::move(buf);
+}
+
+void DescriptorCharactersMeta::CreateBuffer(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+
+void DescriptorCharactersMeta::CreateImage(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+void DescriptorCharactersMeta::CreateView(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+
+// void DescriptorCharactersMeta::Update(
+//     const std::vector<SingleCharTextureData>& char_map
+// ) {
+//     void* data = MapBuffer();
+//
+//     memcpy(
+//         data, char_map.data(), sizeof(SingleCharTextureData) *
+//         char_map.size()
+//     );
+//
+//     UnmapBuffer();
+// }
+
+BufferU CreateCharactersMetaBuffer(
+    DeviceH d, AllocatorH a, const std::vector<SingleCharTextureData>& map
+) {
+    const size_t buffer_size_bytes = sizeof(SingleCharTextureData) * map.size();
+
+    auto buf = std::make_unique<Buffer>(
+        d, a, buffer_size_bytes,
+        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eStorageBuffer),
+        VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU, VmaAllocationCreateFlags{}
+    );
+
+    void* data = buf->Map();
+    memcpy(data, map.data(), buffer_size_bytes);
+    buf->Unmap();
+    return buf;
+}
+
 } // namespace nj::ren

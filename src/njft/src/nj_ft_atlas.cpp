@@ -9,60 +9,17 @@ namespace nj::ft {
 Atlas::Atlas(
     FaceH face, size_t face_w, size_t face_h, size_t start_char, size_t end_char
 )
-    : face{face},
-      width{face_w},
-      height{face_h},
-      startCharCode{start_char},
-      endCharCode{end_char} {
+    : face{face}, startCharCode{start_char}, endCharCode{end_char} {
 
-    face->SetPixelSize(width, height);
-    // log::Info("Atlas creation of face=\"{}\"... STARTED",
-    // face->FamilyName()); log::Debug("Setting face size...");
-    // face->SetPixelSize(0, face_sz);
-    // log::Debug("Setting face size... DONE");
-    // assert(end_char > start_char &&
-    //        "End char code must be > then start to start iteration");
-    // const size_t char_count = end_char - start_char;
-    // atlasSide = char_count * face_sz;
-    // const size_t atlas_area = atlasSide * atlasSide;
-    // bitmap.assign(atlas_area, 0);
-    // glm::ivec2 pen{0, 0};
-    // log::Debug("Started iterating between codes=[{},{}] or [\"{}\",
-    // \"{}\"]...",
-    //            start_char, end_char, static_cast<char>(start_char),
-    //            static_cast<char>(end_char));
-    // for (size_t code = start_char; code < end_char; ++code) {
-    //     const bool sts = face->LoadGlyph(code);
-    //     if (!sts) {
-    //         log::Error("Loading code={} (char={}) ... ERROR", code,
-    //                    static_cast<char>(code));
-    //         continue;
-    //     }
-    //     log::Debug("Loading code={} (char={}) ... DONE", code,
-    //                static_cast<char>(code));
-    //     auto glyph_bitmap_ptr = face->Glyph()->bitmap;
-    //     auto glyph_bitmap_buffer = glyph_bitmap_ptr.buffer;
-    //
-    //     const size_t glyph_width = glyph_bitmap_ptr.width;
-    //     const size_t glyph_height = glyph_bitmap_ptr.rows;
-    //     const size_t global_pen = pen.x + pen.y * atlasSide;
-    //     for (size_t i = 0; i < glyph_width; ++i) {
-    //         for (size_t j = 0; j < glyph_height; ++j) {
-    //             const size_t local_pen = i + j * glyph_width;
-    //             bitmap[global_pen + local_pen] =
-    //             glyph_bitmap_buffer[local_pen];
-    //         }
-    //     }
-    //     charDatas.emplace(code, CharData{.topLeft = pen,
-    //                                      .botRight = {pen.x + glyph_width,
-    //                                                   pen.y +
-    //                                                   glyph_height}});
-    // }
-    // log::Info("Atlas creation of face={}... DONE", face->FamilyName());
+    face->SetPixelSize(face_w, face_h);
+
+    width = face->MaxAdvanceWidth() >> 6;
+    height = face->Size()->metrics.height >> 6;
 }
+
 // clang-format off
 void Atlas::Upload(void* data, size_t w, size_t h) {
-    face->SetPixelSize(width, height);
+    // face->SetPixelSize(width, height);
     if (IsAllocated()) {
         log::Warn("Reuploading font atlas");
         charMap.clear();
@@ -72,14 +29,18 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
     int max_row_height = 0;
 
     auto ptr = static_cast<uint8_t*>(data);
+    
+    charMap.clear();
+    charMap.resize(
+        endCharCode, 
+        SingleCharTextureData{ glm::vec4(-1.f) }
+    );
 
     for (size_t code = startCharCode; code < endCharCode; ++code) {
         if (!face->LoadGlyph(code)) {
             log::Error("Loading code={} ... ERROR", code);
             continue;
-        } else {
-            log::Info("Loading code={} (char={})... OK", code, static_cast<char>(code));
-        }
+        } 
 
         auto& bitmap = face->Glyph()->bitmap;
 
@@ -98,17 +59,34 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
             memcpy(dst_ptr, src_ptr, bitmap.width);
         }
 
-        auto [_, status] = charMap.insert({code, CharData{
-            .topLeft = top_l,
-            .width = bitmap.width,
-            .height = bitmap.rows,
-            .pitch = bitmap.pitch
-        }});
-        if (!status) {
-            log::FatalExit("Internal Atlas::Upload(...) error: "
-                           "Cant insert new char data");
-        }
+        // auto [_, status] = charMap.insert({code, CharData{
+        //     .topLeft = top_l,
+        //     .width = bitmap.width,
+        //     .height = bitmap.rows,
+        //     .pitch = bitmap.pitch
+        // }});
+        
+        // charMap[code].uv = { 
+        //     // relative top left
+        //     top_l.x / static_cast<float>(w), 
+        //     top_l.y / static_cast<float>(h),
+        //     // relative bot right
+        //     (top_l.x + bitmap.width) / static_cast<float>(w), 
+        //     // 1.f - (top_l.y + bitmap.rows) / static_cast<float>(h)
+        //     (top_l.y + bitmap.rows) / static_cast<float>(h)
+        // };
 
+        float u0 = top_l.x / float(w);
+float u1 = (top_l.x + bitmap.width) / float(w);
+
+// flip V
+float v0 = 1.0f - (top_l.y + bitmap.rows) / float(h); // bottom of glyph
+float v1 = 1.0f - top_l.y / float(h);                // top of glyph
+
+charMap[code].uv = { u0, v0, u1, v1 };
+
+        log::Info("Loading code={} (char={}) uv=|{},{},{},{}|... OK", code, static_cast<char>(code), charMap[code].uv.x, charMap[code].uv.y, charMap[code].uv.z, charMap[code].uv.w);
+        
         top_l.x += bitmap.width;
         max_row_height = std::max(static_cast<unsigned int>(max_row_height), bitmap.rows);
     }
@@ -116,10 +94,20 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
 // clang-format off
 
 size_t Atlas::Side() const noexcept { return atlasSide; }
+
 bool Atlas::IsAllocated() const noexcept { return !charMap.empty(); }
 void Upload(void *data) {}
+
 glm::ivec2 Atlas::FontSize() const noexcept {
     return { width, height };
+}
+
+const std::vector<SingleCharTextureData>& Atlas::CharMap() const noexcept { 
+    return charMap; 
+}
+
+size_t Atlas::CharsCount() const noexcept{ 
+    return this->endCharCode - this->startCharCode;
 }
 
 // clang-format off

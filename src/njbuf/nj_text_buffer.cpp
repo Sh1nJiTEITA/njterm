@@ -86,6 +86,7 @@ void TextBuffer::FillWithRainbow() {
     // }
     for (auto& cell : cells) {
         cell.bgColor = PackColor(r, g, b, 255);
+        cell.character = 97;
 
         r += 1;
         g += 2;

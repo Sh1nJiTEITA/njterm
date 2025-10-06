@@ -4,7 +4,17 @@
 #include "nj_descriptor.h"
 #include "nj_text_buffer.h"
 
-namespace nj::ren {
+namespace nj {
+#ifndef NJ_CHAR_STRUCT
+#define NJ_CHAR_STRUCT
+
+struct alignas(16) SingleCharTextureData {
+    glm::vec4 uv; // 4 * 4 = 16 Bytes
+};
+
+#endif
+
+namespace ren {
 
 struct DescriptorCells : public Descriptor {
     DescriptorCells(size_t layout, size_t binding, buf::TextBufferH buf);
@@ -18,7 +28,30 @@ struct DescriptorCells : public Descriptor {
 private:
     buf::TextBufferH textBuffer;
 };
+//
+//
+//
+//
 
-}; // namespace nj::ren
+//
+//
+struct DescriptorCharactersMeta : public Descriptor {
+    DescriptorCharactersMeta(size_t layout, size_t binding, BufferU&& buf);
 
+    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator);
+
+    void Update();
+
+private:
+    size_t charsCount;
+};
+
+BufferU CreateCharactersMetaBuffer(
+    DeviceH d, AllocatorH a, const std::vector<SingleCharTextureData>&
+);
+
+} // namespace ren
+} // namespace nj
 #endif
