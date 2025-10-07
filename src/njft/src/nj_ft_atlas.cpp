@@ -13,8 +13,18 @@ Atlas::Atlas(
 
     face->SetPixelSize(face_w, face_h);
 
-    width = face->MaxAdvanceWidth() >> 6;
+    width = face->Size()->metrics.max_advance >> 6;
     height = face->Size()->metrics.height >> 6;
+    // width = (face->Bbox().xMax >> 6) - (face->Bbox().xMin >> 6);
+    // height = (face->Bbox().yMax >> 6) - (face->Bbox().yMin >> 6);
+    // width = face->MaxAdvanceWidth();
+    // height = face->MaxAdvanceHeight();
+    // height = face->Height();
+    // width = face->Size()->metrics.
+
+    log::Info(
+        "Atlas face size={},{} => size={},{}", face_w, face_h, width, height
+    );
 }
 
 // clang-format off
@@ -66,24 +76,14 @@ void Atlas::Upload(void* data, size_t w, size_t h) {
         //     .pitch = bitmap.pitch
         // }});
         
-        // charMap[code].uv = { 
-        //     // relative top left
-        //     top_l.x / static_cast<float>(w), 
-        //     top_l.y / static_cast<float>(h),
-        //     // relative bot right
-        //     (top_l.x + bitmap.width) / static_cast<float>(w), 
-        //     // 1.f - (top_l.y + bitmap.rows) / static_cast<float>(h)
-        //     (top_l.y + bitmap.rows) / static_cast<float>(h)
-        // };
-
-        float u0 = top_l.x / float(w);
-float u1 = (top_l.x + bitmap.width) / float(w);
-
-// flip V
-float v0 = 1.0f - (top_l.y + bitmap.rows) / float(h); // bottom of glyph
-float v1 = 1.0f - top_l.y / float(h);                // top of glyph
-
-charMap[code].uv = { u0, v0, u1, v1 };
+        charMap[code].uv = { 
+            // relative top left
+            top_l.x / static_cast<float>(w), 
+            top_l.y / static_cast<float>(h),
+            // relative bot right
+            (top_l.x + bitmap.width) / static_cast<float>(w), 
+            (top_l.y + bitmap.rows) / static_cast<float>(h)
+        };
 
         log::Info("Loading code={} (char={}) uv=|{},{},{},{}|... OK", code, static_cast<char>(code), charMap[code].uv.x, charMap[code].uv.y, charMap[code].uv.z, charMap[code].uv.w);
         

@@ -125,7 +125,7 @@ void Context::Update() {
     auto ext = swapchain->Extent();
     grid_desc.Update(
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
+        atlas->FontSize()
     );
 
     auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 3);
@@ -240,14 +240,14 @@ void Context::InitPipelineHandles() {
     gridRenderPass->CreateGuidelinesBuffer(
         device, allocator,
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
+        atlas->FontSize()
     );
 
-    face->LoadGlyph('M');
+    // face->LoadGlyph('M');
     gridRenderPass->CreateCellsBuffer(
         device, allocator, textBuffer->Size(),
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        {face->MaxAdvanceWidth() >> 6, face->Size()->metrics.height >> 6}
+        atlas->FontSize()
     );
 }
 
