@@ -32,6 +32,7 @@ option(BUILD_TEST_NJCON "Build tests for njcon" ON)
 option(BUILD_TEST_NJVK "Build tests for njvk" ON)
 
 # TARGETS
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njimg")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njlog")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njpt")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/njvk")

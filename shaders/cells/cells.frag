@@ -1,7 +1,8 @@
 #version 460
 
 #extension GL_EXT_debug_printf : enable
-// other ======================================================================
+
+// Declarations ===============================================================
 struct SingleCellData {
     uint character;
     uint fgColor;
@@ -10,7 +11,10 @@ struct SingleCellData {
 };
 
 struct SingleCellDataMeta {
-    vec4 uv;
+    ivec2 topLeft;
+    ivec2 botRight;
+    ivec2 bearing;
+    ivec2 size;
 };
 
 vec4 UnpackColor(uint c) {
@@ -22,88 +26,45 @@ vec4 UnpackColor(uint c) {
 }
 
 // ============================================================================
-
-layout(set = 0, binding = 0) uniform DescriptorTest {
-    vec3 color;
-} DT;
-
-layout(set = 0, binding = 1) uniform sampler2D texSampler;
-
-layout(set = 0, binding = 2) uniform DescriptorGrid {
+//                                  LAYOUTS
+// ============================================================================
+// [0] Basic layout ***********************************************************
+// [0] Basic layout ***********************************************************
+layout(set = 0, binding = 0) uniform DescriptorGrid {
     ivec2 extent;
     ivec2 faceSize;
-} DG;
+    ivec2 pageSize;
+} GridProp;
 
-layout(std140, set = 0, binding = 3) buffer CellDatasStorage {
+// [1] Atlas pages layout *****************************************************
+layout(std140, set = 1, binding = 0) buffer DescriptorCells {
     SingleCellData datas[];
-} CellDatas;
+} CellValues;
 
-layout(std140, set = 0, binding = 4) buffer CellDatasMetaStorage {
+// Single atlas page texture
+// DescriptorTexture
+layout(set = 1, binding = 1) uniform sampler2D AtlasPageSampler;
+
+// Single atlas page glyphs metadata
+layout(std140, set = 1, binding = 2) buffer DescriptorCharactersMeta {
     SingleCellDataMeta datas[];
-} CellDatasMeta;
+} AtlasPageMetadata;
 
 // IN & OUT ===================================================================
 layout(location = 0) out vec4 outColor;
+
 layout(location = 0) in flat uint instance;
-layout(location = 1) in flat uint vert;
-layout(location = 2) in vec2 newPos;
-layout(location = 3) in vec2 fragUV;
+layout(location = 1) in vec2 fragUV;
+// ============================================================================
 
-// void main() {
-//     uint color = CellDatas.datas[instance].bgColor;
-//     vec4 ucol = UnpackColor(color);
-//     // debugPrintfEXT("col: %u | %f, %f, %f, %f | Instance: %u\n", color, ucol[0], ucol[1], ucol[2], ucol[3], instance);
-//     outColor = ucol;
-//
-//     // outColor = vec4(newPos[0], newPos[1], 1.0, 0.3);
-//     // outColor = UnpackColor(CellDatas.datas[gl_InstanceIndex]);
-// }
-
-// vec2 takeCharUV(in uint v, in vec4 uv) {
-//     switch (v) {
-//         // Top left
-//         case 0:
-//         return vec2(uv[0], uv[1]);
-//
-//         // Top right
-//         case 1:
-//         return vec2(uv[2], uv[1]);
-//
-//         // Bot left
-//         case 2:
-//         return vec2(uv[0], uv[3]);
-//
-//         // Top right
-//         case 3:
-//         return vec2(uv[2], uv[1]);
-//
-//         // Bot left
-//         case 4:
-//         return vec2(uv[0], uv[3]);
-//
-//         // Bot right
-//         case 5:
-//         return vec2(uv[2], uv[3]);
-//     }
-// }
-
+// ============================================================================
 void main() {
-    SingleCellData cell = CellDatas.datas[instance];
-    vec4 uvRect = CellDatasMeta.datas[cell.character].uv;
+    SingleCellData cell = CellValues.datas[instance];
 
-    // debugPrintfEXT("%f %f %f %f", uvRect.x, uvRect.y, uvRect.z, uvRect.w);
-
-    vec2 uv = fragUV;
-
-    float glyphAlpha = texture(texSampler, uv).r;
-    float glyphAlpha2 = texture(texSampler, uv).a;
-    // debugPrintfEXT("%u | %f,%f & %f, %f -> %f %f | alpha=%f,%f", vert, uvRect.x, uvRect.y, uvRect.z, uvRect.w, uv.x, uv.y, glyphAlpha, glyphAlpha2);
-
-    // debugPrintfEXT("%f", glyphAlpha);
+    float glyphAlpha = texture(AtlasPageSampler, fragUV).r;
 
     vec4 fg = UnpackColor(cell.fgColor);
     vec4 bg = UnpackColor(cell.bgColor);
 
-    // outColor = mix(bg, fg, glyphAlpha);
     outColor = vec4(1.0, 1.0, 1.0, glyphAlpha);
 }

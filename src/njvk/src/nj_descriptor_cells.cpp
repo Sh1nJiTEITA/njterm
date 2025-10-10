@@ -91,4 +91,14 @@ BufferU CreateCharactersMetaBuffer(
     return buf;
 }
 
+BufferU CreateCharactersMetaBuffer(DeviceH d, AllocatorH a, size_t cells) {
+    const size_t buffer_size_bytes = sizeof(SingleCharTextureData) * cells;
+
+    return std::make_unique<Buffer>(
+        d, a, buffer_size_bytes,
+        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eStorageBuffer),
+        VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU, VmaAllocationCreateFlags{}
+    );
+}
+
 } // namespace nj::ren

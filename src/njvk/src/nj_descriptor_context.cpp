@@ -319,10 +319,11 @@ public:
 
     auto AllLayouts() -> std::vector<vk::DescriptorSetLayout> {
         std::vector<vk::DescriptorSetLayout> l;
+        l.reserve(10);
         for (auto& [layout, set] : sets) {
             l.push_back(set->Layout());
         }
-        // std::reverse(l.begin(), l.end());
+        std::reverse(l.begin(), l.end());
         return l;
     }
 

@@ -3,6 +3,7 @@ project(njapp)
 
 set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_app_context.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_app_desc.cpp"
 )
 
 add_library(njapp STATIC ${SOURCES})

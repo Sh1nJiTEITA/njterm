@@ -48,6 +48,7 @@ private:
     size_t charsCount;
 };
 
+BufferU CreateCharactersMetaBuffer(DeviceH d, AllocatorH a, size_t cells_count);
 BufferU CreateCharactersMetaBuffer(
     DeviceH d, AllocatorH a, const std::vector<SingleCharTextureData>&
 );

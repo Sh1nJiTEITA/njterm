@@ -1,9 +1,9 @@
 #include "nj_app_context.h"
-#include "nj_descriptor_cells.h"
-#include "nj_descriptor_grid.h"
+#include "nj_app_desc.h"
 #include "nj_pipeline_cells.h"
 #include "nj_pipeline_guidelines.h"
 #include "njcon.h"
+#include "njlog.h"
 #include "njvklog.h"
 #include "njwin.h"
 
@@ -12,7 +12,9 @@
 #include "nj_command_pool.h"
 #include "nj_debug_utils_messenger.h"
 #include "nj_descriptor.h"
+#include "nj_descriptor_cells.h"
 #include "nj_descriptor_context.h"
+#include "nj_descriptor_grid.h"
 #include "nj_descriptor_test.h"
 #include "nj_descriptor_texture.h"
 #include "nj_device.h"
@@ -28,15 +30,17 @@
 #include "nj_swapchain.h"
 #include "nj_text_buffer.h"
 #include <glm/fwd.hpp>
+#include <memory>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 namespace nj::app {
 
 // clang-format off
-Context::Context() {
+App::App() {
     win = win::CreateWindow({400, 1440});
     InitFontLoaderHandles();
+    
     InitBaseHandles();
     InitPresentHandles();
     InitTextBuffer();
@@ -44,14 +48,14 @@ Context::Context() {
     InitPipelineHandles();
 }
 
-void Context::Run() { 
+void App::Run() { 
+
+    // ft::AtlasPage page{ 
+    //     face, 0, 30, 512, 512, 32, 255
+    // };
+    // page.SaveToBMP("./test.bmp");
+
     auto clear_color = vk::ClearValue { vk::ClearColorValue{0.2f, 0.2f, 0.2f, 0.2f} } ;
-    auto vertex_buffer = log::MakeSharedWithLog<ren::Buffer>(
-        device, allocator, static_cast<size_t>(200),
-        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eVertexBuffer),
-        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-        VmaAllocationCreateFlags{}
-    );
     device->Handle().waitIdle();
     log::Info("============== Render loop... STARTED ==============");
     while (!win->ShouldClose()) {
@@ -74,7 +78,7 @@ void Context::Run() {
                 .setClearValues(clear_color)
                 ;
             cmd->Handle().beginRenderPass(render_pass_info, vk::SubpassContents::eInline); { // clang-format off
-                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, pipeline->LayoutHandle());
+                
 
                 auto viewport = vk::Viewport{}
                                     .setX(0)
@@ -92,17 +96,12 @@ void Context::Run() {
                 };
                 cmd->Handle().setScissor(0, 1, &scissor);
 
-                auto buffers = std::array<vk::Buffer, 1>{
-                vertex_buffer->CHandle() }; auto offsets =
-                std::array<vk::DeviceSize, 1>{ {} };
-
-                cmd->Handle().bindVertexBuffers( 0, buffers, offsets);
-
-                cmd->Handle().bindPipeline(
-                vk::PipelineBindPoint::eGraphics, pipeline->CHandle());
-                cmd->Handle().draw(6, 1, 0, 0);
-
+                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
+                descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
                 gridRenderPass->RenderGuidelines(cmd, guidelinesPipeline);
+
+                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
+                descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
                 gridRenderPass->RenderCells(cmd, cellsPipeline);
             } // clang-format on:
             cmd->Handle().endRenderPass();
@@ -116,23 +115,23 @@ void Context::Run() {
     device->Handle().waitIdle();
 }
 
-void Context::Update() {
+void App::Update() {
     win->Update();
 
     const auto frame = renderContext->CurrentFrameIndex();
 
-    auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 2);
-    auto ext = swapchain->Extent();
-    grid_desc.Update(
-        glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
-    );
-
-    auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 3);
-    cells_desc.Update();
+    // auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 1);
+    // auto ext = swapchain->Extent();
+    // grid_desc.Update(
+    //     glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
+    //     atlasPage->Box(), atlasPage->PageSize()
+    // );
+    //
+    // auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 2);
+    // cells_desc.Update();
 }
 
-void Context::InitBaseHandles() {
+void App::InitBaseHandles() {
     inst = log::MakeSharedWithLog<ren::Instance>(win->VulkanExtensions());
     messenger = log::MakeSharedWithLog<ren::DebugUtilsMessenger>(inst);
     surface = log::MakeSharedWithLog<ren::Surface>(
@@ -146,7 +145,7 @@ void Context::InitBaseHandles() {
     allocator = log::MakeSharedWithLog<ren::Allocator>(inst, device, phDevice);
 }
 
-void Context::InitPresentHandles() {
+void App::InitPresentHandles() {
     swapchain = log::MakeSharedWithLog<ren::Swapchain>(
         phDevice, device, surface,
         vk::Extent2D{
@@ -168,64 +167,29 @@ void Context::InitPresentHandles() {
     );
 }
 
-void Context::InitDescHandles() {
+void App::InitDescHandles() {
     sampler = log::MakeSharedWithLog<ren::Sampler>(device);
     descPool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
     descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
         "Descriptor context", device, descPool, allocator, con::Frames()
     );
 
-    descContext->Add<ren::DescriptorTest>(con::Frames(), 0, 0);
-
-    const size_t ATLAS_W = 4000;
-    const size_t ATLAS_H = 4000;
-
-    const size_t buf_sz{ATLAS_W * ATLAS_H};
-
-    auto atlas_buf = std::make_unique<ren::Buffer>(
-        device, allocator, buf_sz, vk::BufferUsageFlagBits::eTransferSrc,
-        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT
-            | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
-    );
-
-    void* data = atlas_buf->Map();
-    atlas->Upload(data, ATLAS_W, ATLAS_H);
-    atlas_buf->Unmap();
-
-    descContext->Add<ren::DescriptorTexture>(
-        1, 0, 1, vk::ShaderStageFlags(vk::ShaderStageFlagBits::eFragment),
-        renderContext->CurrentCommandBuffer(), phDevice, sampler, ATLAS_W,
-        ATLAS_H, std::move(atlas_buf)
-        // char_bm.rows, char_bm.cols, char_bm.stride,
-        // char_bm.data
-        // atlas.Side(), atlas.Side(),
-        // atlas.Bitmap()
-    );
-
-    descContext->Add<ren::DescriptorGrid>(con::Frames(), 0, 2);
-    descContext->Add<ren::DescriptorCells>(con::Frames(), 0, 3, textBuffer);
-
-    auto chars_buf =
-        ren::CreateCharactersMetaBuffer(device, allocator, atlas->CharMap());
-
-    descContext->Add<ren::DescriptorCharactersMeta>(
-        1, 0, 4, std::move(chars_buf)
-    );
+    CreateBasicDescriptors(this);
+    CreateAtlasPagesDescriptors(this);
 
     descContext->CreateLayouts();
     descContext->AllocateSets();
     descContext->UpdateSets();
 }
 
-void Context::InitPipelineHandles() {
+void App::InitPipelineHandles() {
     auto all_layouts = descContext->AllLayouts();
     log::Debug("Descriptor layout count={}", all_layouts.size());
 
-    pipeline = ren::CreatePipeline<ren::PipelineBuilderBase>(
-        device, gridRenderPass, all_layouts,
-        fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
-    );
+    // pipeline = ren::CreatePipeline<ren::PipelineBuilderBase>(
+    //     device, gridRenderPass, all_layouts,
+    //     fs::path("/home/snj/Code/Other/njterm/build/shaders/basic/")
+    // );
 
     guidelinesPipeline = ren::CreatePipeline<ren::PipelineBuilderGuidelines>(
         device, gridRenderPass, all_layouts,
@@ -240,35 +204,38 @@ void Context::InitPipelineHandles() {
     gridRenderPass->CreateGuidelinesBuffer(
         device, allocator,
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
+        atlasPage->Box()
     );
 
     // face->LoadGlyph('M');
+    log::Debug("faceBox={},{}", atlasPage->Box().x, atlasPage->Box().y);
     gridRenderPass->CreateCellsBuffer(
         device, allocator, textBuffer->Size(),
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
+        atlasPage->Box()
     );
+    log::Debug("faceBox={},{}", atlasPage->Box().x, atlasPage->Box().y);
 }
 
-void Context::InitFontLoaderHandles() {
+void App::InitFontLoaderHandles() {
     const fs::path font_path{
         "/usr/share/fonts/TTF/0xProtoNerdFontPropo-Regular.ttf"
     };
     library = std::make_shared<ft::Library>();
     ft::FaceID id = library->LoadFace(font_path);
     face = library->GetFace(id);
-    atlas = std::make_shared<ft::Atlas>(face, 0, 150, 32, 255);
+    atlasPage = std::make_shared<ft::AtlasPage>(face, 0, 30, 512, 512, 32, 255);
+    // atlas = std::make_shared<ft::Atlas>(face, 0, 150, 32, 255);
 }
 
-void Context::InitTextBuffer() {
+void App::InitTextBuffer() {
     textBuffer = log::MakeSharedWithLog<buf::TextBuffer>(
         "Text buffer", con::TextBufferSize()
     );
     textBuffer->FillWithRainbow();
 }
 
-void Context::RecreateSwapchain() {
+void App::RecreateSwapchain() {
     log::Debug("Recreating swapchain ... STARTED");
     log::Debug("Waiting... STARTED");
     win->WaitToRecreate();
@@ -299,7 +266,7 @@ void Context::RecreateSwapchain() {
     gridRenderPass->CreateGuidelinesBuffer(
         device, allocator,
         glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-        atlas->FontSize()
+        atlasPage->Box()
     );
     log::Debug("Recreating swapchain ... DONE");
 }

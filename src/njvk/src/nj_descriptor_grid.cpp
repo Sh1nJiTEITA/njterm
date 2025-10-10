@@ -33,9 +33,12 @@ void DescriptorGrid::CreateView(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 
-void DescriptorGrid::Update(const glm::ivec2& ext, const glm::ivec2 face_size) {
+void DescriptorGrid::Update(
+    const glm::ivec2& ext, const glm::ivec2 face_size,
+    const glm::ivec2& page_size
+) {
     void* data = MapBuffer();
-    Data tmp{.extent = ext, .faceSize = face_size};
+    Data tmp{.extent = ext, .faceSize = face_size, .pageSize = page_size};
     memcpy(data, &tmp, sizeof(Data));
     UnmapBuffer();
 }

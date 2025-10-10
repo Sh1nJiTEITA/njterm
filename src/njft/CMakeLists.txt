@@ -9,7 +9,7 @@ target_include_directories(njft PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 # "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" PRIVATE
 # "${CMAKE_CURRENT_SOURCE_DIR}/internal")
 
-target_link_libraries(njft PRIVATE njlog)
+target_link_libraries(njft PRIVATE njlog njimg)
 
 find_package(freetype REQUIRED)
 target_link_libraries(njft PUBLIC Freetype::Freetype)

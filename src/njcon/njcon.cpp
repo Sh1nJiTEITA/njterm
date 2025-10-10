@@ -16,7 +16,8 @@ const char* stdConfigFile = R"lua(
                 },
                 extensions = { 
                     "VK_EXT_debug_utils",
-                    "VK_EXT_validation_features"
+                    "VK_EXT_validation_features",
+                    "VK_EXT_descriptor_indexing"
                 },
                 features = {
                     3 -- VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT  

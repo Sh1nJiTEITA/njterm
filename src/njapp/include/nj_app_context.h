@@ -34,6 +34,7 @@ namespace nj::ft {
     NJ_HANDLE( Library );
     NJ_HANDLE( Atlas );
     NJ_HANDLE( Face );
+    NJ_HANDLE( AtlasPage );
 }
 namespace nj::buf {
     NJ_HANDLE( TextBuffer );
@@ -45,23 +46,7 @@ namespace nj::buf {
 
 namespace nj::app {
 
-class Context {
-public:
-    Context();
-    void Run();
-    void Update();
-
-private:
-    void InitBaseHandles();
-    void InitPresentHandles();
-    void InitDescHandles();
-    void InitPipelineHandles();
-    void InitFontLoaderHandles();
-    void InitTextBuffer();
-
-    void RecreateSwapchain();
-
-private:
+struct Context {
     win::WindowH win;
     win::KeyControlH keyCtl;
     ren::InstanceH inst;
@@ -87,8 +72,28 @@ private:
     buf::TextBufferH textBuffer;
 
     ft::LibraryH library;
-    ft::AtlasH atlas;
+    ft::AtlasPageH atlasPage;
     ft::FaceH face;
+};
+
+class App : private Context {
+public:
+public:
+    App();
+    void Run();
+    void Update();
+
+private:
+    void InitBaseHandles();
+    void InitPresentHandles();
+    void InitDescHandles();
+    void InitPipelineHandles();
+    void InitFontLoaderHandles();
+    void InitTextBuffer();
+
+    void RecreateSwapchain();
+
+private:
 };
 
 }; // namespace nj::app
