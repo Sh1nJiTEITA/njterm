@@ -2,6 +2,7 @@
 #ifndef NJ_SWAP_CHAIN_H
 #define NJ_SWAP_CHAIN_H
 
+#include "glm/vec2.hpp"
 #include "nj_device.h"
 #include "nj_handle.h"
 #include "nj_image.h"
@@ -10,11 +11,14 @@
 namespace nj::ren {
 
 class Swapchain : public VulkanObjectNative<vk::SwapchainKHR> {
-  public:
-    Swapchain(PhysicalDeviceH phDevice, DeviceH device, SurfaceH surface,
-              vk::Extent2D ext, vk::ImageUsageFlags flags);
+public:
+    Swapchain(
+        PhysicalDeviceH phDevice, DeviceH device, SurfaceH surface,
+        vk::Extent2D ext, vk::ImageUsageFlags flags
+    );
     //! Current swapchain extent (simular to window size)
     auto Extent() -> vk::Extent2D;
+    auto ExtentPixels() -> glm::ivec2;
 
     //! Current swapchain format (pixel?)
     auto Format() -> vk::Format;
@@ -25,11 +29,11 @@ class Swapchain : public VulkanObjectNative<vk::SwapchainKHR> {
     auto UpdateImages(ren::DeviceH device) -> void;
 
     //! Get access to stored swapchain images
-    auto Images() -> const std::vector<ImageH> &;
+    auto Images() -> const std::vector<ImageH>&;
 
     auto HandleName() const noexcept -> std::string override;
 
-  private:
+private:
     std::vector<ImageH> images;
     vk::Format format;
     vk::Extent2D extent;

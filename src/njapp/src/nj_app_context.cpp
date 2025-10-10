@@ -44,7 +44,7 @@ App::App() {
     InitBaseHandles();
     InitPresentHandles();
     InitTextBuffer();
-    InitDescHandles(); 
+    InitDescriptorHandles(); 
     InitPipelineHandles();
 }
 
@@ -116,32 +116,27 @@ void App::Run() {
 }
 
 void App::Update() {
-    win->Update();
 
-    const auto frame = renderContext->CurrentFrameIndex();
-
-    // auto& grid_desc = descContext->Get<ren::DescriptorGrid>(frame, 0, 1);
-    // auto ext = swapchain->Extent();
-    // grid_desc.Update(
-    //     glm::ivec2{swapchain->Extent().width, swapchain->Extent().height},
-    //     atlasPage->Box(), atlasPage->PageSize()
-    // );
-    //
-    // auto& cells_desc = descContext->Get<ren::DescriptorCells>(frame, 0, 2);
-    // cells_desc.Update();
+    UpdateWindow();
+    UpdateDescriptors();
 }
 
 void App::InitBaseHandles() {
     inst = log::MakeSharedWithLog<ren::Instance>(win->VulkanExtensions());
+
     messenger = log::MakeSharedWithLog<ren::DebugUtilsMessenger>(inst);
+
     surface = log::MakeSharedWithLog<ren::Surface>(
         inst, win->CreateSurface(inst->Handle())
     );
+
     phDevice = log::MakeSharedWithLog<ren::PhysicalDevice>(inst);
     phDevice->UpdateQueueIndices(surface);
     phDevice->UpdateQueueProperties();
+
     device = log::MakeSharedWithLog<ren::Device>(inst, phDevice);
     phDevice->UpdateQueues(device->Handle());
+
     allocator = log::MakeSharedWithLog<ren::Allocator>(inst, device, phDevice);
 }
 
@@ -155,19 +150,23 @@ void App::InitPresentHandles() {
         vk::ImageUsageFlagBits::eColorAttachment
     );
     swapchain->UpdateImages(device);
+
     attColor = log::MakeSharedWithLog<ren::AttachmentColor>(
         "Color attachment", swapchain
     );
+
     gridRenderPass =
         log::MakeSharedWithLog<ren::GridRenderPass>(device, attColor);
+
     cmdPool = log::MakeSharedWithLog<ren::CommandPool>(device, phDevice);
+
     renderContext = log::MakeSharedWithLog<ren::RenderContext>(
         "Render context", device, swapchain, gridRenderPass, cmdPool,
         con::Frames(), std::vector<ren::AttachmentH>{attColor}
     );
 }
 
-void App::InitDescHandles() {
+void App::InitDescriptorHandles() {
     sampler = log::MakeSharedWithLog<ren::Sampler>(device);
     descPool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
     descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
@@ -234,6 +233,22 @@ void App::InitTextBuffer() {
     );
     textBuffer->FillWithRainbow();
 }
+
+void App::UpdateWindow() { win->Update(); }
+
+// clang-format off
+void App::UpdateDescriptors() {
+    const auto frame = renderContext->CurrentFrameIndex();
+
+    descContext->Get<ren::DescriptorGrid>(frame, Layout::Basic, 0).Update(
+        swapchain->ExtentPixels(),
+        atlasPage->Box(), 
+        atlasPage->PageSize()
+    );
+    
+    descContext->Get<ren::DescriptorCells>(frame, Layout::AtlasPages, 0).Update();
+}
+// clang-format on
 
 void App::RecreateSwapchain() {
     log::Debug("Recreating swapchain ... STARTED");

@@ -76,24 +76,30 @@ struct Context {
     ft::FaceH face;
 };
 
-class App : private Context {
-public:
-public:
+struct App : private Context {
     App();
+
     void Run();
     void Update();
 
 private:
+    //                               Initialize
+    // ========================================================================
     void InitBaseHandles();
     void InitPresentHandles();
-    void InitDescHandles();
+    void InitDescriptorHandles();
     void InitPipelineHandles();
     void InitFontLoaderHandles();
     void InitTextBuffer();
 
-    void RecreateSwapchain();
+    //                                Updates
+    // ========================================================================
+    void UpdateWindow();
+    void UpdateDescriptors();
 
-private:
+    //                                 Other
+    // ========================================================================
+    void RecreateSwapchain();
 };
 
 }; // namespace nj::app

@@ -8,7 +8,7 @@ namespace nj::app {
 
 class App;
 
-enum class Layout : uint8_t { Basic = 0, AtlasPages = 1 };
+enum Layout : uint8_t { Basic = 0, AtlasPages = 1 };
 
 void CreateBasicDescriptors(Context* ctx);
 void CreateAtlasPagesDescriptors(Context* ctx);

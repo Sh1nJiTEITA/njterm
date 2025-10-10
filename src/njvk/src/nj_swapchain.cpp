@@ -77,6 +77,9 @@ Swapchain::Swapchain(PhysicalDeviceH phDevice, DeviceH device, SurfaceH surface,
 }
 
 auto Swapchain::Extent() -> vk::Extent2D { return extent; }
+auto Swapchain::ExtentPixels() -> glm::ivec2 { 
+    return { extent.width, extent.height };
+}
 auto Swapchain::Format() -> vk::Format { return format; }
 
 // clang-format off
@@ -93,7 +96,7 @@ auto Swapchain::UpdateImages(ren::DeviceH device) -> void {
 }
 // clang-format on
 
-auto Swapchain::Images() -> const std::vector<ImageH> & { return images; }
+auto Swapchain::Images() -> const std::vector<ImageH>& { return images; }
 
 auto Swapchain::HandleName() const noexcept -> std::string {
     return "Swapchain";
