@@ -12,10 +12,14 @@ using DescriptorU = std::unique_ptr<Descriptor>;
 
 // clang-format off
 class DescriptorContext {
-public:
+  public:
     DescriptorContext(DeviceH device, DescriptorPoolH pool, AllocatorH allocator, size_t frames);
     ~DescriptorContext();
   
+
+    void RegisterLayout(size_t layout, const vk::DescriptorSetLayoutCreateInfo& info,
+                                       const vk::DescriptorSetVariableDescriptorCountAllocateInfoEXT& var_info);
+
     void Add(size_t layout, size_t binding, std::vector<DescriptorU>&& descriptor);
 
     template <typename DescriptorType, typename ...Args>
@@ -27,12 +31,13 @@ public:
         std::vector<DescriptorU> vec;
         vec.reserve(frames);
 
-        constexpr bool any_move_only = !(std::is_copy_constructible_v<std::decay_t<Args>> && ...);
+        constexpr bool any_move_only = !(
+            std::is_copy_constructible_v<std::decay_t<Args>> && ...
+        );
 
         if constexpr (any_move_only) {
-            if (frames > 1) {
-                throw std::logic_error("Cannot create multiple descriptors with move-only arguments.");
-            }
+            log::FatalAssert(frames > 1, "Cannot create multiple descriptors "
+                                         "with move-only arguments.");
         }
 
         for (size_t i = 0; i < frames; ++i) {

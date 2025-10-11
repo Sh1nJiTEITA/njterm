@@ -14,23 +14,26 @@ DescriptorCells::DescriptorCells(
       ),
       textBuffer(buf) {}
 
-void DescriptorCells::CreateBuffer(
+void DescriptorCells::CreateBuffers(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {
 
     const size_t buffer_size_bytes = sizeof(buf::Cell) * textBuffer->Size();
 
-    buffer = std::make_unique<Buffer>(
-        device, allocator, buffer_size_bytes,
-        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eStorageBuffer),
-        VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU, VmaAllocationCreateFlags{}
+    buffers.push_back(
+        std::make_unique<Buffer>(
+            device, allocator, buffer_size_bytes,
+            vk::BufferUsageFlags(vk::BufferUsageFlagBits::eStorageBuffer),
+            VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU,
+            VmaAllocationCreateFlags{}
+        )
     );
 }
 
-void DescriptorCells::CreateImage(
+void DescriptorCells::CreateImages(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
-void DescriptorCells::CreateView(
+void DescriptorCells::CreateViews(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 
@@ -47,17 +50,17 @@ DescriptorCharactersMeta::DescriptorCharactersMeta(
           layout, binding, vk::DescriptorType::eStorageBuffer,
           vk::ShaderStageFlagBits::eAll
       ) {
-    buffer = std::move(buf);
+    buffers.push_back(std::move(buf));
 }
 
-void DescriptorCharactersMeta::CreateBuffer(
+void DescriptorCharactersMeta::CreateBuffers(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 
-void DescriptorCharactersMeta::CreateImage(
+void DescriptorCharactersMeta::CreateImages(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
-void DescriptorCharactersMeta::CreateView(
+void DescriptorCharactersMeta::CreateViews(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 

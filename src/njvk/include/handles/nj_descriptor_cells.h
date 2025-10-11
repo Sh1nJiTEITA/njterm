@@ -19,9 +19,9 @@ namespace ren {
 struct DescriptorCells : public Descriptor {
     DescriptorCells(size_t layout, size_t binding, buf::TextBufferH buf);
 
-    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator);
 
     void Update();
 
@@ -38,9 +38,9 @@ private:
 struct DescriptorCharactersMeta : public Descriptor {
     DescriptorCharactersMeta(size_t layout, size_t binding, BufferU&& buf);
 
-    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator);
 
     void Update();
 

@@ -65,6 +65,7 @@ class Image : public AllocationUnit, public VulkanObjectManual<vk::Image> {
 };
 // clang-format on
 using ImageH = std::shared_ptr<Image>;
+using ImageU = std::unique_ptr<Image>;
 
 } // namespace nj::ren
 

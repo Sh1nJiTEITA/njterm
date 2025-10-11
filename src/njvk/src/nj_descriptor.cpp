@@ -33,44 +33,64 @@ auto DescriptorPool::HandleName() const noexcept -> std::string {
 Descriptor::~Descriptor() { }
 
 auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
+    size_t desc_count = 1;
+    if (IsBindless()) {
+        const size_t buf_sz = buffers.size();
+        const size_t img_sz = images.size();
+        const size_t vie_sz = imageViews.size();
+        log::FatalAssert(
+            buf_sz == img_sz == vie_sz,
+            "buffers.size() ({}) " "!= images.size() ({}) " "!= imageViews.size() ({})", 
+            buf_sz, img_sz, vie_sz
+        );
+        desc_count = buf_sz;
+    }
     return vk::DescriptorSetLayoutBinding{}
         .setBinding(binding)
         .setDescriptorType(type)
-        .setDescriptorCount(1)
+        .setDescriptorCount(desc_count)
         .setStageFlags(shaderStages)
         ;
 }
 
-auto Descriptor::BufferInfo() -> vk::DescriptorBufferInfo {
-    if (buffer) { 
+auto Descriptor::BufferInfo(size_t idx) -> vk::DescriptorBufferInfo {
+    if (buffers.size() > idx) { 
         return  vk::DescriptorBufferInfo {}
-            .setBuffer(buffer->CHandle())
+            .setBuffer(buffers[idx]->CHandle())
             .setOffset(0)
-            .setRange(buffer->InitialSize())
+            .setRange(buffers[idx]->InitialSize())
             ;
     }
     return {};
 }
 
-auto Descriptor::ImageInfo() -> vk::DescriptorImageInfo {
-    if (image) { 
+auto Descriptor::ImageInfo(size_t idx) -> vk::DescriptorImageInfo {
+    if (images.size() > idx) { 
         return vk::DescriptorImageInfo{}
-            .setImageView(imageView->Handle())
-            .setImageLayout(image->Layout())
+            .setImageView(imageViews[idx]->Handle())
+            .setImageLayout(images[idx]->Layout())
             ;
     }
     return {};
 }
 
-auto Descriptor::MapBuffer() -> void* { 
-    if (!buffer) { 
+
+auto Descriptor::IsBindless() -> bool {
+    return bindless;
+}
+
+auto Descriptor::MapBuffer(size_t idx) -> void* { 
+    if (!(buffers.size() > idx && buffers[idx].get()) ) { 
         log::FatalExit("Cant map descriptor buffer. Buffer has invalid handle");
     }
-    return buffer->Map();
+    return buffers[idx]->Map();
 }
 
-auto Descriptor::UnmapBuffer() -> void {
-    buffer->Unmap();
+auto Descriptor::UnmapBuffer(size_t idx) -> void {
+    if (!(buffers.size() > idx && buffers[idx].get()) ) { 
+        log::FatalExit("Cant unmap descriptor buffer. Buffer has invalid handle");
+    }
+    buffers[idx]->Unmap();
 }
 
 
@@ -78,7 +98,7 @@ auto Descriptor::Layout() const noexcept -> size_t { return layout; }
 auto Descriptor::Binding() const noexcept -> size_t {return binding; } 
 auto Descriptor::ShaderStages() const noexcept -> vk::ShaderStageFlags { return shaderStages; } 
 auto Descriptor::DescriptorType() const noexcept -> vk::DescriptorType { return type; } 
-auto Descriptor::HasBuffer() const noexcept -> bool  { return buffer.get(); } 
-auto Descriptor::HasImage() const noexcept -> bool { return image.get(); } 
+auto Descriptor::HasBuffer() const noexcept -> bool  { return !buffers.empty(); } 
+auto Descriptor::HasImage() const noexcept -> bool { return !images.empty(); } 
 
 } // namespace nj::ren

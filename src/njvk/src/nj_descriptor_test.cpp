@@ -6,29 +6,29 @@ DescriptorTest::DescriptorTest(size_t layout, size_t binding)
     : Descriptor(layout, binding, vk::DescriptorType::eUniformBuffer) {}
 
 // clang-format off
-void DescriptorTest::CreateBuffer(ren::DeviceH device,
+void DescriptorTest::CreateBuffers(ren::DeviceH device,
                                   ren::AllocatorH allocator) {
-    buffer = std::make_unique<Buffer>(
+    buffers.push_back(std::make_unique<Buffer>(
         device, 
         allocator, 
         sizeof(Data),
         vk::BufferUsageFlags(vk::BufferUsageFlagBits::eUniformBuffer),
         VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU,
         VmaAllocationCreateFlags{}
-    );
+    ));
 
-    void* data = buffer->Map();
+    void* data = buffers.back()->Map();
     Data tmp { .color = { 1.f, 0.f, 0.f } };
     memcpy(data, &tmp, sizeof(tmp));
-    buffer->Unmap();
+    buffers.back()->Unmap();
 }
 // clang-format on
 
-void DescriptorTest::CreateImage(
+void DescriptorTest::CreateImages(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 
-void DescriptorTest::CreateView(
+void DescriptorTest::CreateViews(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {}
 

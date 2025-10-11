@@ -49,12 +49,21 @@ DeviceExtensions(ren::VarHandles& h) {
 
 Device::Device(ren::InstanceH instance, ren::PhysicalDeviceH phDevice) {
     ren::VarHandles h;
+
+    auto& physical_features = h.Handle(build::PhysicalDeviceFeatures());
+    auto& physical_features2 = h.Handle(vk::PhysicalDeviceFeatures2{});
+    auto& indexing_features = h.Handle(build::IndexingFeatures());
+    auto& shader_features = h.Handle(build::PhysicalDeviceShaderFeatures());
+
+    physical_features2.setFeatures(physical_features);
+    physical_features2.setPNext(indexing_features);
+    indexing_features.setPNext(shader_features);
+
     auto info = vk::DeviceCreateInfo{}
         .setQueueCreateInfos( DeviceQueueInfos(h, phDevice) )
         .setPEnabledExtensionNames( DeviceExtensions(h) )
         // From global settings
-        .setPEnabledFeatures( &h.Handle(build::PhysicalDeviceFeatures()) )
-        .setPNext( &h.Handle(build::PhysicalDeviceShaderFeatures()) )
+        .setPNext( physical_features2 )
     ;
 
     handle = phDevice->Handle().createDeviceUnique(info);

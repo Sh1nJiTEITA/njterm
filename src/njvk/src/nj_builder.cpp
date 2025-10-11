@@ -24,13 +24,13 @@ auto AvailableValidationExtensions() -> std::vector<vk::ExtensionProperties> {
     std::vector<vk::ExtensionProperties> available;
 
     const auto all_available = vk::enumerateInstanceExtensionProperties();
-    auto required = con::ValidationExtensions() |
-                    std::ranges::to<std::set<std::string_view>>();
+    auto required = con::ValidationExtensions()
+                  | std::ranges::to<std::set<std::string_view>>();
 
     required.insert(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     required.insert(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 
-    for (const auto &extension : all_available) {
+    for (const auto& extension : all_available) {
         if (required.contains(extension.extensionName)) {
             available.push_back(extension);
         }
@@ -45,7 +45,7 @@ auto CheckVulkanCompability() -> void {
 
     constexpr auto layer_msg = "{:<45} {:<12} {:<5}";
     nj::log::Info(layer_msg, "Layer name", "Version", "Is needed");
-    for (auto &layer : avail_l) {
+    for (auto& layer : avail_l) {
         const auto name = std::string(layer.layerName);
         const bool status = needed_l.contains(name);
         const std::string_view str_status = status ? "TRUE" : "FALSE";
@@ -56,12 +56,14 @@ auto CheckVulkanCompability() -> void {
     }
     if (!needed_l.empty()) {
         std::string msg{};
-        for (auto &l : needed_l) {
+        for (auto& l : needed_l) {
             msg += l + ", ";
         }
-        nj::log::FatalExit("Program cant work... some layers are not available "
-                           "on this device. Needed layer list: {}",
-                           msg);
+        nj::log::FatalExit(
+            "Program cant work... some layers are not available "
+            "on this device. Needed layer list: {}",
+            msg
+        );
     }
 
     if (con::ValidationEnabled()) {
@@ -171,6 +173,14 @@ auto PhysicalDeviceShaderFeatures() -> vk::PhysicalDeviceShaderDrawParameterFeat
     return  vk::PhysicalDeviceShaderDrawParameterFeatures{}
         .setShaderDrawParameters(true)
     ;
+}
+
+auto IndexingFeatures() -> vk::PhysicalDeviceDescriptorIndexingFeatures {
+    return vk::PhysicalDeviceDescriptorIndexingFeatures{}
+        .setDescriptorBindingPartiallyBound(true)
+        .setDescriptorBindingVariableDescriptorCount(true)
+        .setRuntimeDescriptorArray(true)
+        ;
 }
 
 auto DeviceFeatures() -> std::vector<std::string> { 

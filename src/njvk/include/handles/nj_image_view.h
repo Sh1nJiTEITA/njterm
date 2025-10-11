@@ -8,11 +8,12 @@
 namespace nj::ren {
 
 class ImageView : public VulkanObjectNative<vk::ImageView> {
-  public:
-    ImageView(vk::UniqueImageView &&image);
+public:
+    ImageView(vk::UniqueImageView&& image);
     auto HandleName() const noexcept -> std::string override;
 };
 using ImageViewH = std::shared_ptr<ImageView>;
+using ImageViewU = std::unique_ptr<ImageView>;
 
 } // namespace nj::ren
 

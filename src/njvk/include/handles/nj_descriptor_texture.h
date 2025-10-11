@@ -56,10 +56,10 @@ struct DescriptorTexture : public Descriptor {
 
     virtual ~DescriptorTexture();
 
-    virtual void CreateBuffer(DeviceH device, AllocatorH allocator) override;
-    virtual void CreateImage(DeviceH device, AllocatorH allocator) override;
-    virtual void CreateView(DeviceH device, AllocatorH allocator) override;
-    virtual auto ImageInfo() -> vk::DescriptorImageInfo override;
+    virtual void CreateBuffers(DeviceH device, AllocatorH allocator) override;
+    virtual void CreateImages(DeviceH device, AllocatorH allocator) override;
+    virtual void CreateViews(DeviceH device, AllocatorH allocator) override;
+    virtual auto ImageInfo(size_t idx=0) -> vk::DescriptorImageInfo override;
 
 private:
     void BeginCommandBufferSingleCommand();
@@ -79,6 +79,7 @@ private:
     std::unique_ptr<Buffer> textureBuffer;
     std::vector<uint8_t> bitmap;
 };
+
 // clang-format on
 
 } // namespace nj::ren

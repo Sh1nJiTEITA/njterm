@@ -64,6 +64,8 @@ auto PhysicalDeviceFeatures() -> vk::PhysicalDeviceFeatures;
 //! ...
 auto PhysicalDeviceShaderFeatures() -> vk::PhysicalDeviceShaderDrawParameterFeatures;
 
+auto IndexingFeatures() -> vk::PhysicalDeviceDescriptorIndexingFeatures;
+
 //! @ingroup vk-settings
 //! Stores vk-device needed features needed to run the program
 //! At least func returns swap-chain feature

@@ -20,9 +20,9 @@ struct DescriptorGrid : public Descriptor {
         glm::ivec2 pageSize;    //!< size is 4 * 2 = 8 
     };
 
-    virtual void CreateBuffer(DeviceH device, AllocatorH allocator) override;
-    virtual void CreateImage(DeviceH device, AllocatorH allocator) override;
-    virtual void CreateView(DeviceH device, AllocatorH allocator) override;
+    virtual void CreateBuffers(DeviceH device, AllocatorH allocator) override;
+    virtual void CreateImages(DeviceH device, AllocatorH allocator) override;
+    virtual void CreateViews(DeviceH device, AllocatorH allocator) override;
     
 
     //! Updates descriptor buffer with new values

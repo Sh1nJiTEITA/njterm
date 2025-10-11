@@ -14,9 +14,9 @@ struct DescriptorTest : public ren::Descriptor {
         glm::vec3 color;
     };
 
-    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator) override;
-    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator) override;
-    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator) override;
+    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator) override;
+    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator) override;
+    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator) override;
 };
 // clang-format on
 
