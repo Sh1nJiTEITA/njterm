@@ -1,4 +1,12 @@
 #pragma once
+#include "nj_device.h"
+#include "nj_handle.h"
+#include <memory>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vulkan/vulkan_handles.hpp>
+#include <vulkan/vulkan_structs.hpp>
 #ifndef NJ_DESCRIPTOR_CONTEXT_H
 #define NJ_DESCRIPTOR_CONTEXT_H
 
@@ -9,6 +17,165 @@
 namespace nj::ren {
 
 using DescriptorU = std::unique_ptr<Descriptor>;
+
+namespace exp {
+
+using DescriptorBaseU = std::unique_ptr<DescriptorBase>;
+
+struct DescriptorSet {
+    using BindingType = uint32_t;
+    using FrameType = uint32_t;
+
+    struct Pack {
+        // Per frame
+        const bool isSingle;
+        const std::vector<DescriptorBaseU> handles;
+    };
+
+    //                                Consts
+    // ************************************************************************
+    const FrameType framesCount;
+
+    //                                Ctors
+    // ************************************************************************
+    DescriptorSet(FrameType frames_count);
+    DescriptorSet(const DescriptorSet&) = delete;
+    DescriptorSet& operator=(const DescriptorSet&) = delete;
+    DescriptorSet(DescriptorSet&&) noexcept = default;
+    DescriptorSet& operator=(DescriptorSet&&) noexcept = delete;
+
+    //                            Pre allocation
+    // ************************************************************************
+
+    // clang-format off
+    //! For per frame buffer/image descriptors
+    template <typename DescriptorType, typename... Args>
+    void Register(FrameType frames_count, BindingType binding, const Args&... args) {
+        std::vector< DescriptorBaseU > tmp; tmp.reserve(frames_count);
+        for (FrameType frame = 0; frame < frames_count; ++frame) { 
+            tmp.emplace_back(std::make_unique< DescriptorType >(args...));
+        }
+        auto [_, success] = packs.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(binding),
+            std::forward_as_tuple(false, std::move(tmp))
+        );
+        if (!success) { 
+            log::FatalExitInternal("Binding={} occupied", binding);
+        }
+    }
+    //! For single buffer/image descriptors
+    template <typename DescriptorType, typename... Args>
+    void Register(BindingType binding, Args&&...args) {
+        auto [_, success] = packs.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(binding),
+            std::forward_as_tuple(true, std::make_unique<DescriptorType>(std::forward<Args>(args)...))
+        );
+        if (!success) {
+            log::FatalExitInternal("Binding={} occupied", binding);
+        }
+    }
+    // clang-format on
+
+    DescriptorBase& Get(FrameType frame, BindingType binding) {
+        if (!packs.contains(binding)) {
+            log::FatalExitInternal("Binding={} was not registered", binding);
+        }
+        const auto& pack = packs.at(binding);
+        if (pack.handles.size() < frame) {
+            log::FatalExitInternal(
+                "Frame={} > registered frames count", binding
+            );
+        }
+        return *pack.handles[frame];
+    }
+
+    template <typename DescriptorType>
+    DescriptorType& Get(FrameType frame, BindingType binding) {
+        return static_cast<DescriptorType&>(Get(frame, binding));
+    }
+
+    vk::DescriptorSetLayout& LayoutHandle() noexcept;
+    vk::DescriptorSet& Set(FrameType frame);
+
+    std::vector<BindingType> RegisteredBindings() const;
+
+    //                               Allocation
+    // ************************************************************************
+
+    void InitializeDescriptors(DeviceH device, AllocatorH allocator);
+
+    virtual void Create(DeviceH device);
+
+    //! Same as create vk::DesriptorSets
+    virtual void Allocate(DeviceH device, DescriptorPoolH pool);
+
+    //! Register existing inner descriptors for vulkan
+    void Write(std::vector<vk::WriteDescriptorSet>& writes);
+
+private:
+    //! Creates descriptor set layout. For simplicity every registered
+    //! desccriptor are added to single layout.
+    void InternalCreate(
+        DeviceH device, const vk::DescriptorSetLayoutCreateFlags& flags,
+        void* pnext = nullptr
+    );
+    void InternalAllocate(
+        DeviceH device, DescriptorPoolH pool, void* pnext = nullptr
+    );
+    void AssertDescriptorCount() const;
+
+private:
+    std::unordered_map<BindingType, Pack> packs;
+    std::vector<vk::UniqueDescriptorSet> vkSets;
+    vk::UniqueDescriptorSetLayout layoutHandle;
+};
+using DescriptorSetU = std::unique_ptr<DescriptorSet>;
+
+// clang-format off
+class DescriptorContext {
+public:
+    using LayoutType = uint32_t;
+    using FrameType = uint32_t;
+    using BindingType = uint32_t;
+
+    DescriptorContext() = default;
+    DescriptorContext(const DescriptorContext&) = delete;
+    DescriptorContext& operator=(const DescriptorContext&) = delete;
+    DescriptorContext(DescriptorContext&&) noexcept = default;
+    DescriptorContext& operator=(DescriptorContext&&) noexcept = delete;
+
+    void Add(LayoutType layout, DescriptorSetU&& set);
+
+    template < typename DescriptorSetType, typename ...Args >
+    void Add(LayoutType layout, Args&& ...args) {
+        Add(layout, std::make_unique< DescriptorSetType >(
+            std::forward<Args>(args)...
+        ));
+    }
+
+    DescriptorBase& GetDescriptor(
+        LayoutType layout, 
+        BindingType binding, 
+        FrameType frame
+    );
+
+    DescriptorSet& GetSet(LayoutType layout); 
+
+    void Create(DeviceH device); 
+    void Allocate(DeviceH device, DescriptorPoolH pool);
+    void Update(DeviceH device);
+    void Bind(LayoutType layout, FrameType frame, CommandBufferH cmd, 
+              vk::PipelineLayout pipeline_layout);
+    std::vector<vk::DescriptorSetLayout> AllLayouts();
+
+private:
+    std::unordered_map<LayoutType, DescriptorSetU> sets;
+};
+// clang-format on
+
+} // namespace exp
 
 // clang-format off
 class DescriptorContext {

@@ -15,9 +15,6 @@ struct DescriptorTextureArray : public Descriptor {
     virtual void CreateBuffers(DeviceH device, AllocatorH allocator) override;
     virtual void CreateImages(DeviceH device, AllocatorH allocator) override;
     virtual void CreateViews(DeviceH device, AllocatorH allocator) override;
-
-private:
-    std::vector<BufferU> textureBuffers;
 };
 
 }; // namespace nj::ren

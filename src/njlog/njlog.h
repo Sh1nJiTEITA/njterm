@@ -105,6 +105,12 @@ inline auto FatalExit(fmt::format_string<Args...> str, Args&&... args) {
 }
 
 template <typename... Args>
+inline auto FatalExitInternal(fmt::format_string<Args...> str, Args&&... args) {
+    log::Fatal("Internal: {}", fmt::format(str, std::forward<Args>(args)...));
+    std::exit(EXIT_FAILURE);
+}
+
+template <typename... Args>
 inline auto
 FatalAssert(bool condition, fmt::format_string<Args...> str, Args&&... args) {
     if (condition) {

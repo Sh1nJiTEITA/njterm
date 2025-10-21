@@ -4,10 +4,13 @@
 #include "nj_device.h"
 #include "nj_handle.h"
 #include "njlog.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <list>
 #include <memory>
+#include <ranges>
 #include <stack>
 #include <unordered_map>
 #include <utility>
@@ -17,6 +20,184 @@
 #include <vulkan/vulkan_structs.hpp>
 
 namespace nj::ren {
+
+namespace exp {
+
+DescriptorSet::DescriptorSet(DescriptorSet::FrameType frames_count)
+    : framesCount{frames_count} {}
+
+vk::DescriptorSetLayout& DescriptorSet::LayoutHandle() noexcept {
+    return layoutHandle.get();
+}
+
+vk::DescriptorSet& DescriptorSet::Set(DescriptorSet::FrameType frame) {
+    if (frame > vkSets.size()) {
+        log::FatalExitInternal(
+            "Cant get descriptor set. Input frame index={} > vkSets.size()={}",
+            frame, vkSets.size()
+        );
+    }
+    return vkSets[frame].get();
+}
+
+std::vector<DescriptorSet::BindingType>
+DescriptorSet::RegisteredBindings() const {
+    std::vector<BindingType> bindings;
+    bindings.reserve(packs.size());
+    for (const auto& pack : packs) {
+        bindings.push_back(pack.first);
+    }
+    return bindings;
+}
+
+void DescriptorSet::InitializeDescriptors(
+    DeviceH device, AllocatorH allocator
+) {
+    for (const auto& [binding, pack] : packs) {
+        for (auto& handle : pack.handles) {
+            handle->Initialize(device, allocator);
+        }
+    }
+}
+
+// clang-format off
+void DescriptorSet::InternalCreate(
+    DeviceH device,
+    const vk::DescriptorSetLayoutCreateFlags& flags,
+    void* pnext 
+) {
+    auto layout_bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
+    layout_bindings.reserve(packs.size());
+    for (const auto& [binding, pack] : packs) {
+        layout_bindings.push_back(pack.handles.back()->GenLayoutBinding());
+    }
+
+    auto create_info = vk::DescriptorSetLayoutCreateInfo{}
+    .setBindings(layout_bindings)
+    .setPNext(pnext)
+    .setFlags(flags)
+    ;
+
+    layoutHandle = device->Handle().createDescriptorSetLayoutUnique(create_info);
+}
+// clang-format on
+
+void DescriptorSet::Create(DeviceH device) {
+    InternalCreate(device, {}, nullptr);
+}
+
+void DescriptorSet::InternalAllocate(
+    DeviceH device, DescriptorPoolH pool, void* pnext
+) {
+    AssertDescriptorCount();
+
+    // clang-format off
+    auto create_info = vk::DescriptorSetAllocateInfo{}
+    .setDescriptorSetCount(framesCount) // Set per frame
+    .setDescriptorPool(pool->Handle())  // ...
+    .setSetLayouts(LayoutHandle())      // Using single layout for simplicity
+    .setPNext(pnext)                    // For special ext-like tweaks
+    ;
+
+    vkSets = device->Handle().allocateDescriptorSetsUnique(create_info);
+    // clang-format on
+}
+
+void DescriptorSet::Allocate(DeviceH device, DescriptorPoolH pool) {
+    InternalAllocate(device, pool, nullptr);
+}
+
+void DescriptorSet::Write(std::vector<vk::WriteDescriptorSet>& writes) {
+    for (FrameType frame = 0; frame < framesCount; frame++) {
+        for (BindingType binding : RegisteredBindings()) {
+            DescriptorBase& desc = Get(frame, binding);
+            writes.push_back(desc.GenWrite());
+            writes.back().setDstBinding(binding);
+            writes.back().setDstSet(Set(frame));
+        }
+    }
+}
+
+void DescriptorSet::AssertDescriptorCount() const {
+    for (const auto& [binding, pack] : packs) {
+        if (!pack.isSingle && pack.handles.size() != framesCount) {
+            log::FatalExitInternal(
+                "Descriptor count={} and frame count={} mismatch during "
+                "descriptor "
+                "set allocation",
+                pack.handles.size(), framesCount
+            );
+        }
+    }
+}
+
+void DescriptorContext::Add(LayoutType layout, DescriptorSetU&& set) {
+    auto [added_set, success] = sets.emplace(layout, std::move(set));
+    if (!success) {
+        log::FatalExitInternal("Cant add set with layout={}", layout);
+    }
+}
+
+DescriptorBase& DescriptorContext::GetDescriptor(
+    DescriptorContext::LayoutType layout,
+    DescriptorContext::BindingType binding, DescriptorContext::FrameType frame
+) {
+    return GetSet(layout).Get(frame, binding);
+}
+
+DescriptorSet& DescriptorContext::GetSet(DescriptorContext::LayoutType layout) {
+    if (!sets.contains(layout)) {
+        log::FatalExit(
+            "Wrong layout={} for getting descriptor from descriptor context",
+            layout
+        );
+    }
+    return *sets[layout];
+}
+
+void DescriptorContext::Create(DeviceH device) {
+    for (auto& [layout_idx, set] : sets) {
+        set->Create(device);
+    }
+}
+void DescriptorContext::Allocate(DeviceH device, DescriptorPoolH pool) {
+    for (auto& [layout_idx, set] : sets) {
+        set->Allocate(device, pool);
+    }
+}
+
+void DescriptorContext::Update(DeviceH device) {
+    std::vector<vk::WriteDescriptorSet> writes;
+    writes.reserve(150); // WARN Literal
+    for (auto& [layout_idx, set] : sets) {
+        set->Write(writes);
+    }
+    device->Handle().updateDescriptorSets(
+        writes.size(), writes.data(), 0, nullptr
+    );
+}
+
+void DescriptorContext::Bind(
+    LayoutType layout, FrameType frame, CommandBufferH cmd,
+    vk::PipelineLayout pipeline_layout
+) {
+    cmd->Handle().bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics, pipeline_layout,
+        static_cast<uint32_t>(layout), std::vector{sets[layout]->Set(frame)}, {}
+    );
+}
+
+std::vector<vk::DescriptorSetLayout> DescriptorContext::AllLayouts() {
+    std::vector<vk::DescriptorSetLayout> l;
+    l.reserve(100); // WARN Literal
+    for (auto& [layout, set] : sets) {
+        l.push_back(set->LayoutHandle());
+    }
+    std::reverse(l.begin(), l.end());
+    return l;
+}
+
+}; // namespace exp
 
 // clang-format off
 

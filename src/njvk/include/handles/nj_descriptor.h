@@ -22,6 +22,27 @@ public:
 };
 using DescriptorPoolH = std::shared_ptr<DescriptorPool>;
 
+namespace exp {
+
+// clang-format off
+struct DescriptorBase {
+    const vk::ShaderStageFlags shaderStages;
+    const vk::DescriptorType descriptorType;
+
+    DescriptorBase(vk::ShaderStageFlags shader_stages, vk::DescriptorType desc_type);
+    DescriptorBase(const DescriptorBase&) = delete;
+    DescriptorBase& operator=(const DescriptorBase&) = delete;
+    DescriptorBase(DescriptorBase&&) noexcept = default;
+    virtual ~DescriptorBase() = default;
+
+    virtual void Initialize(DeviceH device, AllocatorH allocator) = 0;
+    virtual auto GenWrite() -> vk::WriteDescriptorSet = 0;
+    virtual auto GenLayoutBinding() -> vk::DescriptorSetLayoutBinding = 0;
+};
+// clang-format on
+
+}; // namespace exp
+
 // clang-format off
 struct Descriptor {
     //! Main descriptor creation

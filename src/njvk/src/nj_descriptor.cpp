@@ -30,6 +30,26 @@ auto DescriptorPool::HandleName() const noexcept -> std::string {
     return "DescriptorPool";
 }
 
+
+namespace exp { 
+
+
+DescriptorBase::DescriptorBase(
+    vk::ShaderStageFlags shader_stages, vk::DescriptorType desc_type
+) 
+    : shaderStages { shader_stages } 
+    , descriptorType{ desc_type } 
+{ }
+
+
+
+
+
+
+
+};
+
+
 Descriptor::~Descriptor() { }
 
 auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
