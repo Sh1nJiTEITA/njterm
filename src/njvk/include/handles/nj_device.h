@@ -10,7 +10,7 @@
 namespace nj::ren {
 
 class Device : public VulkanObjectNative<vk::Device> {
-  public:
+public:
     Device(ren::InstanceH, ren::PhysicalDeviceH);
     auto HandleName() const noexcept -> std::string override;
 };

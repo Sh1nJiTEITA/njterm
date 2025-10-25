@@ -2,6 +2,7 @@
 #include "njlog.h"
 #include "njvkutils.h"
 #include <vulkan/vulkan_shared.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace nj::ren {
 
@@ -39,18 +40,69 @@ DescriptorBase::DescriptorBase(
 ) 
     : shaderStages { shader_stages } 
     , descriptorType{ desc_type } 
-{ }
+{ 
+}
 
 
+DescriptorStatic::DescriptorStatic(
+    vk::ShaderStageFlags shader_stages, vk::DescriptorType desc_type
+) 
+    : DescriptorBase(shader_stages, desc_type)
+{
+}
 
+void DescriptorStatic::Initialize(DeviceH device, AllocatorH allocator) {
+    CreateBuffers(device, allocator); 
+    CreateImages(device, allocator);
+    CreateViews(device, allocator);
+}
 
+auto DescriptorStatic::GenBufferInfo() -> vk::DescriptorBufferInfo{
+    return vk::DescriptorBufferInfo{}
+        .setBuffer(buffer->Handle())
+        .setOffset(0)
+        .setRange(buffer->InitialSize())
+    ;
+}
 
+auto DescriptorStatic::GenImageInfo() -> vk::DescriptorImageInfo{ 
+    return vk::DescriptorImageInfo{}
+        .setImageLayout(image->Layout())
+        .setImageView(imageView->Handle())
+    ;
+}
 
+// clang-format off
 
-};
+// clang-format on
 
+auto DescriptorStatic::GenWrite(
+    std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+    std::vector<vk::DescriptorImageInfo>& image_infos
+) -> vk::WriteDescriptorSet {
+    auto info = vk::WriteDescriptorSet{};
+    info.setDescriptorCount(1);
+    info.setDescriptorType(descriptorType);
 
-Descriptor::~Descriptor() { }
+    if (buffer) {
+        buffer_infos.push_back(GenBufferInfo());
+        info.setBufferInfo(buffer_infos.back());
+    }
+
+    if (image && imageView) {
+        image_infos.push_back(GenImageInfo());
+        info.setImageInfo(image_infos.back());
+    }
+
+    return info;
+}
+
+void* DescriptorStatic::MapBuffer() { return buffer->Map(); }
+void DescriptorStatic::UnmapBuffer() { buffer->Unmap(); }
+
+}; // namespace exp
+
+Descriptor::~Descriptor() {}
 
 auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
     size_t desc_count = 1;
@@ -60,7 +112,9 @@ auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
         const size_t vie_sz = imageViews.size();
         log::FatalAssert(
             buf_sz == img_sz == vie_sz,
-            "buffers.size() ({}) " "!= images.size() ({}) " "!= imageViews.size() ({})", 
+            "buffers.size() ({}) "
+            "!= images.size() ({}) "
+            "!= imageViews.size() ({})",
             buf_sz, img_sz, vie_sz
         );
         desc_count = buf_sz;
@@ -69,56 +123,55 @@ auto Descriptor::LayoutBinding() -> vk::DescriptorSetLayoutBinding {
         .setBinding(binding)
         .setDescriptorType(type)
         .setDescriptorCount(desc_count)
-        .setStageFlags(shaderStages)
-        ;
+        .setStageFlags(shaderStages);
 }
 
 auto Descriptor::BufferInfo(size_t idx) -> vk::DescriptorBufferInfo {
-    if (buffers.size() > idx) { 
-        return  vk::DescriptorBufferInfo {}
+    if (buffers.size() > idx) {
+        return vk::DescriptorBufferInfo{}
             .setBuffer(buffers[idx]->CHandle())
             .setOffset(0)
-            .setRange(buffers[idx]->InitialSize())
-            ;
+            .setRange(buffers[idx]->InitialSize());
     }
     return {};
 }
 
 auto Descriptor::ImageInfo(size_t idx) -> vk::DescriptorImageInfo {
-    if (images.size() > idx) { 
+    if (images.size() > idx) {
         return vk::DescriptorImageInfo{}
             .setImageView(imageViews[idx]->Handle())
-            .setImageLayout(images[idx]->Layout())
-            ;
+            .setImageLayout(images[idx]->Layout());
     }
     return {};
 }
 
+auto Descriptor::IsBindless() -> bool { return bindless; }
 
-auto Descriptor::IsBindless() -> bool {
-    return bindless;
-}
-
-auto Descriptor::MapBuffer(size_t idx) -> void* { 
-    if (!(buffers.size() > idx && buffers[idx].get()) ) { 
+auto Descriptor::MapBuffer(size_t idx) -> void* {
+    if (!(buffers.size() > idx && buffers[idx].get())) {
         log::FatalExit("Cant map descriptor buffer. Buffer has invalid handle");
     }
     return buffers[idx]->Map();
 }
 
 auto Descriptor::UnmapBuffer(size_t idx) -> void {
-    if (!(buffers.size() > idx && buffers[idx].get()) ) { 
-        log::FatalExit("Cant unmap descriptor buffer. Buffer has invalid handle");
+    if (!(buffers.size() > idx && buffers[idx].get())) {
+        log::FatalExit(
+            "Cant unmap descriptor buffer. Buffer has invalid handle"
+        );
     }
     buffers[idx]->Unmap();
 }
 
-
 auto Descriptor::Layout() const noexcept -> size_t { return layout; }
-auto Descriptor::Binding() const noexcept -> size_t {return binding; } 
-auto Descriptor::ShaderStages() const noexcept -> vk::ShaderStageFlags { return shaderStages; } 
-auto Descriptor::DescriptorType() const noexcept -> vk::DescriptorType { return type; } 
-auto Descriptor::HasBuffer() const noexcept -> bool  { return !buffers.empty(); } 
-auto Descriptor::HasImage() const noexcept -> bool { return !images.empty(); } 
+auto Descriptor::Binding() const noexcept -> size_t { return binding; }
+auto Descriptor::ShaderStages() const noexcept -> vk::ShaderStageFlags {
+    return shaderStages;
+}
+auto Descriptor::DescriptorType() const noexcept -> vk::DescriptorType {
+    return type;
+}
+auto Descriptor::HasBuffer() const noexcept -> bool { return !buffers.empty(); }
+auto Descriptor::HasImage() const noexcept -> bool { return !images.empty(); }
 
 } // namespace nj::ren

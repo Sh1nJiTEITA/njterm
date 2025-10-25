@@ -3,6 +3,7 @@
 #include "nj_descriptor.h"
 #include "nj_device.h"
 #include "nj_handle.h"
+#include "nj_log_scope.h"
 #include "njlog.h"
 #include <algorithm>
 #include <cassert>
@@ -53,8 +54,14 @@ DescriptorSet::RegisteredBindings() const {
 void DescriptorSet::InitializeDescriptors(
     DeviceH device, AllocatorH allocator
 ) {
+    DEBUG_SCOPE_A("Initializing descriptors");
     for (const auto& [binding, pack] : packs) {
+        DEBUG_SCOPE_A(
+            "Binding={} pack.isSingle={} pack.size={}", binding, pack.isSingle,
+            pack.handles.size()
+        );
         for (auto& handle : pack.handles) {
+            DEBUG_SCOPE_A("type={}", (int)handle->descriptorType);
             handle->Initialize(device, allocator);
         }
     }
@@ -66,16 +73,28 @@ void DescriptorSet::InternalCreate(
     const vk::DescriptorSetLayoutCreateFlags& flags,
     void* pnext 
 ) {
+    DEBUG_SCOPE_A("Creating descriptor set layout");
     auto layout_bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
     layout_bindings.reserve(packs.size());
     for (const auto& [binding, pack] : packs) {
-        layout_bindings.push_back(pack.handles.back()->GenLayoutBinding());
+        log::DebugA(
+            "Adding binding={} with pack: isSingle={}, size={}", 
+            binding, pack.isSingle, pack.handles.size()
+        );
+        auto layout_binding = vk::DescriptorSetLayoutBinding{}
+            .setBinding(binding)
+            .setDescriptorType(pack.handles.back()->descriptorType)
+            .setStageFlags(pack.handles.back()->shaderStages)
+            // .setDescriptorCount(pack.handles.size())
+            .setDescriptorCount(1)
+            ;
+        layout_bindings.push_back(layout_binding);
     }
 
     auto create_info = vk::DescriptorSetLayoutCreateInfo{}
     .setBindings(layout_bindings)
-    .setPNext(pnext)
-    .setFlags(flags)
+    // .setPNext(pnext)
+    // .setFlags(flags)
     ;
 
     layoutHandle = device->Handle().createDescriptorSetLayoutUnique(create_info);
@@ -89,17 +108,33 @@ void DescriptorSet::Create(DeviceH device) {
 void DescriptorSet::InternalAllocate(
     DeviceH device, DescriptorPoolH pool, void* pnext
 ) {
+    DEBUG_SCOPE_A("Allocating descriptor layouts");
     AssertDescriptorCount();
 
     // clang-format off
-    auto create_info = vk::DescriptorSetAllocateInfo{}
-    .setDescriptorSetCount(framesCount) // Set per frame
-    .setDescriptorPool(pool->Handle())  // ...
-    .setSetLayouts(LayoutHandle())      // Using single layout for simplicity
-    .setPNext(pnext)                    // For special ext-like tweaks
-    ;
+    auto layouts = std::array { layoutHandle.get() };
+    for (size_t frame_idx = 0; frame_idx < framesCount; ++frame_idx) { 
+        log::DebugA("-> Allocating DescriptorSet for frame {}...", frame_idx);
 
-    vkSets = device->Handle().allocateDescriptorSetsUnique(create_info);
+        // NOTE: Default vulkan behaviour: create as many descriptor sets 
+        // as layouts. For current codebase we have single layout per 
+        // ren::DescriptorSet but inside we have mulitple vulkan desciptor set
+        // handles for each frame. 
+        // 
+        // No reason to allocate multiple descriptor sets per frame via using
+        // .setDescriptorSetCount( ... ) because of above mentioned reason
+        
+        auto info = vk::DescriptorSetAllocateInfo{}
+        .setDescriptorPool(pool->CHandle())
+        .setDescriptorSetCount(1)
+        .setSetLayouts(layouts)
+        ;
+        if (pnext) {
+            info.setPNext(pnext);
+        }
+        auto res = device->Handle().allocateDescriptorSetsUnique(info);
+        vkSets.push_back(std::move(res.back()));
+    }
     // clang-format on
 }
 
@@ -108,10 +143,12 @@ void DescriptorSet::Allocate(DeviceH device, DescriptorPoolH pool) {
 }
 
 void DescriptorSet::Write(std::vector<vk::WriteDescriptorSet>& writes) {
+    std::vector<vk::DescriptorBufferInfo> buffer_infos{};
+    std::vector<vk::DescriptorImageInfo> image_infos{};
     for (FrameType frame = 0; frame < framesCount; frame++) {
         for (BindingType binding : RegisteredBindings()) {
             DescriptorBase& desc = Get(frame, binding);
-            writes.push_back(desc.GenWrite());
+            writes.push_back(desc.GenWrite(buffer_infos, image_infos));
             writes.back().setDstBinding(binding);
             writes.back().setDstSet(Set(frame));
         }
@@ -225,16 +262,16 @@ public:
         : framePacks{ std::move(packs) }
         , singleDescriptors{ std::move(single_desc) } 
     {
-        log::Debug("DescriptorSet::ctor packs.size={}", framePacks.size());
+        log::DebugA("DescriptorSet::ctor packs.size={}", framePacks.size());
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         std::set<uint32_t> unique;
-        log::Debug("Searching for unique bindings inside perframe descriptor list");
+        log::DebugA("Searching for unique bindings inside perframe descriptor list");
 
         const auto add = [&unique, &bindings](DescriptorU& desc){
             auto info = desc->LayoutBinding();
             auto [it, success] = unique.insert(info.binding);
             if (success) {
-                log::Debug("--> Unique binding={}", info.binding);
+                log::DebugA("Unique binding={}", info.binding);
                 bindings.push_back(std::move(info));
             }
         };
@@ -246,10 +283,15 @@ public:
             }
         }
 
-        log::Debug("Searching for unique bindings inside single descriptor list");
+        log::DebugA("Searching for unique bindings inside single descriptor list");
         for (auto& single_desc : singleDescriptors) { 
             add(single_desc); 
         }
+
+        auto layout_create_info = create_info;
+        layout_create_info.setBindings(bindings);
+
+        layout = device->Handle().createDescriptorSetLayoutUnique(layout_create_info);
 
         // auto layout_create_info = vk::DescriptorSetLayoutCreateInfo{}
         //     .setBindings(bindings)
@@ -280,20 +322,17 @@ public:
         //     .setPNext(&bindingFlagsInfo) // <<--- critical for bindless support
         //     ;
         // --------------- END: VK_EXT_descriptor_indexing --------------------
-        auto layout_create_info = create_info;
-        layout_create_info.setBindings(bindings);
-
-        layout = device->Handle().createDescriptorSetLayoutUnique(layout_create_info);
+        
     }
 
     auto Layout() noexcept -> vk::DescriptorSetLayout& { return *layout; }
 
     void Allocate(ren::DeviceH device, ren::DescriptorPoolH pool, void* pnext) { 
-        log::Debug("Allocating descriptor set...");
+        log::DebugA("Allocating descriptor set...");
         const size_t frames_count = framePacks.size();
         const auto layouts = std::array{ layout.get() };
         for (size_t frame_idx = 0; frame_idx < frames_count; ++frame_idx) { 
-            log::Debug("--> Allocating DescriptorSet for frame {}...", frame_idx);
+            log::DebugA("Allocating DescriptorSet for frame {}...", frame_idx);
             auto info = vk::DescriptorSetAllocateInfo{}
                 .setDescriptorPool(pool->CHandle())
                 .setDescriptorSetCount(descriptorSetCountPerClass)

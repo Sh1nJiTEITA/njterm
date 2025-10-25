@@ -1,4 +1,5 @@
 #include "nj_buffer.h"
+#include "nj_log_scope.h"
 #include "njlog.h"
 #include "njvklog.h"
 #include "njvkutils.h"
@@ -15,7 +16,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
     : AllocationUnit(allocator)
     , initialAllocationSize{ alloc_size } 
 {
-    log::Debug("Creating new vkBuffer with id={}...", id);
+    DEBUG_SCOPE_A("Creating new vkBuffer with id={}", id);
 
     auto buffer_info = vk::BufferCreateInfo{}
       .setSize(alloc_size)
@@ -46,7 +47,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
 }
 
 Buffer::~Buffer() { 
-    log::Debug("Deleting vkBuffer with id={}...", id);
+    DEBUG_SCOPE_A("Deleting vkBuffer with id={}", id);
     vmaDestroyBuffer(allocator->Handle(), *handle, allocation);
 }
 

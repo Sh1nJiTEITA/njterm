@@ -48,7 +48,7 @@ inline const fmt::text_style FmtStyleTime =  fmt::emphasis::italic;
 // clang-format on
 
 template <Level l, typename... Args>
-inline void
+constexpr inline void
 Log(fmt::text_style style, fmt::format_string<Args...> str, Args&&... args) {
     const auto bitset = LevelBitSet.load();
     const bool is_level = bitset & static_cast<LevelType>(l);
@@ -64,29 +64,31 @@ Log(fmt::text_style style, fmt::format_string<Args...> str, Args&&... args) {
 }
 
 template <typename... Args>
-inline void Debug(fmt::format_string<Args...> str, Args&&... args) {
+constexpr inline void Debug(fmt::format_string<Args...> str, Args&&... args) {
     Log<Level::Debug>(FmtStyleDebug, str, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void Info(fmt::format_string<Args...> str, Args&&... args) {
+constexpr inline void Info(fmt::format_string<Args...> str, Args&&... args) {
     Log<Level::Info>(FmtStyleInfo, str, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void Warn(fmt::format_string<Args...> str, Args&&... args) {
+constexpr inline void Warn(fmt::format_string<Args...> str, Args&&... args) {
     Log<Level::Warn>(FmtStyleWarn, str, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void Error(fmt::format_string<Args...> str, Args&&... args) {
+constexpr inline void Error(fmt::format_string<Args...> str, Args&&... args) {
     Log<Level::Error>(FmtStyleError, str, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void Fatal(fmt::format_string<Args...> str, Args&&... args) {
+constexpr inline void Fatal(fmt::format_string<Args...> str, Args&&... args) {
     Log<Level::Fatal>(FmtStyleFatal, str, std::forward<Args>(args)...);
 }
+
+// clang-format on
 
 template <typename... Args>
 inline auto

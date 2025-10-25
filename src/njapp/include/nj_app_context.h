@@ -21,6 +21,9 @@ namespace nj::ren {
     NJ_HANDLE( Sampler );
     NJ_HANDLE( DescriptorPool );
     NJ_HANDLE( DescriptorContext );
+    namespace exp { 
+        NJ_HANDLE( DescriptorContext );
+    }
     NJ_HANDLE( DescriptorTest );
     NJ_HANDLE( DescriptorTexture );
     NJ_HANDLE( PipelineBuilderBase );
@@ -64,6 +67,7 @@ struct Context {
 
     ren::DescriptorPoolH descPool;
     ren::DescriptorContextH descContext;
+    ren::exp::DescriptorContextH expDescContext;
 
     ren::PipelineH pipeline;
     ren::PipelineH guidelinesPipeline;
@@ -88,6 +92,7 @@ private:
     void InitBaseHandles();
     void InitPresentHandles();
     void InitDescriptorHandles();
+    void InitExpDescriptorHandles();
     void InitPipelineHandles();
     void InitFontLoaderHandles();
     void InitTextBuffer();

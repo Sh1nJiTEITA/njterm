@@ -1,18 +1,17 @@
 #pragma once
-#include "nj_device.h"
-#include "nj_handle.h"
-#include <memory>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
+
 #ifndef NJ_DESCRIPTOR_CONTEXT_H
 #define NJ_DESCRIPTOR_CONTEXT_H
 
 #include "nj_command_buffer.h"
 #include "nj_descriptor.h"
+#include "nj_device.h"
+#include "nj_handle.h"
 #include "njlog.h"
+#include <memory>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
 
 namespace nj::ren {
 
@@ -32,10 +31,6 @@ struct DescriptorSet {
         const std::vector<DescriptorBaseU> handles;
     };
 
-    //                                Consts
-    // ************************************************************************
-    const FrameType framesCount;
-
     //                                Ctors
     // ************************************************************************
     DescriptorSet(FrameType frames_count);
@@ -50,9 +45,9 @@ struct DescriptorSet {
     // clang-format off
     //! For per frame buffer/image descriptors
     template <typename DescriptorType, typename... Args>
-    void Register(FrameType frames_count, BindingType binding, const Args&... args) {
-        std::vector< DescriptorBaseU > tmp; tmp.reserve(frames_count);
-        for (FrameType frame = 0; frame < frames_count; ++frame) { 
+    void RegisterPerFrame(BindingType binding, const Args&... args) {
+        std::vector< DescriptorBaseU > tmp; tmp.reserve(framesCount);
+        for (FrameType frame = 0; frame < framesCount; ++frame) { 
             tmp.emplace_back(std::make_unique< DescriptorType >(args...));
         }
         auto [_, success] = packs.emplace(
@@ -60,34 +55,24 @@ struct DescriptorSet {
             std::forward_as_tuple(binding),
             std::forward_as_tuple(false, std::move(tmp))
         );
-        if (!success) { 
-            log::FatalExitInternal("Binding={} occupied", binding);
-        }
+        log::FatalAssert(!success, "Binding={} occupied", binding);
     }
+
     //! For single buffer/image descriptors
     template <typename DescriptorType, typename... Args>
-    void Register(BindingType binding, Args&&...args) {
+    void RegisterSingle(BindingType binding, Args&&...args) {
         auto [_, success] = packs.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(binding),
             std::forward_as_tuple(true, std::make_unique<DescriptorType>(std::forward<Args>(args)...))
         );
-        if (!success) {
-            log::FatalExitInternal("Binding={} occupied", binding);
-        }
+        log::FatalAssert(!success, "Binding={} occupied", binding);
     }
-    // clang-format on
 
     DescriptorBase& Get(FrameType frame, BindingType binding) {
-        if (!packs.contains(binding)) {
-            log::FatalExitInternal("Binding={} was not registered", binding);
-        }
+        log::FatalAssert(!packs.contains(binding), "Binding={} was not registered", binding);
         const auto& pack = packs.at(binding);
-        if (pack.handles.size() < frame) {
-            log::FatalExitInternal(
-                "Frame={} > registered frames count", binding
-            );
-        }
+        log::FatalAssert(pack.handles.size() < frame, "Frame={} > registered frames count", binding);
         return *pack.handles[frame];
     }
 
@@ -95,6 +80,7 @@ struct DescriptorSet {
     DescriptorType& Get(FrameType frame, BindingType binding) {
         return static_cast<DescriptorType&>(Get(frame, binding));
     }
+    // clang-format on
 
     vk::DescriptorSetLayout& LayoutHandle() noexcept;
     vk::DescriptorSet& Set(FrameType frame);
@@ -127,6 +113,12 @@ private:
     void AssertDescriptorCount() const;
 
 private:
+    //                                Consts
+    // ************************************************************************
+    const FrameType framesCount;
+
+    //                                Fields
+    // ************************************************************************
     std::unordered_map<BindingType, Pack> packs;
     std::vector<vk::UniqueDescriptorSet> vkSets;
     vk::UniqueDescriptorSetLayout layoutHandle;
@@ -155,11 +147,12 @@ public:
         ));
     }
 
-    DescriptorBase& GetDescriptor(
-        LayoutType layout, 
-        BindingType binding, 
-        FrameType frame
-    );
+    DescriptorBase& GetDescriptor(LayoutType layout, BindingType binding, FrameType frame);
+    
+    template <typename DescriptorType> 
+    DescriptorType& GetDescriptor(LayoutType layout, BindingType binding, FrameType frame) {
+        return static_cast<DescriptorType&>(GetDescriptor(layout, binding, frame));
+    }
 
     DescriptorSet& GetSet(LayoutType layout); 
 

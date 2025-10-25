@@ -1,4 +1,5 @@
 #pragma once
+#include "nj_sampler.h"
 #ifndef NJ_DESCRIPTOR_H
 #define NJ_DESCRIPTOR_H
 
@@ -36,8 +37,30 @@ struct DescriptorBase {
     virtual ~DescriptorBase() = default;
 
     virtual void Initialize(DeviceH device, AllocatorH allocator) = 0;
-    virtual auto GenWrite() -> vk::WriteDescriptorSet = 0;
-    virtual auto GenLayoutBinding() -> vk::DescriptorSetLayoutBinding = 0;
+    virtual auto GenWrite(std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+                          std::vector< vk::DescriptorImageInfo>& image_infos) -> vk::WriteDescriptorSet = 0;
+};
+
+struct DescriptorStatic : public DescriptorBase {
+    DescriptorStatic(vk::ShaderStageFlags shader_stages, vk::DescriptorType desc_type);
+
+    virtual void Initialize(DeviceH device, AllocatorH allocator) override;
+    virtual auto GenBufferInfo() -> vk::DescriptorBufferInfo;
+    virtual auto GenImageInfo() -> vk::DescriptorImageInfo;
+    virtual auto GenWrite(std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+                          std::vector< vk::DescriptorImageInfo>& image_infos) -> vk::WriteDescriptorSet override;
+
+    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+
+    void* MapBuffer();
+    void UnmapBuffer();
+    
+  protected:
+    BufferU buffer;
+    ImageU image;
+    ImageViewU imageView;
 };
 // clang-format on
 

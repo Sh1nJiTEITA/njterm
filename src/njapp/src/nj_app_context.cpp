@@ -29,7 +29,9 @@
 #include "nj_surface.h"
 #include "nj_swapchain.h"
 #include "nj_text_buffer.h"
+#include <algorithm>
 #include <glm/fwd.hpp>
+#include <iterator>
 #include <memory>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -45,6 +47,7 @@ App::App() {
     InitPresentHandles();
     InitTextBuffer();
     InitDescriptorHandles(); 
+    InitExpDescriptorHandles();
     InitPipelineHandles();
 }
 
@@ -77,8 +80,8 @@ void App::Run() {
                 .setRenderArea(render_area)
                 .setClearValues(clear_color)
                 ;
-            cmd->Handle().beginRenderPass(render_pass_info, vk::SubpassContents::eInline); { // clang-format off
-                
+            cmd->Handle().beginRenderPass(render_pass_info, vk::SubpassContents::eInline); { 
+                // clang-format off
 
                 auto viewport = vk::Viewport{}
                                     .setX(0)
@@ -96,11 +99,13 @@ void App::Run() {
                 };
                 cmd->Handle().setScissor(0, 1, &scissor);
 
-                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
+                // descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
+                expDescContext->Bind(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
                 descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
                 gridRenderPass->RenderGuidelines(cmd, guidelinesPipeline);
 
-                descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
+                // descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
+                expDescContext->Bind(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
                 descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
                 gridRenderPass->RenderCells(cmd, cellsPipeline);
             } // clang-format on:
@@ -181,8 +186,31 @@ void App::InitDescriptorHandles() {
     descContext->UpdateSets();
 }
 
+void App::InitExpDescriptorHandles() {
+    expDescContext = log::MakeSharedWithLog<ren::exp::DescriptorContext>("123");
+
+    auto set_0 = std::make_unique<ren::exp::DescriptorSet>(con::Frames());
+    set_0->RegisterPerFrame<ren::exp::DescriptorGrid>(
+        0, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+    );
+    set_0->InitializeDescriptors(device, allocator);
+    expDescContext->Add(0, std::move(set_0));
+
+    expDescContext->Create(device);
+    expDescContext->Allocate(device, descPool);
+    expDescContext->Update(device);
+}
+
 void App::InitPipelineHandles() {
-    auto all_layouts = descContext->AllLayouts();
+    auto def_all_layouts = descContext->AllLayouts();
+    auto exp_all_layouts = expDescContext->AllLayouts();
+    auto all_layouts = decltype(def_all_layouts){};
+
+    std::merge(
+        def_all_layouts.begin(), def_all_layouts.end(), exp_all_layouts.begin(),
+        exp_all_layouts.end(), std::back_inserter(all_layouts)
+    );
+
     log::Debug("Descriptor layout count={}", all_layouts.size());
 
     // pipeline = ren::CreatePipeline<ren::PipelineBuilderBase>(
@@ -206,7 +234,6 @@ void App::InitPipelineHandles() {
         atlasPage->Box()
     );
 
-    // face->LoadGlyph('M');
     log::Debug("faceBox={},{}", atlasPage->Box().x, atlasPage->Box().y);
     gridRenderPass->CreateCellsBuffer(
         device, allocator, textBuffer->Size(),
@@ -240,7 +267,8 @@ void App::UpdateWindow() { win->Update(); }
 void App::UpdateDescriptors() {
     const auto frame = renderContext->CurrentFrameIndex();
 
-    descContext->Get<ren::DescriptorGrid>(frame, Layout::Basic, 0).Update(
+    expDescContext->GetDescriptor<ren::exp::DescriptorGrid>(Layout::Basic, 0, frame)
+    .Update(
         swapchain->ExtentPixels(),
         atlasPage->Box(), 
         atlasPage->PageSize()
