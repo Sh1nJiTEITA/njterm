@@ -218,8 +218,6 @@ void DescriptorContext::Allocate(DeviceH device, DescriptorPoolH pool) {
 void DescriptorContext::Update(DeviceH device) {
     DEBUG_SCOPE_A("Updating descriptor sets");
 
-    
-
     for (auto& [layout, set] : sets) {
         DEBUG_SCOPE_A("Make writes for descriptor set with layout={}", layout);
             

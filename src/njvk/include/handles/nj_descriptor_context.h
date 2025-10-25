@@ -59,10 +59,14 @@ struct DescriptorSet {
     //! For single buffer/image descriptors
     template <typename DescriptorType, typename... Args>
     void RegisterSingle(BindingType binding, Args&&...args) {
+        std::vector< DescriptorBaseU > tmp;
+        tmp.push_back(
+            std::make_unique< DescriptorType >(std::forward<Args>(args)...)
+        );
         auto [_, success] = packs.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(binding),
-            std::forward_as_tuple(true, std::make_unique<DescriptorType>(std::forward<Args>(args)...))
+            std::forward_as_tuple(true, std::move(tmp))
         );
         log::FatalAssert(!success, "Binding={} occupied", binding);
     }
@@ -70,8 +74,13 @@ struct DescriptorSet {
     DescriptorBase& Get(FrameType frame, BindingType binding) {
         log::FatalAssert(!packs.contains(binding), "Binding={} was not registered", binding);
         const auto& pack = packs.at(binding);
-        log::FatalAssert(pack.handles.size() < frame, "Frame={} > registered frames count", binding);
-        return *pack.handles[frame];
+        if (pack.isSingle) {
+            log::FatalAssert(pack.handles.size()!=1, "Invalid count of descriptors for single one", binding);
+            return *pack.handles.back();
+        } else { 
+            log::FatalAssert(pack.handles.size() < frame, "Frame={} > registered frames count", binding);
+            return *pack.handles[frame];
+        }
     }
 
     template <typename DescriptorType>

@@ -1,5 +1,6 @@
 #include "nj_app_context.h"
 #include "nj_app_desc.h"
+#include "nj_log_scope.h"
 #include "nj_pipeline_cells.h"
 #include "nj_pipeline_guidelines.h"
 #include "njcon.h"
@@ -101,12 +102,12 @@ void App::Run() {
 
                 // descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
                 expDescContext->Bind(0, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
-                descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
+                expDescContext->Bind(1, renderContext->CurrentFrameIndex(), cmd, guidelinesPipeline->LayoutHandle());
                 gridRenderPass->RenderGuidelines(cmd, guidelinesPipeline);
 
                 // descContext->BindSets(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
                 expDescContext->Bind(0, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
-                descContext->BindSets(1, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
+                expDescContext->Bind(1, renderContext->CurrentFrameIndex(), cmd, cellsPipeline->LayoutHandle());
                 gridRenderPass->RenderCells(cmd, cellsPipeline);
             } // clang-format on:
             cmd->Handle().endRenderPass();
@@ -174,42 +175,110 @@ void App::InitPresentHandles() {
 void App::InitDescriptorHandles() {
     sampler = log::MakeSharedWithLog<ren::Sampler>(device);
     descPool = log::MakeSharedWithLog<ren::DescriptorPool>(device);
-    descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
-        "Descriptor context", device, descPool, allocator, con::Frames()
-    );
+    // descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
+    //     "Descriptor context", device, descPool, allocator, con::Frames()
+    // );
 
-    CreateBasicDescriptors(this);
-    CreateAtlasPagesDescriptors(this);
-
-    descContext->CreateLayouts();
-    descContext->AllocateSets();
-    descContext->UpdateSets();
+    // CreateBasicDescriptors(this);
+    // CreateAtlasPagesDescriptors(this);
+    //
+    // descContext->CreateLayouts();
+    // descContext->AllocateSets();
+    // descContext->UpdateSets();
 }
 
+ren::BufferU _CreatePageTextureBuffer(Context* ctx, size_t w, size_t h) {
+    DEBUG_SCOPE_A("_CreatePageTextureBuffer");
+    const size_t buf_sz{w * h};
+
+    auto atlas_buf = std::make_unique<ren::Buffer>(
+        ctx->device, ctx->allocator, buf_sz,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT
+            | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+    );
+
+    void* data = atlas_buf->Map();
+    {
+        ctx->atlasPage->MapTexture(data);
+    }
+    atlas_buf->Unmap();
+    return atlas_buf;
+}
+
+ren::BufferU _CreatePageMapBuffer(Context* ctx) {
+    auto chars_buf = ren::CreateCharactersMetaBuffer(
+        ctx->device, ctx->allocator, ctx->atlasPage->CodesCount()
+    );
+
+    void* data = chars_buf->Map();
+    {
+        ctx->atlasPage->MapMap(data);
+    }
+    chars_buf->Unmap();
+
+    return chars_buf;
+}
+
+// clang-format off
 void App::InitExpDescriptorHandles() {
-    expDescContext = log::MakeSharedWithLog<ren::exp::DescriptorContext>("123");
+    using StagesType = vk::ShaderStageFlagBits;
+    const size_t PAGE_H = 1024, PAGE_W = 1024;
+    expDescContext = log::MakeSharedWithLog<ren::exp::DescriptorContext>(
+        "ExpDescriptorContext"
+    );
 
     auto set_0 = std::make_unique<ren::exp::DescriptorSet>(con::Frames());
     set_0->RegisterPerFrame<ren::exp::DescriptorGrid>(
-        0, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+        /* binding */ 0,
+        /* stages  */ StagesType::eVertex | StagesType::eFragment
     );
     set_0->InitializeDescriptors(device, allocator);
-    expDescContext->Add(0, std::move(set_0));
+    expDescContext->Add(Layout::Basic, std::move(set_0));
+
+    auto set_1 = std::make_unique<ren::exp::DescriptorSet>(con::Frames());
+    set_1->RegisterPerFrame<ren::exp::DescriptorCells>(
+        /* binding */ 0,
+        /* stages  */ StagesType::eVertex | StagesType::eFragment,
+        textBuffer
+    );
+
+    auto buf = _CreatePageTextureBuffer(this, PAGE_W, PAGE_H);
+    set_1->RegisterSingle<ren::exp::DescriptorTexture>(
+        /* binding */ 1,
+        /* stages  */ StagesType::eVertex | StagesType::eFragment,
+        renderContext->CurrentCommandBuffer(), 
+        phDevice, 
+        sampler,
+        PAGE_W, 
+        PAGE_H, 
+        std::move(buf) 
+    );
+    // set_1->RegisterSingle<ren::exp::DescriptorCharactersMeta>(
+    //     /* binding */ 2,
+    //     /* stages  */ StagesType::eVertex | StagesType::eFragment,
+    //     _CreatePageMapBuffer(this)
+    // );
+    set_1->InitializeDescriptors(device, allocator);
+    expDescContext->Add(Layout::AtlasPages, std::move(set_1));
 
     expDescContext->Create(device);
     expDescContext->Allocate(device, descPool);
     expDescContext->Update(device);
 }
+// clang-format on
 
 void App::InitPipelineHandles() {
-    auto def_all_layouts = descContext->AllLayouts();
-    auto exp_all_layouts = expDescContext->AllLayouts();
-    auto all_layouts = decltype(def_all_layouts){};
+    // auto def_all_layouts = descContext->AllLayouts();
+    auto all_layouts = expDescContext->AllLayouts();
+    // auto all_layouts = decltype(def_all_layouts){};
 
-    std::merge(
-        def_all_layouts.begin(), def_all_layouts.end(), exp_all_layouts.begin(),
-        exp_all_layouts.end(), std::back_inserter(all_layouts)
-    );
+    // std::merge(
+    //     def_all_layouts.begin(), def_all_layouts.end(),
+    //     exp_all_layouts.begin(), exp_all_layouts.end(),
+    //     std::back_inserter(all_layouts)
+    // );
 
     log::Debug("Descriptor layout count={}", all_layouts.size());
 
@@ -274,7 +343,7 @@ void App::UpdateDescriptors() {
         atlasPage->PageSize()
     );
     
-    descContext->Get<ren::DescriptorCells>(frame, Layout::AtlasPages, 0).Update();
+    expDescContext->GetDescriptor<ren::exp::DescriptorCells>(Layout::AtlasPages, 0, frame).Update();
 }
 // clang-format on
 

@@ -5,6 +5,44 @@
 
 namespace nj::ren {
 
+namespace exp {
+
+DescriptorCells::DescriptorCells(
+    vk::ShaderStageFlags stages, buf::TextBufferH buf
+)
+    : DescriptorStatic(
+          vk::ShaderStageFlagBits::eAll, vk::DescriptorType::eStorageBuffer
+      ),
+      textBuffer(buf) {}
+
+void DescriptorCells::CreateBuffer(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {
+
+    const size_t buffer_size_bytes = sizeof(buf::Cell) * textBuffer->Size();
+
+    buffer = std::make_unique<Buffer>(
+        device, allocator, buffer_size_bytes,
+        vk::BufferUsageFlags(vk::BufferUsageFlagBits::eStorageBuffer),
+        VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU, VmaAllocationCreateFlags{}
+    );
+}
+
+void DescriptorCells::CreateImage(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+void DescriptorCells::CreateView(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+
+void DescriptorCells::Update() {
+    void* data = MapBuffer();
+    textBuffer->MapDataTo(data);
+    UnmapBuffer();
+}
+
+} // namespace exp
+
 DescriptorCells::DescriptorCells(
     size_t layout, size_t binding, buf::TextBufferH buf
 )
@@ -42,6 +80,30 @@ void DescriptorCells::Update() {
     textBuffer->MapDataTo(data);
     UnmapBuffer();
 }
+
+namespace exp {
+
+DescriptorCharactersMeta::DescriptorCharactersMeta(
+    vk::ShaderStageFlags stages, BufferU&& buf
+)
+    : DescriptorStatic(
+          vk::ShaderStageFlagBits::eAll, vk::DescriptorType::eStorageBuffer
+      ) {
+    buffer = std::move(buf);
+}
+
+void DescriptorCharactersMeta::CreateBuffer(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+
+void DescriptorCharactersMeta::CreateImage(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+void DescriptorCharactersMeta::CreateView(
+    ren::DeviceH device, ren::AllocatorH allocator
+) {}
+
+} // namespace exp
 
 DescriptorCharactersMeta::DescriptorCharactersMeta(
     size_t layout, size_t binding, BufferU&& buf

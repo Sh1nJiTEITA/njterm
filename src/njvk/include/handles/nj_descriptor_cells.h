@@ -3,6 +3,7 @@
 
 #include "nj_descriptor.h"
 #include "nj_text_buffer.h"
+#include <vulkan/vulkan_enums.hpp>
 
 namespace nj {
 #ifndef NJ_CHAR_STRUCT
@@ -15,6 +16,23 @@ struct alignas(16) SingleCharTextureData {
 #endif
 
 namespace ren {
+
+namespace exp {
+
+struct DescriptorCells : public DescriptorStatic {
+    DescriptorCells(vk::ShaderStageFlags stages, buf::TextBufferH buf);
+
+    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator);
+    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator);
+
+    void Update();
+
+private:
+    buf::TextBufferH textBuffer;
+};
+
+} // namespace exp
 
 struct DescriptorCells : public Descriptor {
     DescriptorCells(size_t layout, size_t binding, buf::TextBufferH buf);
@@ -33,8 +51,23 @@ private:
 //
 //
 
-//
-//
+namespace exp {
+
+struct DescriptorCharactersMeta : public DescriptorStatic {
+    DescriptorCharactersMeta(vk::ShaderStageFlags stages, BufferU&& buf);
+
+    virtual void CreateBuffer(ren::DeviceH d, ren::AllocatorH a) override;
+    virtual void CreateImage(ren::DeviceH d, ren::AllocatorH a) override;
+    virtual void CreateView(ren::DeviceH d, ren::AllocatorH a) override;
+
+    void Update();
+
+private:
+    size_t charsCount;
+};
+
+} // namespace exp
+
 struct DescriptorCharactersMeta : public Descriptor {
     DescriptorCharactersMeta(size_t layout, size_t binding, BufferU&& buf);
 

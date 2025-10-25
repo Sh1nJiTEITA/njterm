@@ -37,9 +37,11 @@ struct DescriptorBase {
     virtual ~DescriptorBase() = default;
 
     virtual void Initialize(DeviceH device, AllocatorH allocator) = 0;
-    virtual void FillWriteWithResourcesInfo(vk::WriteDescriptorSet& write,
-                                            std::vector< vk::DescriptorBufferInfo >& buffer_infos,
-                                            std::vector< vk::DescriptorImageInfo >& image_infos) const = 0;
+    virtual void FillWriteWithResourcesInfo(
+        vk::WriteDescriptorSet& write,
+        std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+        std::vector< vk::DescriptorImageInfo >& image_infos
+    ) const = 0;
 };
 
 struct DescriptorStatic : public DescriptorBase {
@@ -48,13 +50,15 @@ struct DescriptorStatic : public DescriptorBase {
     virtual void Initialize(DeviceH device, AllocatorH allocator) override;
     virtual auto GenBufferInfo() const -> vk::DescriptorBufferInfo;
     virtual auto GenImageInfo() const -> vk::DescriptorImageInfo;
-    virtual void FillWriteWithResourcesInfo(vk::WriteDescriptorSet& write,
-                                            std::vector< vk::DescriptorBufferInfo >& buffer_infos,
-                                            std::vector< vk::DescriptorImageInfo >& image_infos) const override;
+    virtual void FillWriteWithResourcesInfo(
+        vk::WriteDescriptorSet& write,
+        std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+        std::vector< vk::DescriptorImageInfo >& image_infos
+    ) const override;
 
-    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateBuffer(ren::DeviceH d, ren::AllocatorH a) = 0;
+    virtual void CreateImage(ren::DeviceH d, ren::AllocatorH a) = 0;
+    virtual void CreateView(ren::DeviceH d, ren::AllocatorH a) = 0;
 
     virtual bool HasBuffer() const noexcept;
     virtual bool HasImage() const noexcept;
