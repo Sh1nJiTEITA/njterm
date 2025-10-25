@@ -37,24 +37,30 @@ struct DescriptorBase {
     virtual ~DescriptorBase() = default;
 
     virtual void Initialize(DeviceH device, AllocatorH allocator) = 0;
-    virtual auto GenWrite(std::vector< vk::DescriptorBufferInfo >& buffer_infos,
-                          std::vector< vk::DescriptorImageInfo>& image_infos) -> vk::WriteDescriptorSet = 0;
+    virtual void FillWriteWithResourcesInfo(vk::WriteDescriptorSet& write,
+                                            std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+                                            std::vector< vk::DescriptorImageInfo >& image_infos) const = 0;
 };
 
 struct DescriptorStatic : public DescriptorBase {
     DescriptorStatic(vk::ShaderStageFlags shader_stages, vk::DescriptorType desc_type);
 
     virtual void Initialize(DeviceH device, AllocatorH allocator) override;
-    virtual auto GenBufferInfo() -> vk::DescriptorBufferInfo;
-    virtual auto GenImageInfo() -> vk::DescriptorImageInfo;
-    virtual auto GenWrite(std::vector< vk::DescriptorBufferInfo >& buffer_infos,
-                          std::vector< vk::DescriptorImageInfo>& image_infos) -> vk::WriteDescriptorSet override;
+    virtual auto GenBufferInfo() const -> vk::DescriptorBufferInfo;
+    virtual auto GenImageInfo() const -> vk::DescriptorImageInfo;
+    virtual void FillWriteWithResourcesInfo(vk::WriteDescriptorSet& write,
+                                            std::vector< vk::DescriptorBufferInfo >& buffer_infos,
+                                            std::vector< vk::DescriptorImageInfo >& image_infos) const override;
 
-    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateImage(ren::DeviceH device, ren::AllocatorH allocator) = 0;
+    virtual void CreateView(ren::DeviceH device, ren::AllocatorH allocator) = 0;
 
-    void* MapBuffer();
+    virtual bool HasBuffer() const noexcept;
+    virtual bool HasImage() const noexcept;
+    virtual bool HasView() const noexcept;
+
+    [[nodiscard]] void* MapBuffer();
     void UnmapBuffer();
     
   protected:

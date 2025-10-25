@@ -11,7 +11,7 @@ namespace exp {
 DescriptorGrid::DescriptorGrid(vk::ShaderStageFlags shader_stages)
     : DescriptorStatic{shader_stages, vk::DescriptorType::eUniformBuffer} {}
 
-void DescriptorGrid::CreateBuffers(
+void DescriptorGrid::CreateBuffer(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {
     DEBUG_SCOPE_A("Creating buffer for DescriptorGrid");
@@ -21,13 +21,13 @@ void DescriptorGrid::CreateBuffers(
         VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU, VmaAllocationCreateFlags{}
     );
 }
-void DescriptorGrid::CreateImages(
+void DescriptorGrid::CreateImage(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {
     DEBUG_SCOPE_A("Skipping image creation for DescriptorGrid");
 }
 
-void DescriptorGrid::CreateViews(
+void DescriptorGrid::CreateView(
     ren::DeviceH device, ren::AllocatorH allocator
 ) {
     DEBUG_SCOPE_A("Skipping image views creation for DescriptorGrid");

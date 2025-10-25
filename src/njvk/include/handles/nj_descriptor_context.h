@@ -1,12 +1,10 @@
 #pragma once
-
 #ifndef NJ_DESCRIPTOR_CONTEXT_H
 #define NJ_DESCRIPTOR_CONTEXT_H
 
 #include "nj_command_buffer.h"
 #include "nj_descriptor.h"
 #include "nj_device.h"
-#include "nj_handle.h"
 #include "njlog.h"
 #include <memory>
 #include <tuple>
@@ -98,7 +96,11 @@ struct DescriptorSet {
     virtual void Allocate(DeviceH device, DescriptorPoolH pool);
 
     //! Register existing inner descriptors for vulkan
-    void Write(std::vector<vk::WriteDescriptorSet>& writes);
+    void Write(
+        std::vector<vk::WriteDescriptorSet>& writes,
+        std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+        std::vector<vk::DescriptorImageInfo>& image_infos
+    );
 
 private:
     //! Creates descriptor set layout. For simplicity every registered
@@ -124,7 +126,13 @@ private:
     vk::UniqueDescriptorSetLayout layoutHandle;
 };
 using DescriptorSetU = std::unique_ptr<DescriptorSet>;
-
+//
+//
+//
+//
+//
+//
+//
 // clang-format off
 class DescriptorContext {
 public:
@@ -169,7 +177,37 @@ private:
 // clang-format on
 
 } // namespace exp
-
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 // clang-format off
 class DescriptorContext {
   public:

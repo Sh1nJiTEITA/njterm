@@ -20,9 +20,9 @@ struct DescriptorGrid : public DescriptorStatic {
     
     DescriptorGrid(vk::ShaderStageFlags shader_stages);
 
-    void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator) override;
-    void CreateImages(ren::DeviceH device, ren::AllocatorH allocator) override;
-    void CreateViews(ren::DeviceH device, ren::AllocatorH allocator) override;
+    void CreateBuffer(ren::DeviceH device, ren::AllocatorH allocator) override;
+    void CreateImage(ren::DeviceH device, ren::AllocatorH allocator) override;
+    void CreateView(ren::DeviceH device, ren::AllocatorH allocator) override;
 
     void Update(const glm::ivec2& ext, const glm::ivec2 face_size, 
                 const glm::ivec2& page_size);

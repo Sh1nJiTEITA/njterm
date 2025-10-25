@@ -5,10 +5,7 @@
 #include "nj_handle.h"
 #include "nj_log_scope.h"
 #include "njlog.h"
-#include <algorithm>
 #include <cassert>
-#include <cstdint>
-#include <iterator>
 #include <list>
 #include <memory>
 #include <ranges>
@@ -57,11 +54,16 @@ void DescriptorSet::InitializeDescriptors(
     DEBUG_SCOPE_A("Initializing descriptors");
     for (const auto& [binding, pack] : packs) {
         DEBUG_SCOPE_A(
-            "Binding={} pack.isSingle={} pack.size={}", binding, pack.isSingle,
-            pack.handles.size()
+            "Initializing descriptor with binding={} pack.isSingle={} "
+            "pack.size={}",
+            binding, pack.isSingle, pack.handles.size()
         );
+        size_t i = 0;
         for (auto& handle : pack.handles) {
-            DEBUG_SCOPE_A("type={}", (int)handle->descriptorType);
+            DEBUG_SCOPE_A(
+                "Initializing handle #{} with type={}", i++,
+                static_cast<int>(handle->descriptorType)
+            );
             handle->Initialize(device, allocator);
         }
     }
@@ -73,7 +75,6 @@ void DescriptorSet::InternalCreate(
     const vk::DescriptorSetLayoutCreateFlags& flags,
     void* pnext 
 ) {
-    DEBUG_SCOPE_A("Creating descriptor set layout");
     auto layout_bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
     layout_bindings.reserve(packs.size());
     for (const auto& [binding, pack] : packs) {
@@ -108,15 +109,14 @@ void DescriptorSet::Create(DeviceH device) {
 void DescriptorSet::InternalAllocate(
     DeviceH device, DescriptorPoolH pool, void* pnext
 ) {
-    DEBUG_SCOPE_A("Allocating descriptor layouts");
     AssertDescriptorCount();
 
     // clang-format off
     auto layouts = std::array { layoutHandle.get() };
     for (size_t frame_idx = 0; frame_idx < framesCount; ++frame_idx) { 
-        log::DebugA("-> Allocating DescriptorSet for frame {}...", frame_idx);
+        log::DebugA("Allocating DescriptorSet for frame {}...", frame_idx);
 
-        // NOTE: Default vulkan behaviour: create as many descriptor sets 
+        //  NOTE: Default vulkan behaviour: create as many descriptor sets 
         // as layouts. For current codebase we have single layout per 
         // ren::DescriptorSet but inside we have mulitple vulkan desciptor set
         // handles for each frame. 
@@ -142,15 +142,22 @@ void DescriptorSet::Allocate(DeviceH device, DescriptorPoolH pool) {
     InternalAllocate(device, pool, nullptr);
 }
 
-void DescriptorSet::Write(std::vector<vk::WriteDescriptorSet>& writes) {
-    std::vector<vk::DescriptorBufferInfo> buffer_infos{};
-    std::vector<vk::DescriptorImageInfo> image_infos{};
+void DescriptorSet::Write(
+    std::vector<vk::WriteDescriptorSet>& writes,
+    std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+    std::vector<vk::DescriptorImageInfo>& image_infos
+) {
     for (FrameType frame = 0; frame < framesCount; frame++) {
         for (BindingType binding : RegisteredBindings()) {
-            DescriptorBase& desc = Get(frame, binding);
-            writes.push_back(desc.GenWrite(buffer_infos, image_infos));
-            writes.back().setDstBinding(binding);
-            writes.back().setDstSet(Set(frame));
+            const DescriptorBase& desc = Get(frame, binding);
+            const Pack& pack = packs.at(binding);
+
+            auto& last = writes.emplace_back();
+            last.setDstBinding(binding);
+            last.setDstSet(Set(frame));
+            last.setDescriptorCount(1);
+            last.setDescriptorType(desc.descriptorType);
+            desc.FillWriteWithResourcesInfo(last, buffer_infos, image_infos);
         }
     }
 }
@@ -193,26 +200,43 @@ DescriptorSet& DescriptorContext::GetSet(DescriptorContext::LayoutType layout) {
 }
 
 void DescriptorContext::Create(DeviceH device) {
-    for (auto& [layout_idx, set] : sets) {
+    DEBUG_SCOPE_A("Creating descriptor sets layouts");
+    for (auto& [layout, set] : sets) {
+        DEBUG_SCOPE_A("Creating descriptor set with layout={}", layout);
         set->Create(device);
     }
 }
 void DescriptorContext::Allocate(DeviceH device, DescriptorPoolH pool) {
-    for (auto& [layout_idx, set] : sets) {
+    DEBUG_SCOPE_A("Allocating descriptor sets");
+    for (auto& [layout, set] : sets) {
+        DEBUG_SCOPE_A("Allocating descriptor sets for layout={}", layout);
         set->Allocate(device, pool);
     }
 }
 
+// clang-format off
 void DescriptorContext::Update(DeviceH device) {
-    std::vector<vk::WriteDescriptorSet> writes;
-    writes.reserve(150); // WARN Literal
-    for (auto& [layout_idx, set] : sets) {
-        set->Write(writes);
+    DEBUG_SCOPE_A("Updating descriptor sets");
+
+    
+
+    for (auto& [layout, set] : sets) {
+        DEBUG_SCOPE_A("Make writes for descriptor set with layout={}", layout);
+            
+        std::vector<vk::WriteDescriptorSet> writes{}; writes.reserve(256);
+        std::vector<vk::DescriptorBufferInfo> buffer_infos{}; buffer_infos.reserve(256);
+        std::vector<vk::DescriptorImageInfo> image_infos{}; image_infos.reserve(256);
+
+        set->Write(writes, buffer_infos, image_infos);
+
+        log::DebugA("Calling vkUpdateDescriptorSets");
+        device->Handle().updateDescriptorSets(
+            writes.size(), writes.data(), 0, nullptr
+        );
     }
-    device->Handle().updateDescriptorSets(
-        writes.size(), writes.data(), 0, nullptr
-    );
+    
 }
+// clang-format on
 
 void DescriptorContext::Bind(
     LayoutType layout, FrameType frame, CommandBufferH cmd,

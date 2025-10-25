@@ -17,6 +17,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
     , initialAllocationSize{ alloc_size } 
 {
     DEBUG_SCOPE_A("Creating new vkBuffer with id={}", id);
+    log::DebugA("Buffer initial size={}", alloc_size);
 
     auto buffer_info = vk::BufferCreateInfo{}
       .setSize(alloc_size)
@@ -32,6 +33,7 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
 
     VkBuffer pBuffer {};
 
+    log::DebugA("Creating VMA buffer");
     auto res = static_cast<vk::Result>(vmaCreateBuffer(
         allocator->Handle(),
         &static_cast<VkBufferCreateInfo&>(buffer_info),
@@ -41,6 +43,11 @@ Buffer::Buffer(ren::DeviceH device, ren::AllocatorH allocator, size_t alloc_size
         &allocationInfo
     ));
     *handle = pBuffer; 
+
+    log::DebugA("VMA creation done");
+    log::DebugA("Offset={}", allocationInfo.offset);
+    log::DebugA("pName={}", allocationInfo.pName ? allocationInfo.pName : "");
+    log::DebugA("Size={}", allocationInfo.size);
 
     // vmaDestroyBuffer(*allocator->CHandle(), pBuffer, allocation);
     log::CheckCall(res, "Cant create vulkan buffer");

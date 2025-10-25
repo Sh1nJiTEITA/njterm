@@ -52,12 +52,12 @@ DescriptorStatic::DescriptorStatic(
 }
 
 void DescriptorStatic::Initialize(DeviceH device, AllocatorH allocator) {
-    CreateBuffers(device, allocator); 
-    CreateImages(device, allocator);
-    CreateViews(device, allocator);
+    CreateBuffer(device, allocator); 
+    CreateImage(device, allocator);
+    CreateView(device, allocator);
 }
 
-auto DescriptorStatic::GenBufferInfo() -> vk::DescriptorBufferInfo{
+auto DescriptorStatic::GenBufferInfo() const -> vk::DescriptorBufferInfo{
     return vk::DescriptorBufferInfo{}
         .setBuffer(buffer->Handle())
         .setOffset(0)
@@ -65,7 +65,7 @@ auto DescriptorStatic::GenBufferInfo() -> vk::DescriptorBufferInfo{
     ;
 }
 
-auto DescriptorStatic::GenImageInfo() -> vk::DescriptorImageInfo{ 
+auto DescriptorStatic::GenImageInfo() const -> vk::DescriptorImageInfo{ 
     return vk::DescriptorImageInfo{}
         .setImageLayout(image->Layout())
         .setImageView(imageView->Handle())
@@ -76,26 +76,25 @@ auto DescriptorStatic::GenImageInfo() -> vk::DescriptorImageInfo{
 
 // clang-format on
 
-auto DescriptorStatic::GenWrite(
+void DescriptorStatic::FillWriteWithResourcesInfo(
+    vk::WriteDescriptorSet& write,
     std::vector<vk::DescriptorBufferInfo>& buffer_infos,
     std::vector<vk::DescriptorImageInfo>& image_infos
-) -> vk::WriteDescriptorSet {
-    auto info = vk::WriteDescriptorSet{};
-    info.setDescriptorCount(1);
-    info.setDescriptorType(descriptorType);
-
+) const {
     if (buffer) {
         buffer_infos.push_back(GenBufferInfo());
-        info.setBufferInfo(buffer_infos.back());
+        write.setBufferInfo(buffer_infos.back());
     }
 
     if (image && imageView) {
         image_infos.push_back(GenImageInfo());
-        info.setImageInfo(image_infos.back());
+        write.setImageInfo(image_infos.back());
     }
-
-    return info;
 }
+
+bool DescriptorStatic::HasBuffer() const noexcept { return buffer.get(); }
+bool DescriptorStatic::HasImage() const noexcept { return image.get(); }
+bool DescriptorStatic::HasView() const noexcept { return imageView.get(); }
 
 void* DescriptorStatic::MapBuffer() { return buffer->Map(); }
 void DescriptorStatic::UnmapBuffer() { buffer->Unmap(); }
