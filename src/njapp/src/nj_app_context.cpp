@@ -255,11 +255,11 @@ void App::InitExpDescriptorHandles() {
         PAGE_H, 
         std::move(buf) 
     );
-    // set_1->RegisterSingle<ren::exp::DescriptorCharactersMeta>(
-    //     /* binding */ 2,
-    //     /* stages  */ StagesType::eVertex | StagesType::eFragment,
-    //     _CreatePageMapBuffer(this)
-    // );
+    set_1->RegisterSingle<ren::exp::DescriptorCharactersMeta>(
+        /* binding */ 2,
+        /* stages  */ StagesType::eVertex | StagesType::eFragment,
+        _CreatePageMapBuffer(this)
+    );
     set_1->InitializeDescriptors(device, allocator);
     expDescContext->Add(Layout::AtlasPages, std::move(set_1));
 
