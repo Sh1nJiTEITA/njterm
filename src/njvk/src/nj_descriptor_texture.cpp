@@ -82,22 +82,31 @@ void DescriptorTexture::CreateBuffer(
     }
 }
 
-// clang-format off
-void DescriptorTexture::CreateImage(ren::DeviceH device,
-                                    ren::AllocatorH allocator) {
+void DescriptorTexture::CreateImage(
+    ren::DeviceH device,
+    ren::AllocatorH allocator
+) {
     image = std::make_unique<Image>(
         device, allocator, width, height, 1, vk::Format::eR8Unorm,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
+        VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO
+    );
 
-    TransitionImageLayout(vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-    CopyBufferToImage();
-    TransitionImageLayout(vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    build::TransitionImageLayout(
+        *image, vk::ImageLayout::eTransferDstOptimal, phDevice, commandBuffer
+    );
+    build::CopyBufferToImage(
+        *buffer, *image, {width, height}, phDevice, commandBuffer
+    );
+    build::TransitionImageLayout(
+        *image, vk::ImageLayout::eShaderReadOnlyOptimal, phDevice, commandBuffer
+    );
 }
-// clang-format off
 
-void DescriptorTexture::CreateView(ren::DeviceH device,
-                                   ren::AllocatorH allocator) {
+void DescriptorTexture::CreateView(
+    ren::DeviceH device,
+    ren::AllocatorH allocator
+) {
     vk::ImageViewCreateInfo info{};
     info.image = image->CHandle();
     info.viewType = vk::ImageViewType::e2D;
@@ -111,16 +120,16 @@ void DescriptorTexture::CreateView(ren::DeviceH device,
     info.subresourceRange.levelCount = 1;
     info.subresourceRange.baseArrayLayer = 0;
     info.subresourceRange.layerCount = 1;
-    imageView = std::make_unique<ImageView>(device->Handle().createImageViewUnique(info));
+    imageView = std::make_unique<ImageView>(
+        device->Handle().createImageViewUnique(info)
+    );
 }
 
-
-auto DescriptorTexture::GenImageInfo() const -> vk::DescriptorImageInfo { 
-    auto info = DescriptorStatic::GenImageInfo(); 
+auto DescriptorTexture::GenImageInfo() const -> vk::DescriptorImageInfo {
+    auto info = DescriptorStatic::GenImageInfo();
     info.setSampler(sampler->Handle());
     return info;
 }
-
 
 // void DescriptorTexture::BeginCommandBufferSingleCommand() {
 //     auto info = vk::CommandBufferBeginInfo{}.setFlags(
@@ -129,79 +138,79 @@ auto DescriptorTexture::GenImageInfo() const -> vk::DescriptorImageInfo {
 //     commandBuffer->Handle().begin(info);
 // }
 
-void DescriptorTexture::TransitionImageLayout(
-    vk::ImageLayout o, vk::ImageLayout n
-) {
-    build::BeginCmdSingleCommand(commandBuffer);
-    // clang-format off
-    auto bar = vk::ImageMemoryBarrier{}
-                   .setOldLayout(o)
-                   .setNewLayout(n)
-                   .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                   .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                   .setImage(image->CHandle())
-                   .setSubresourceRange(
-                       vk::ImageSubresourceRange{}
-                           .setAspectMask(vk::ImageAspectFlagBits::eColor)
-                           .setBaseMipLevel(0)
-                           .setLevelCount(1)
-                           .setBaseArrayLayer(0)
-                           .setLayerCount(1)
-                   )
-                   .setDstAccessMask(vk::AccessFlagBits::eNone)
-                   .setSrcAccessMask(vk::AccessFlagBits::eNone)
-                   ;
-
-    // clang-format on
-    vk::PipelineStageFlags src_stage, dst_stage;
-    if (o == vk::ImageLayout::eUndefined
-        && n == vk::ImageLayout::eTransferDstOptimal) {
-        bar.setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
-        src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-        dst_stage = vk::PipelineStageFlagBits::eTransfer;
-        image->Layout() = vk::ImageLayout::eTransferDstOptimal;
-    } else if (o == vk::ImageLayout::eTransferDstOptimal
-               && n == vk::ImageLayout::eShaderReadOnlyOptimal) {
-        bar.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-        bar.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-        src_stage = vk::PipelineStageFlagBits::eTransfer;
-        dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
-        image->Layout() = vk::ImageLayout::eShaderReadOnlyOptimal;
-    } else {
-        log::Error("Wrong layouts to translate texture image");
-    }
-    commandBuffer->Handle().pipelineBarrier(
-        src_stage, dst_stage, {}, {}, {}, std::array{bar}
-    );
-    build::EndCmdSingleCommand(phDevice, commandBuffer);
-}
+// void DescriptorTexture::TransitionImageLayout(
+//     vk::ImageLayout o, vk::ImageLayout n
+// ) {
+//     build::BeginCmdSingleCommand(commandBuffer);
+//     // clang-format off
+//     auto bar = vk::ImageMemoryBarrier{}
+//                    .setOldLayout(o)
+//                    .setNewLayout(n)
+//                    .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+//                    .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+//                    .setImage(image->CHandle())
+//                    .setSubresourceRange(
+//                        vk::ImageSubresourceRange{}
+//                            .setAspectMask(vk::ImageAspectFlagBits::eColor)
+//                            .setBaseMipLevel(0)
+//                            .setLevelCount(1)
+//                            .setBaseArrayLayer(0)
+//                            .setLayerCount(1)
+//                    )
+//                    .setDstAccessMask(vk::AccessFlagBits::eNone)
+//                    .setSrcAccessMask(vk::AccessFlagBits::eNone)
+//                    ;
+//
+//     // clang-format on
+//     vk::PipelineStageFlags src_stage, dst_stage;
+//     if (o == vk::ImageLayout::eUndefined
+//         && n == vk::ImageLayout::eTransferDstOptimal) {
+//         bar.setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+//         src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+//         dst_stage = vk::PipelineStageFlagBits::eTransfer;
+//         image->Layout() = vk::ImageLayout::eTransferDstOptimal;
+//     } else if (o == vk::ImageLayout::eTransferDstOptimal
+//                && n == vk::ImageLayout::eShaderReadOnlyOptimal) {
+//         bar.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+//         bar.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+//         src_stage = vk::PipelineStageFlagBits::eTransfer;
+//         dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+//         image->Layout() = vk::ImageLayout::eShaderReadOnlyOptimal;
+//     } else {
+//         log::Error("Wrong layouts to translate texture image");
+//     }
+//     commandBuffer->Handle().pipelineBarrier(
+//         src_stage, dst_stage, {}, {}, {}, std::array{bar}
+//     );
+//     build::EndCmdSingleCommand(phDevice, commandBuffer);
+// }
 
 // clang-format off
-void DescriptorTexture::CopyBufferToImage() {
-    build::BeginCmdSingleCommand(commandBuffer);
-    auto info = vk::BufferImageCopy{}
-        .setBufferOffset(0)
-        .setBufferRowLength(0)
-        .setBufferImageHeight(0)
-        .setImageSubresource(vk::ImageSubresourceLayers{}
-                                .setAspectMask(vk::ImageAspectFlagBits::eColor)
-                                .setMipLevel(0)
-                                .setBaseArrayLayer(0)
-                                .setLayerCount(1))
-        .setImageOffset({ 0, 0, 0 })
-        .setImageExtent({ 
-            static_cast< uint32_t > ( width ),
-            static_cast< uint32_t > ( height ) ,
-            1
-        })
-        ;
-    commandBuffer->Handle().copyBufferToImage(
-        buffer->CHandle(), image->CHandle(), 
-        vk::ImageLayout::eTransferDstOptimal, info
-    );
-    // buffer.reset();
-    build::EndCmdSingleCommand(phDevice, commandBuffer);
-}
+// void DescriptorTexture::CopyBufferToImage() {
+//     build::BeginCmdSingleCommand(commandBuffer);
+//     auto info = vk::BufferImageCopy{}
+//         .setBufferOffset(0)
+//         .setBufferRowLength(0)
+//         .setBufferImageHeight(0)
+//         .setImageSubresource(vk::ImageSubresourceLayers{}
+//                                 .setAspectMask(vk::ImageAspectFlagBits::eColor)
+//                                 .setMipLevel(0)
+//                                 .setBaseArrayLayer(0)
+//                                 .setLayerCount(1))
+//         .setImageOffset({ 0, 0, 0 })
+//         .setImageExtent({ 
+//             static_cast< uint32_t > ( width ),
+//             static_cast< uint32_t > ( height ) ,
+//             1
+//         })
+//         ;
+//     commandBuffer->Handle().copyBufferToImage(
+//         buffer->CHandle(), image->CHandle(), 
+//         vk::ImageLayout::eTransferDstOptimal, info
+//     );
+//     // buffer.reset();
+//     build::EndCmdSingleCommand(phDevice, commandBuffer);
+// }
 // clang-format off
 
 // void DescriptorTexture::EndCommandBufferSingleCommand() {

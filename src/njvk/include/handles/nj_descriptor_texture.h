@@ -63,8 +63,8 @@ struct DescriptorTexture : public DescriptorStatic {
 
 private:
     // void BeginCommandBufferSingleCommand();
-    void TransitionImageLayout(vk::ImageLayout o, vk::ImageLayout n);
-    void CopyBufferToImage();
+    // void TransitionImageLayout(vk::ImageLayout o, vk::ImageLayout n);
+    // void CopyBufferToImage();
     // void EndCommandBufferSingleCommand();
 
 private: 

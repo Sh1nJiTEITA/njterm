@@ -88,13 +88,27 @@ auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::Compos
 //! Finds minimal image count to render (buffirization)
 //! Default buffering is TRIPLE buffering, but can be changed from config
 auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t;
+//! @}
+
 
 auto BeginCmdSingleCommand(ren::CommandBufferH cmd) -> void;
 auto EndCmdSingleCommand(ren::PhysicalDeviceH phDevice, ren::CommandBufferH cmd) -> void;
 
+auto TransitionImageLayout(ren::Image& image,
+                           vk::ImageLayout new_layout,
+                           ren::PhysicalDeviceH phDevice,
+                           ren::CommandBufferH cmd) -> void;
 
+auto TransitionImageLayout(ren::ImageH image,
+                           vk::ImageLayout new_layout,
+                           ren::PhysicalDeviceH phDevice,
+                           ren::CommandBufferH cmd) -> void;
 
-//! @}
+auto CopyBufferToImage(ren::Buffer& buffer, 
+                       ren::Image& image,
+                       const vk::Extent2D& extent,
+                       ren::PhysicalDeviceH phDevice,
+                       ren::CommandBufferH cmd) -> void;
 
 // clang-format on
 }; // namespace nj::build

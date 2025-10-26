@@ -17,6 +17,9 @@ namespace nj::ren {
     NJ_HANDLE( GridRenderPass );
     NJ_HANDLE( CommandPool );
     NJ_HANDLE( CommandBuffer );
+    NJ_HANDLE( Buffer );
+    NJ_HANDLE( Image );
+    NJ_HANDLE( ImageView );
     NJ_HANDLE( RenderContext );
     NJ_HANDLE( Sampler );
     NJ_HANDLE( DescriptorPool );

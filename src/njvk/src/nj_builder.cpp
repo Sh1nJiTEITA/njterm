@@ -1,5 +1,7 @@
 #include "nj_builder.h"
+#include "nj_buffer.h"
 #include "nj_command_buffer.h"
+#include "nj_image.h"
 #include "nj_physical_device.h"
 #include "njcon.h"
 #include "njvklog.h"
@@ -206,13 +208,6 @@ auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_
     return std::clamp(con::Buffering(), surface_cap.minImageCount, surface_cap.maxImageCount);
 }
 
-auto BeginCmdSingleCommand(vk::CommandBuffer& cmd) { 
-    auto info = vk::CommandBufferBeginInfo{}.setFlags(
-        vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-    );
-    cmd.begin(info);
-}
-
 
 auto BeginCmdSingleCommand(ren::CommandBufferH cmd) -> void{ 
     auto info = vk::CommandBufferBeginInfo{}.setFlags(
@@ -228,6 +223,103 @@ auto EndCmdSingleCommand(ren::PhysicalDeviceH phDevice, ren::CommandBufferH cmd)
     auto &queue = phDevice->GraphicsQueue();
     queue.submit(info, {});
     queue.waitIdle();
+}
+
+
+auto TransitionImageLayout(
+    ren::Image& image,
+    vk::ImageLayout new_layout,
+    ren::PhysicalDeviceH phDevice, 
+    ren::CommandBufferH cmd
+) -> void { 
+    build::BeginCmdSingleCommand(cmd);
+
+    auto o = image.Layout();
+    auto n = new_layout;
+
+    // clang-format off
+    auto bar = vk::ImageMemoryBarrier{}
+                   .setOldLayout(o)
+                   .setNewLayout(n)
+                   .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                   .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                   .setImage(image.CHandle())
+                   .setSubresourceRange(
+                       vk::ImageSubresourceRange{}
+                           .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                           .setBaseMipLevel(0)
+                           .setLevelCount(1)
+                           .setBaseArrayLayer(0)
+                           .setLayerCount(1)
+                   )
+                   .setDstAccessMask(vk::AccessFlagBits::eNone)
+                   .setSrcAccessMask(vk::AccessFlagBits::eNone)
+                   ;
+
+    // clang-format on
+    vk::PipelineStageFlags src_stage, dst_stage;
+    if (o == vk::ImageLayout::eUndefined
+        && n == vk::ImageLayout::eTransferDstOptimal) {
+        bar.setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+        src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+        dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        image.Layout() = vk::ImageLayout::eTransferDstOptimal;
+    } else if (o == vk::ImageLayout::eTransferDstOptimal
+               && n == vk::ImageLayout::eShaderReadOnlyOptimal) {
+        bar.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+        bar.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+        src_stage = vk::PipelineStageFlagBits::eTransfer;
+        dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        image.Layout() = vk::ImageLayout::eShaderReadOnlyOptimal;
+    } else {
+        log::Error("Wrong layouts to translate texture image");
+    }
+    cmd->Handle().pipelineBarrier(
+        src_stage, dst_stage, {}, {}, {}, std::array{bar}
+    );
+    build::EndCmdSingleCommand(phDevice, cmd);
+}
+
+auto TransitionImageLayout(
+    ren::ImageH image,
+    vk::ImageLayout new_layout,
+    ren::PhysicalDeviceH phDevice,
+    ren::CommandBufferH cmd
+) -> void {
+    TransitionImageLayout(*image, new_layout, phDevice, cmd);
+}
+
+auto CopyBufferToImage(
+    ren::Buffer& buffer,
+    ren::Image& image,
+    const vk::Extent2D& extent,
+    ren::PhysicalDeviceH phDevice,
+    ren::CommandBufferH cmd
+) -> void {
+    build::BeginCmdSingleCommand(cmd);
+    auto info = vk::BufferImageCopy{}
+                    .setBufferOffset(0)
+                    .setBufferRowLength(0)
+                    .setBufferImageHeight(0)
+                    .setImageSubresource(
+                        vk::ImageSubresourceLayers{}
+                            .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                            .setMipLevel(0)
+                            .setBaseArrayLayer(0)
+                            .setLayerCount(1)
+                    )
+                    .setImageOffset({0, 0, 0})
+                    // .setImageExtent(
+                    //     {static_cast<uint32_t>(image.Width()),
+                    //      static_cast<uint32_t>(image.Height()), 1}
+                    // );
+                    .setImageExtent({extent.width, extent.height, 1});
+    cmd->Handle().copyBufferToImage(
+        buffer.CHandle(), image.CHandle(), vk::ImageLayout::eTransferDstOptimal,
+        info
+    );
+    // buffer.reset();
+    build::EndCmdSingleCommand(phDevice, cmd);
 }
 
 // clang-format on
