@@ -92,7 +92,6 @@ private:
     void InitBaseHandles();
     void InitPresentHandles();
     void InitDescriptorHandles();
-    void InitExpDescriptorHandles();
     void InitPipelineHandles();
     void InitFontLoaderHandles();
     void InitTextBuffer();

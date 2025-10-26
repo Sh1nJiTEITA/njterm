@@ -101,6 +101,8 @@ struct DescriptorSet {
     virtual void Allocate(DeviceH device, DescriptorPoolH pool);
 
     //! Register existing inner descriptors for vulkan
+    //! @note Does not set descriptor count -> it must be done inside each
+    //! decriptor child classes
     void Write(
         std::vector<vk::WriteDescriptorSet>& writes,
         std::vector<vk::DescriptorBufferInfo>& buffer_infos,
@@ -111,11 +113,14 @@ private:
     //! Creates descriptor set layout. For simplicity every registered
     //! desccriptor are added to single layout.
     void InternalCreate(
-        DeviceH device, const vk::DescriptorSetLayoutCreateFlags& flags,
+        DeviceH device,
+        const vk::DescriptorSetLayoutCreateFlags& flags,
         void* pnext = nullptr
     );
     void InternalAllocate(
-        DeviceH device, DescriptorPoolH pool, void* pnext = nullptr
+        DeviceH device,
+        DescriptorPoolH pool,
+        void* pnext = nullptr
     );
     void AssertDescriptorCount() const;
 

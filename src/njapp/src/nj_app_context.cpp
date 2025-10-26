@@ -45,7 +45,7 @@ App::App() {
     InitPresentHandles();
     InitTextBuffer();
     InitDescriptorHandles(); 
-    InitExpDescriptorHandles();
+    InitDescriptorHandles();
     InitPipelineHandles();
 }
 
@@ -169,20 +169,6 @@ void App::InitPresentHandles() {
     );
 }
 
-void App::InitDescriptorHandles() {
-
-    // descContext = log::MakeSharedWithLog<ren::DescriptorContext>(
-    //     "Descriptor context", device, descPool, allocator, con::Frames()
-    // );
-
-    // CreateBasicDescriptors(this);
-    // CreateAtlasPagesDescriptors(this);
-    //
-    // descContext->CreateLayouts();
-    // descContext->AllocateSets();
-    // descContext->UpdateSets();
-}
-
 ren::BufferU _CreatePageTextureBuffer(Context* ctx, size_t w, size_t h) {
     DEBUG_SCOPE_A("_CreatePageTextureBuffer");
     const size_t buf_sz{w * h};
@@ -218,7 +204,7 @@ ren::BufferU _CreatePageMapBuffer(Context* ctx) {
 }
 
 // clang-format off
-void App::InitExpDescriptorHandles() {
+void App::InitDescriptorHandles() {
     using StagesType = vk::ShaderStageFlagBits;
     const size_t PAGE_H = 1024, PAGE_W = 1024;
     descContext = log::MakeSharedWithLog<ren::DescriptorContext>(

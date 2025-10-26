@@ -3,6 +3,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 Language: Cpp
 AlignAfterOpenBracket: BlockIndent
+# AlignAfterOpenBracket: Align
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
 ReferenceAlignment: Left
@@ -10,3 +11,6 @@ IndentCaseLabels: true
 AccessModifierOffset: -4
 AlignOperands: AlignAfterOperator
 BreakBeforeBinaryOperators: NonAssignment
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakConstructorInitializers: BeforeComma
+BinPackParameters: false

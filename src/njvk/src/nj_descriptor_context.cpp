@@ -45,7 +45,8 @@ DescriptorSet::RegisteredBindings() const {
 }
 
 void DescriptorSet::InitializeDescriptors(
-    DeviceH device, AllocatorH allocator
+    DeviceH device,
+    AllocatorH allocator
 ) {
     DEBUG_SCOPE_A("Initializing descriptors");
     for (const auto& [binding, pack] : packs) {
@@ -103,7 +104,9 @@ void DescriptorSet::Create(DeviceH device) {
 }
 
 void DescriptorSet::InternalAllocate(
-    DeviceH device, DescriptorPoolH pool, void* pnext
+    DeviceH device,
+    DescriptorPoolH pool,
+    void* pnext
 ) {
     AssertDescriptorCount();
 
@@ -151,7 +154,8 @@ void DescriptorSet::Write(
             auto& last = writes.emplace_back();
             last.setDstBinding(binding);
             last.setDstSet(Set(frame));
-            last.setDescriptorCount(1);
+            // NOTE: Moved to DescriptorBase implementations
+            // last.setDescriptorCount(1);
             last.setDescriptorType(desc.descriptorType);
             desc.FillWriteWithResourcesInfo(last, buffer_infos, image_infos);
         }
@@ -180,7 +184,8 @@ void DescriptorContext::Add(LayoutType layout, DescriptorSetU&& set) {
 
 DescriptorBase& DescriptorContext::GetDescriptor(
     DescriptorContext::LayoutType layout,
-    DescriptorContext::BindingType binding, DescriptorContext::FrameType frame
+    DescriptorContext::BindingType binding,
+    DescriptorContext::FrameType frame
 ) {
     return GetSet(layout).Get(frame, binding);
 }
@@ -233,7 +238,9 @@ void DescriptorContext::Update(DeviceH device) {
 // clang-format on
 
 void DescriptorContext::Bind(
-    LayoutType layout, FrameType frame, CommandBufferH cmd,
+    LayoutType layout,
+    FrameType frame,
+    CommandBufferH cmd,
     vk::PipelineLayout pipeline_layout
 ) {
     cmd->Handle().bindDescriptorSets(

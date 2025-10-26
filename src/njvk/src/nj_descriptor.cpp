@@ -78,6 +78,8 @@ void DescriptorStatic::FillWriteWithResourcesInfo(
     std::vector<vk::DescriptorBufferInfo>& buffer_infos,
     std::vector<vk::DescriptorImageInfo>& image_infos
 ) const {
+    write.setDescriptorCount(1);
+
     if (buffer) {
         buffer_infos.push_back(GenBufferInfo());
         write.setBufferInfo(buffer_infos.back());
