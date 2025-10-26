@@ -6,15 +6,18 @@
 namespace nj::ren {
 
 DescriptorCells::DescriptorCells(
-    vk::ShaderStageFlags stages, buf::TextBufferH buf
+    vk::ShaderStageFlags stages,
+    buf::TextBufferH buf
 )
     : DescriptorStatic(
-          vk::ShaderStageFlagBits::eAll, vk::DescriptorType::eStorageBuffer
-      ),
-      textBuffer(buf) {}
+          vk::ShaderStageFlagBits::eAll,
+          vk::DescriptorType::eStorageBuffer
+      )
+    , textBuffer(buf) {}
 
 void DescriptorCells::CreateBuffer(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {
 
     const size_t buffer_size_bytes = sizeof(buf::Cell) * textBuffer->Size();
@@ -27,10 +30,12 @@ void DescriptorCells::CreateBuffer(
 }
 
 void DescriptorCells::CreateImage(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {}
 void DescriptorCells::CreateView(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {}
 
 void DescriptorCells::Update() {
@@ -40,27 +45,33 @@ void DescriptorCells::Update() {
 }
 
 DescriptorCharactersMeta::DescriptorCharactersMeta(
-    vk::ShaderStageFlags stages, BufferU&& buf
+    vk::ShaderStageFlags stages,
+    BufferU&& buf
 )
     : DescriptorStatic(
-          vk::ShaderStageFlagBits::eAll, vk::DescriptorType::eStorageBuffer
+          vk::ShaderStageFlagBits::eAll,
+          vk::DescriptorType::eStorageBuffer
       ) {
     buffer = std::move(buf);
 }
 
 void DescriptorCharactersMeta::CreateBuffer(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {}
-
 void DescriptorCharactersMeta::CreateImage(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {}
 void DescriptorCharactersMeta::CreateView(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {}
 
 BufferU CreateCharactersMetaBuffer(
-    DeviceH d, AllocatorH a, const std::vector<SingleCharTextureData>& map
+    DeviceH d,
+    AllocatorH a,
+    const std::vector<SingleCharTextureData>& map
 ) {
     const size_t buffer_size_bytes = sizeof(SingleCharTextureData) * map.size();
 

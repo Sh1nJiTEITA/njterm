@@ -7,7 +7,8 @@ add_library(
 
 target_include_directories(njbuf PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
-target_link_libraries(njbuf PRIVATE njlog)
+find_package(Boost)
+target_link_libraries(njbuf PRIVATE njlog Boost::boost)
 
 if(BUILD_TEST_NJCON)
 

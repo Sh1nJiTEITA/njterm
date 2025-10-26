@@ -25,6 +25,7 @@ class CompressorRecipe(ConanFile):
         # self.requires("vulkan-memory-allocator/3.0.1")
         self.requires("freetype/2.13.2")
         self.requires("fontconfig/2.15.0")
+        self.requires("boost/1.88.0")
         self.requires("stb/cci.20240531")
         #
         # self.tool_requires("vulkan-headers/system")

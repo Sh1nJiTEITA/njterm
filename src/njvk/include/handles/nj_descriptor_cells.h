@@ -10,7 +10,26 @@ namespace nj {
 #define NJ_CHAR_STRUCT
 
 struct alignas(16) SingleCharTextureData {
-    glm::vec4 uv; // 4 * 4 = 16 Bytes
+    //! Top left relative to texture page position inside range of 0..1
+    //! Size:         4 * 2 = 8 Bytes
+    //! Growing size: 8
+    glm::vec2 topLeftUV;
+
+    //! Bottom right relative to texture page position inside range of 0..1
+    //! Size:         4 * 2 = 8 Bytes
+    //! Growing size: 16
+    glm::vec2 botRightUV;
+
+    //! X-offset from left border of cell box and Y-offset from base line to
+    //! most upper point of glyph
+    //! Size:         4 * 2 = 8 Bytes
+    //! Growing size: 24
+    glm::vec2 bearing;
+
+    //! Individual width and hight of glyph
+    //! Size:         4 * 2 = 8 Bytes
+    //! Growing size: 32
+    glm::vec2 size;
 };
 
 #endif
@@ -50,7 +69,9 @@ private:
 
 BufferU CreateCharactersMetaBuffer(DeviceH d, AllocatorH a, size_t cells_count);
 BufferU CreateCharactersMetaBuffer(
-    DeviceH d, AllocatorH a, const std::vector<SingleCharTextureData>&
+    DeviceH d,
+    AllocatorH a,
+    const std::vector<SingleCharTextureData>&
 );
 
 } // namespace ren

@@ -1,9 +1,8 @@
-#pragma once
-#include <filesystem>
 #ifndef NJ_FT_ATLAS_H
 #define NJ_FT_ATLAS_H
 
 #include "nj_ft_library.h"
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -42,7 +41,10 @@ class Atlas {
 public:
 public:
     Atlas(
-        FaceH face, size_t face_w, size_t face_h, size_t start_char,
+        FaceH face,
+        size_t face_w,
+        size_t face_h,
+        size_t start_char,
         size_t end_char
     );
 
@@ -86,8 +88,13 @@ struct AtlasPage {
     //! @param end_char_code Last char code from range to include inside
     //! page (inboundly)
     AtlasPage(
-        FaceH face, size_t face_w, size_t face_h, size_t atlas_w,
-        size_t atlas_h, size_t begin_char_code, size_t end_char_code
+        FaceH face,
+        size_t face_w,
+        size_t face_h,
+        size_t atlas_w,
+        size_t atlas_h,
+        size_t begin_char_code,
+        size_t end_char_code
     );
 
     //! Returns max glypth box height which might be used

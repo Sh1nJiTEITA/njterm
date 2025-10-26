@@ -1,11 +1,10 @@
-#pragma once
-
-#include <memory>
 #ifndef NG_TEXT_BUFFER_H
 #define NG_TEXT_BUFFER_H
 
+#include <boost/circular_buffer.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace nj::buf {
