@@ -28,7 +28,6 @@ set(SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_pipeline_cells.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_vertex.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_test.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_grid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_texture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nj_descriptor_cells.cpp"

@@ -17,8 +17,6 @@ struct alignas(16) SingleCharTextureData {
 
 namespace ren {
 
-namespace exp {
-
 struct DescriptorCells : public DescriptorStatic {
     DescriptorCells(vk::ShaderStageFlags stages, buf::TextBufferH buf);
 
@@ -32,26 +30,10 @@ private:
     buf::TextBufferH textBuffer;
 };
 
-} // namespace exp
-
-struct DescriptorCells : public Descriptor {
-    DescriptorCells(size_t layout, size_t binding, buf::TextBufferH buf);
-
-    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator);
-
-    void Update();
-
-private:
-    buf::TextBufferH textBuffer;
-};
 //
 //
 //
 //
-
-namespace exp {
 
 struct DescriptorCharactersMeta : public DescriptorStatic {
     DescriptorCharactersMeta(vk::ShaderStageFlags stages, BufferU&& buf);
@@ -59,21 +41,6 @@ struct DescriptorCharactersMeta : public DescriptorStatic {
     virtual void CreateBuffer(ren::DeviceH d, ren::AllocatorH a) override;
     virtual void CreateImage(ren::DeviceH d, ren::AllocatorH a) override;
     virtual void CreateView(ren::DeviceH d, ren::AllocatorH a) override;
-
-    void Update();
-
-private:
-    size_t charsCount;
-};
-
-} // namespace exp
-
-struct DescriptorCharactersMeta : public Descriptor {
-    DescriptorCharactersMeta(size_t layout, size_t binding, BufferU&& buf);
-
-    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator);
-    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator);
 
     void Update();
 

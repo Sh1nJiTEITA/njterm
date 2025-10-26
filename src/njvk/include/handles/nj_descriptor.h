@@ -23,8 +23,6 @@ public:
 };
 using DescriptorPoolH = std::shared_ptr<DescriptorPool>;
 
-namespace exp {
-
 // clang-format off
 struct DescriptorBase {
     const vk::ShaderStageFlags shaderStages;
@@ -71,63 +69,6 @@ struct DescriptorStatic : public DescriptorBase {
     BufferU buffer;
     ImageU image;
     ImageViewU imageView;
-};
-// clang-format on
-
-}; // namespace exp
-
-// clang-format off
-struct Descriptor {
-    //! Main descriptor creation
-    //! @param layout Shader layout number to connect to
-    //! @param binding Shader binding number to connect to
-    //! @param stages Shader stages to work in
-    //! @param type Vulkan descriptor type enum value
-    Descriptor(size_t layout, 
-               size_t binding, 
-               vk::DescriptorType type,
-               vk::ShaderStageFlags stages = vk::ShaderStageFlagBits::eVertex | 
-                                             vk::ShaderStageFlagBits::eFragment,
-               bool bindless = false)
-        : layout{layout}
-        , binding{binding}
-        , shaderStages{stages}
-        , type{type}
-        , bindless{bindless}  
-    {}
-
-    virtual ~Descriptor();
-    Descriptor(const Descriptor &) = delete;
-    Descriptor &operator=(const Descriptor &) = delete;
-
-    virtual void CreateBuffers(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateImages(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-    virtual void CreateViews(ren::DeviceH device, ren::AllocatorH allocator) = 0;
-
-    virtual auto LayoutBinding() -> vk::DescriptorSetLayoutBinding;
-    virtual auto BufferInfo(size_t idx=0) -> vk::DescriptorBufferInfo;
-    virtual auto ImageInfo(size_t idx=0) -> vk::DescriptorImageInfo;
-
-    auto IsBindless() -> bool;
-    auto MapBuffer(size_t idx=0) -> void*;
-    auto UnmapBuffer(size_t idx=0) -> void;
-    auto Layout() const noexcept -> size_t; 
-    auto Binding() const noexcept -> size_t; 
-    auto ShaderStages() const noexcept -> vk::ShaderStageFlags; 
-    auto DescriptorType() const noexcept -> vk::DescriptorType; 
-    auto HasBuffer() const noexcept -> bool;
-    auto HasImage() const noexcept -> bool;
-
-  protected:
-    const bool bindless;
-    const size_t layout;
-    const size_t binding;
-    const vk::ShaderStageFlags shaderStages;
-    const vk::DescriptorType type;
-
-    std::vector<BufferU> buffers;
-    std::vector<ImageU> images;
-    std::vector<ImageViewU> imageViews;
 };
 // clang-format on
 

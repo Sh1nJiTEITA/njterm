@@ -14,11 +14,11 @@ namespace nj::app {
 auto CE(Layout l) { return static_cast<size_t>(l); }
 
 void CreateBasicDescriptors(Context* ctx) {
-    ctx->descContext->Add<ren::DescriptorGrid>(
-        /* Desc count */ con::Frames(),
-        /* Layout     */ CE(Layout::Basic),
-        /* Binding    */ 0
-    );
+    // ctx->descContext->Add<ren::DescriptorGrid>(
+    //     /* Desc count */ con::Frames(),
+    //     /* Layout     */ CE(Layout::Basic),
+    //     /* Binding    */ 0
+    // );
 }
 
 ren::BufferU CreatePageTextureBuffer(Context* ctx, size_t w, size_t h) {
@@ -56,38 +56,38 @@ ren::BufferU CreatePageMapBuffer(Context* ctx) {
 
 // clang-format off
 void CreateAtlasPagesDescriptors(Context* ctx) {
-    const size_t PAGE_H = 1024, PAGE_W = 1024;
-
-    ctx->descContext->Add<ren::DescriptorCells>(
-        /* Desc count */ con::Frames(), 
-        /* Layout     */ CE(Layout::AtlasPages), 
-        /* Binding    */ 0, 
-        ctx->textBuffer
-    );
-
-    ctx->descContext->Add<ren::DescriptorTexture>(
-        /* Desc count */ 1, 
-        /* Layout     */ CE(Layout::AtlasPages), 
-        /* Binding    */ 1, 
-        vk::ShaderStageFlags(
-            vk::ShaderStageFlagBits::eFragment | 
-            vk::ShaderStageFlagBits::eVertex
-        ),
-        ctx->renderContext->CurrentCommandBuffer(), 
-        ctx->phDevice, 
-        ctx->sampler,
-        PAGE_W, 
-        PAGE_H, 
-        CreatePageTextureBuffer(ctx, PAGE_W, PAGE_H)
-    );
-
-    
-    ctx->descContext->Add<ren::DescriptorCharactersMeta>(
-        /* Desc count */ 1, 
-        /* Layout     */ CE(Layout::AtlasPages), 
-        /* Binding    */ 2, 
-        CreatePageMapBuffer(ctx)
-    );
+    // const size_t PAGE_H = 1024, PAGE_W = 1024;
+    //
+    // ctx->descContext->Add<ren::DescriptorCells>(
+    //     /* Desc count */ con::Frames(), 
+    //     /* Layout     */ CE(Layout::AtlasPages), 
+    //     /* Binding    */ 0, 
+    //     ctx->textBuffer
+    // );
+    //
+    // ctx->descContext->Add<ren::DescriptorTexture>(
+    //     /* Desc count */ 1, 
+    //     /* Layout     */ CE(Layout::AtlasPages), 
+    //     /* Binding    */ 1, 
+    //     vk::ShaderStageFlags(
+    //         vk::ShaderStageFlagBits::eFragment | 
+    //         vk::ShaderStageFlagBits::eVertex
+    //     ),
+    //     ctx->renderContext->CurrentCommandBuffer(), 
+    //     ctx->phDevice, 
+    //     ctx->sampler,
+    //     PAGE_W, 
+    //     PAGE_H, 
+    //     CreatePageTextureBuffer(ctx, PAGE_W, PAGE_H)
+    // );
+    //
+    // 
+    // ctx->descContext->Add<ren::DescriptorCharactersMeta>(
+    //     /* Desc count */ 1, 
+    //     /* Layout     */ CE(Layout::AtlasPages), 
+    //     /* Binding    */ 2, 
+    //     CreatePageMapBuffer(ctx)
+    // );
 }
 // clang-format on
 
