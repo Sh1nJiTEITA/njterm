@@ -115,6 +115,18 @@ inline auto FatalExitInternal(fmt::format_string<Args...> str, Args&&... args) {
 template <typename... Args>
 inline auto
 FatalAssert(bool condition, fmt::format_string<Args...> str, Args&&... args) {
+    if (!condition) {
+        log::Fatal(str, std::forward<Args>(args)...);
+        std::exit(EXIT_FAILURE);
+    }
+}
+
+template <typename... Args>
+inline auto FatalAssertNot(
+    bool condition,
+    fmt::format_string<Args...> str,
+    Args&&... args
+) {
     if (condition) {
         log::Fatal(str, std::forward<Args>(args)...);
         std::exit(EXIT_FAILURE);
@@ -123,7 +135,9 @@ FatalAssert(bool condition, fmt::format_string<Args...> str, Args&&... args) {
 
 template <typename... Args>
 inline auto FatalThrow(
-    std::exception&& exc, fmt::format_string<Args...> str, Args&&... args
+    std::exception&& exc,
+    fmt::format_string<Args...> str,
+    Args&&... args
 ) {
     log::Fatal(str, std::forward<Args>(args)...);
     throw std::forward<std::exception>(exc);

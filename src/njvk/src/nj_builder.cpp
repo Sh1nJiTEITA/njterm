@@ -1,4 +1,6 @@
 #include "nj_builder.h"
+#include "nj_command_buffer.h"
+#include "nj_physical_device.h"
 #include "njcon.h"
 #include "njvklog.h"
 #include <ranges>
@@ -202,6 +204,30 @@ auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::Compos
 
 auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t {
     return std::clamp(con::Buffering(), surface_cap.minImageCount, surface_cap.maxImageCount);
+}
+
+auto BeginCmdSingleCommand(vk::CommandBuffer& cmd) { 
+    auto info = vk::CommandBufferBeginInfo{}.setFlags(
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    );
+    cmd.begin(info);
+}
+
+
+auto BeginCmdSingleCommand(ren::CommandBufferH cmd) -> void{ 
+    auto info = vk::CommandBufferBeginInfo{}.setFlags(
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    );
+    cmd->Handle().begin(info);
+}
+
+auto EndCmdSingleCommand(ren::PhysicalDeviceH phDevice, ren::CommandBufferH cmd) -> void {
+    cmd->Handle().end();
+    auto command_buffers = std::array{cmd->Handle()};
+    auto info = vk::SubmitInfo{}.setCommandBuffers(command_buffers);
+    auto &queue = phDevice->GraphicsQueue();
+    queue.submit(info, {});
+    queue.waitIdle();
 }
 
 // clang-format on

@@ -2,9 +2,11 @@
 #ifndef NJ_BUILDER_H
 #define NJ_BUILDER_H
 
-#include <njvkutils.h>
+#include "nj_vk_handles.h"
+#include "njvkutils.h"
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -87,7 +89,8 @@ auto CompositeAlpha(const vk::SurfaceCapabilitiesKHR& surface_cap) -> vk::Compos
 //! Default buffering is TRIPLE buffering, but can be changed from config
 auto PickMinImageCount(const vk::SurfaceCapabilitiesKHR& surface_cap) -> uint32_t;
 
-
+auto BeginCmdSingleCommand(ren::CommandBufferH cmd) -> void;
+auto EndCmdSingleCommand(ren::PhysicalDeviceH phDevice, ren::CommandBufferH cmd) -> void;
 
 
 

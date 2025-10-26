@@ -11,7 +11,11 @@
 namespace nj::ft {
 
 Atlas::Atlas(
-    FaceH face, size_t face_w, size_t face_h, size_t start_char, size_t end_char
+    FaceH face,
+    size_t face_w,
+    size_t face_h,
+    size_t start_char,
+    size_t end_char
 )
     : face{face}, startCharCode{start_char}, endCharCode{end_char} {
 
@@ -156,32 +160,37 @@ glm::ivec2 AtlasPage::PageSize() const noexcept {
 }
 
 void AtlasPage::Validate() {
-    log::FatalAssert(
+    log::FatalAssertNot(
         BoxHeight() > pageHeight, "BoxHeight({}) > pageHeight({})", BoxHeight(),
         pageHeight
     );
 
-    log::FatalAssert(
+    log::FatalAssertNot(
         BoxWidth() > pageWidth, "BoxWidth({}) > pageWidth({})", BoxWidth(),
         pageWidth
     );
 
-    log::FatalAssert(
+    log::FatalAssertNot(
         beginCharCode > endCharCode, "Invalid char code range: [{}, {}]",
         beginCharCode, endCharCode
     );
 }
 
 AtlasPage::AtlasPage(
-    FaceH face, size_t face_w, size_t face_h, size_t atlas_w, size_t atlas_h,
-    size_t begin_char_code, size_t end_char_code
+    FaceH face,
+    size_t face_w,
+    size_t face_h,
+    size_t atlas_w,
+    size_t atlas_h,
+    size_t begin_char_code,
+    size_t end_char_code
 )
-    : initialFaceHeight(face_h),
-      initialFaceWidth(face_w),
-      pageWidth{atlas_w},
-      pageHeight{atlas_h},
-      beginCharCode{begin_char_code},
-      endCharCode{end_char_code} {
+    : initialFaceHeight(face_h)
+    , initialFaceWidth(face_w)
+    , pageWidth{atlas_w}
+    , pageHeight{atlas_h}
+    , beginCharCode{begin_char_code}
+    , endCharCode{end_char_code} {
     face->SetPixelSize(face_w, face_h);
 
     ascender = face->Size()->metrics.ascender >> 6;

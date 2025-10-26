@@ -1,5 +1,6 @@
 #include "nj_descriptor_texture.h"
 #include "nj_allocator.h"
+#include "nj_builder.h"
 #include "nj_command_buffer.h"
 #include "nj_descriptor.h"
 #include "njlog.h"
@@ -10,34 +11,43 @@
 namespace nj::ren {
 
 DescriptorTexture::DescriptorTexture(
-    vk::ShaderStageFlags stages, CommandBufferH command_buffer,
-    PhysicalDeviceH physical_device, SamplerH sampler, uint32_t width,
-    uint32_t height, uint32_t stride, const std::vector<uint8_t>& data
+    vk::ShaderStageFlags stages,
+    CommandBufferH command_buffer,
+    PhysicalDeviceH physical_device,
+    SamplerH sampler,
+    uint32_t width,
+    uint32_t height,
+    uint32_t stride,
+    const std::vector<uint8_t>& data
 )
-    : DescriptorStatic{stages, vk::DescriptorType::eCombinedImageSampler},
-      bitmap{data},
-      commandBuffer{command_buffer},
-      phDevice{physical_device},
-      sampler{sampler},
-      width{width},
-      height{height},
-      stride{stride} {
+    : DescriptorStatic{stages, vk::DescriptorType::eCombinedImageSampler}
+    , bitmap{data}
+    , commandBuffer{command_buffer}
+    , phDevice{physical_device}
+    , sampler{sampler}
+    , width{width}
+    , height{height}
+    , stride{stride} {
     assert(data.size() == width * height);
 }
 
 DescriptorTexture::DescriptorTexture(
-    vk::ShaderStageFlags stages, CommandBufferH command_buffer,
-    PhysicalDeviceH physical_device, SamplerH sampler, uint32_t width,
-    uint32_t height, std::unique_ptr<Buffer>&& buffer
+    vk::ShaderStageFlags stages,
+    CommandBufferH command_buffer,
+    PhysicalDeviceH physical_device,
+    SamplerH sampler,
+    uint32_t width,
+    uint32_t height,
+    std::unique_ptr<Buffer>&& buffer
 )
-    : DescriptorStatic{stages, vk::DescriptorType::eCombinedImageSampler},
-      bitmap{},
-      commandBuffer{command_buffer},
-      phDevice{physical_device},
-      sampler{sampler},
-      width{width},
-      height{height},
-      stride{0} {
+    : DescriptorStatic{stages, vk::DescriptorType::eCombinedImageSampler}
+    , bitmap{}
+    , commandBuffer{command_buffer}
+    , phDevice{physical_device}
+    , sampler{sampler}
+    , width{width}
+    , height{height}
+    , stride{0} {
     this->buffer = std::move(buffer);
 }
 
@@ -50,7 +60,8 @@ DescriptorTexture::~DescriptorTexture() {
 }
 
 void DescriptorTexture::CreateBuffer(
-    ren::DeviceH device, ren::AllocatorH allocator
+    ren::DeviceH device,
+    ren::AllocatorH allocator
 ) {
     if (!buffer && stride) {
         using BitType = decltype(bitmap)::value_type;
@@ -111,17 +122,17 @@ auto DescriptorTexture::GenImageInfo() const -> vk::DescriptorImageInfo {
 }
 
 
-void DescriptorTexture::BeginCommandBufferSingleCommand() {
-    auto info = vk::CommandBufferBeginInfo{}.setFlags(
-        vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-    );
-    commandBuffer->Handle().begin(info);
-}
+// void DescriptorTexture::BeginCommandBufferSingleCommand() {
+//     auto info = vk::CommandBufferBeginInfo{}.setFlags(
+//         vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+//     );
+//     commandBuffer->Handle().begin(info);
+// }
 
 void DescriptorTexture::TransitionImageLayout(
     vk::ImageLayout o, vk::ImageLayout n
 ) {
-    BeginCommandBufferSingleCommand();
+    build::BeginCmdSingleCommand(commandBuffer);
     // clang-format off
     auto bar = vk::ImageMemoryBarrier{}
                    .setOldLayout(o)
@@ -162,12 +173,12 @@ void DescriptorTexture::TransitionImageLayout(
     commandBuffer->Handle().pipelineBarrier(
         src_stage, dst_stage, {}, {}, {}, std::array{bar}
     );
-    EndCommandBufferSingleCommand();
+    build::EndCmdSingleCommand(phDevice, commandBuffer);
 }
 
 // clang-format off
 void DescriptorTexture::CopyBufferToImage() {
-    BeginCommandBufferSingleCommand();
+    build::BeginCmdSingleCommand(commandBuffer);
     auto info = vk::BufferImageCopy{}
         .setBufferOffset(0)
         .setBufferRowLength(0)
@@ -188,19 +199,19 @@ void DescriptorTexture::CopyBufferToImage() {
         buffer->CHandle(), image->CHandle(), 
         vk::ImageLayout::eTransferDstOptimal, info
     );
-    EndCommandBufferSingleCommand();
     // buffer.reset();
+    build::EndCmdSingleCommand(phDevice, commandBuffer);
 }
 // clang-format off
 
-void DescriptorTexture::EndCommandBufferSingleCommand() {
-    commandBuffer->Handle().end();
-    auto command_buffers = std::array{commandBuffer->Handle()};
-    auto info = vk::SubmitInfo{}.setCommandBuffers(command_buffers);
-    auto &queue = phDevice->GraphicsQueue();
-    queue.submit(info, {});
-    queue.waitIdle();
-}
+// void DescriptorTexture::EndCommandBufferSingleCommand() {
+//     commandBuffer->Handle().end();
+//     auto command_buffers = std::array{commandBuffer->Handle()};
+//     auto info = vk::SubmitInfo{}.setCommandBuffers(command_buffers);
+//     auto &queue = phDevice->GraphicsQueue();
+//     queue.submit(info, {});
+//     queue.waitIdle();
+// }
 
 
 

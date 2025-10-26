@@ -62,10 +62,10 @@ struct DescriptorTexture : public DescriptorStatic {
     virtual auto GenImageInfo() const -> vk::DescriptorImageInfo override;
 
 private:
-    void BeginCommandBufferSingleCommand();
+    // void BeginCommandBufferSingleCommand();
     void TransitionImageLayout(vk::ImageLayout o, vk::ImageLayout n);
     void CopyBufferToImage();
-    void EndCommandBufferSingleCommand();
+    // void EndCommandBufferSingleCommand();
 
 private: 
     CommandBufferH commandBuffer;

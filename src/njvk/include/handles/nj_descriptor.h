@@ -34,6 +34,7 @@ struct DescriptorBase {
     virtual ~DescriptorBase() = default;
 
     virtual void Initialize(DeviceH device, AllocatorH allocator) = 0;
+    virtual uint32_t Count() const = 0;
     virtual void FillWriteWithResourcesInfo(
         vk::WriteDescriptorSet& write,
         std::vector<vk::DescriptorBufferInfo>& buffer_infos,
@@ -55,6 +56,7 @@ struct DescriptorStatic : public DescriptorBase {
         std::vector<vk::DescriptorBufferInfo>& buffer_infos,
         std::vector<vk::DescriptorImageInfo>& image_infos
     ) const override;
+    virtual uint32_t Count() const override;
 
     virtual void CreateBuffer(ren::DeviceH d, ren::AllocatorH a) = 0;
     virtual void CreateImage(ren::DeviceH d, ren::AllocatorH a) = 0;

@@ -42,7 +42,8 @@ add_library(njvk STATIC ${SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/njvk.cpp")
 
 target_include_directories(
   njvk
-  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/" 
+         "${CMAKE_CURRENT_SOURCE_DIR}/include"
          "${CMAKE_CURRENT_SOURCE_DIR}/include/handles")
 
 find_package(Vulkan REQUIRED)

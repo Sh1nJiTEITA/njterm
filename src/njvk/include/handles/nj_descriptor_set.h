@@ -71,7 +71,7 @@ struct DescriptorSet {
                 std::move(tmp)
             )
         );
-        log::FatalAssert(!success, "Binding={} occupied", binding);
+        log::FatalAssertNot(!success, "Binding={} occupied", binding);
     }
 
     //! For single buffer/image descriptors
@@ -91,7 +91,7 @@ struct DescriptorSet {
                 std::move(tmp)
             )
         );
-        log::FatalAssert(!success, "Binding={} occupied", binding);
+        log::FatalAssertNot(!success, "Binding={} occupied", binding);
     }
 
     template< typename DescriptorType, typename... Args>
@@ -108,7 +108,7 @@ struct DescriptorSet {
                 std::move(tmp)
             )
         );
-        log::FatalAssert(!success, "Binding={} occupied", binding);
+        log::FatalAssertNot(!success, "Binding={} occupied", binding);
     }
 
     //! Finds descriptor by frame and binding stored inside this set. If no 

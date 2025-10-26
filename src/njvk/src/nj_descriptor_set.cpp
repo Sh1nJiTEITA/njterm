@@ -141,11 +141,40 @@ void DescriptorSet::InternalAllocate(
         .setDescriptorSetCount(1)
         .setSetLayouts(layouts)
         ;
-        if (pnext) {
-            info.setPNext(pnext);
+        
+        auto it = std::max_element(
+            packs.begin(), 
+            packs.end(), 
+            [](const auto& a, const auto& b){
+                return a.first < b.first;
+            }
+        );
+        if (it != packs.end() && it->second.isArray) { 
+            const uint32_t handles_sz = it->second.handles.size();
+            log::FatalAssert(
+                handles_sz == 1, 
+                "Pack handles size={} != 1", handles_sz
+            );
+
+            const uint32_t count = it->second.handles.back()->Count();
+            log::FatalAssert(
+                count > 1, 
+                "Array descriptor count={} <= 1", count
+            );
+            
+            auto count_info = vk::DescriptorSetVariableDescriptorCountAllocateInfo{}
+                .setDescriptorSetCount(1)
+                .setPDescriptorCounts(&count)
+                ;
+
+            info.setPNext(&count_info);
+            
+            auto res = device->Handle().allocateDescriptorSetsUnique(info);
+            vkSets.push_back(std::move(res.back()));
+        } else { 
+            auto res = device->Handle().allocateDescriptorSetsUnique(info);
+            vkSets.push_back(std::move(res.back()));
         }
-        auto res = device->Handle().allocateDescriptorSetsUnique(info);
-        vkSets.push_back(std::move(res.back()));
     }
     // clang-format on
 }
@@ -176,18 +205,18 @@ void DescriptorSet::Write(
 }
 
 DescriptorBase& DescriptorSet::Get(FrameType frame, BindingType binding) {
-    log::FatalAssert(
+    log::FatalAssertNot(
         !packs.contains(binding), "Binding={} was not registered", binding
     );
     const auto& pack = packs.at(binding);
     if (pack.isSingle) {
-        log::FatalAssert(
+        log::FatalAssertNot(
             pack.handles.size() != 1,
             "Invalid count of descriptors for single one", binding
         );
         return *pack.handles.back();
     } else {
-        log::FatalAssert(
+        log::FatalAssertNot(
             pack.handles.size() < frame, "Frame={} > registered frames count",
             binding
         );
@@ -210,7 +239,7 @@ void DescriptorSet::AssertDescriptorCount() const {
 
 void DescriptorSet::AssertArrayBinding(BindingType binding) const {
     for (auto& [registered_binding, _] : packs) {
-        log::FatalAssert(
+        log::FatalAssertNot(
             registered_binding >= binding,
             "Cant register new descriptor as array caz some already registred "
             "binding={} >= input binding={}",

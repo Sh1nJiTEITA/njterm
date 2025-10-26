@@ -91,6 +91,8 @@ void DescriptorStatic::FillWriteWithResourcesInfo(
     }
 }
 
+uint32_t DescriptorStatic::Count() const { return 1; }
+
 bool DescriptorStatic::HasBuffer() const noexcept { return buffer.get(); }
 bool DescriptorStatic::HasImage() const noexcept { return image.get(); }
 bool DescriptorStatic::HasView() const noexcept { return imageView.get(); }
