@@ -2,6 +2,7 @@
 #define NG_TEXT_BUFFER_H
 
 #include <boost/circular_buffer.hpp>
+#include <boost/circular_buffer/base.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -79,7 +80,8 @@ struct TextBuffer {
 
 private:
     size_t cursor1d;
-    std::vector<Cell> cells;
+    // std::vector<Cell> cells;
+    boost::circular_buffer<Cell> cells;
 };
 
 using TextBufferH = std::shared_ptr<TextBuffer>;

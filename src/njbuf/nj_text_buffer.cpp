@@ -99,7 +99,11 @@ void TextBuffer::FillWithRainbow() {
 }
 
 void TextBuffer::MapDataTo(void* data) const {
-    memcpy(data, cells.data(), sizeof(Cell) * cells.size());
+    auto arr1 = cells.array_one();
+    memcpy(data, arr1.first, sizeof(Cell) * arr1.second);
+
+    auto arr2 = cells.array_one();
+    memcpy(data, arr2.first, sizeof(Cell) * arr2.second);
 }
 
 } // namespace nj::buf
