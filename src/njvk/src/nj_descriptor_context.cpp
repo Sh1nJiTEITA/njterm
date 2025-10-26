@@ -72,4 +72,29 @@ std::vector<vk::DescriptorSetLayout> DescriptorContext::AllLayouts() {
     return l;
 }
 
+void DescriptorContext::Add(LayoutType layout, DescriptorSetU&& set) {
+    auto [added_set, success] = sets.emplace(layout, std::move(set));
+    if (!success) {
+        log::FatalExitInternal("Cant add set with layout={}", layout);
+    }
+}
+
+DescriptorBase& DescriptorContext::GetDescriptor(
+    DescriptorContext::LayoutType layout,
+    DescriptorContext::BindingType binding,
+    DescriptorContext::FrameType frame
+) {
+    return GetSet(layout).Get(frame, binding);
+}
+
+DescriptorSet& DescriptorContext::GetSet(DescriptorContext::LayoutType layout) {
+    if (!sets.contains(layout)) {
+        log::FatalExit(
+            "Wrong layout={} for getting descriptor from descriptor context",
+            layout
+        );
+    }
+    return *sets[layout];
+}
+
 } // namespace nj::ren

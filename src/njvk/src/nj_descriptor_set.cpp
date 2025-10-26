@@ -4,9 +4,12 @@
 #include "nj_device.h"
 #include "nj_handle.h"
 #include "nj_log_scope.h"
+#include "njlog.h"
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <unordered_map>
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_shared.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -64,12 +67,14 @@ void DescriptorSet::InitializeDescriptors(
 
 // clang-format off
 void DescriptorSet::InternalCreate(
-    DeviceH device,
+    DeviceH d,
     const vk::DescriptorSetLayoutCreateFlags& flags,
     void* pnext 
 ) {
     auto layout_bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
     layout_bindings.reserve(packs.size());
+    
+    uint32_t max_binding = 0;
     for (const auto& [binding, pack] : packs) {
         log::DebugA(
             "Adding binding={} with pack: isSingle={}, size={}", 
@@ -83,6 +88,7 @@ void DescriptorSet::InternalCreate(
             .setDescriptorCount(1)
             ;
         layout_bindings.push_back(layout_binding);
+        max_binding = std::max(max_binding, binding);
     }
 
     auto create_info = vk::DescriptorSetLayoutCreateInfo{}
@@ -91,7 +97,18 @@ void DescriptorSet::InternalCreate(
     // .setFlags(flags)
     ;
 
-    layoutHandle = device->Handle().createDescriptorSetLayoutUnique(create_info);
+    // Descriptor array logic handling
+    if (packs.contains(max_binding) && packs.at(max_binding).isArray) {
+        vk::DescriptorBindingFlags binding_flags = 
+            vk::DescriptorBindingFlagBits::ePartiallyBound | 
+            vk::DescriptorBindingFlagBits::eVariableDescriptorCount;
+
+        auto binding_flags_info = vk::DescriptorSetLayoutBindingFlagsCreateInfo{}
+        .setBindingFlags(binding_flags);
+        create_info.setPNext(binding_flags_info);
+    } else { 
+        layoutHandle = d->Handle().createDescriptorSetLayoutUnique(create_info);
+    }
 }
 // clang-format on
 
@@ -158,6 +175,26 @@ void DescriptorSet::Write(
     }
 }
 
+DescriptorBase& DescriptorSet::Get(FrameType frame, BindingType binding) {
+    log::FatalAssert(
+        !packs.contains(binding), "Binding={} was not registered", binding
+    );
+    const auto& pack = packs.at(binding);
+    if (pack.isSingle) {
+        log::FatalAssert(
+            pack.handles.size() != 1,
+            "Invalid count of descriptors for single one", binding
+        );
+        return *pack.handles.back();
+    } else {
+        log::FatalAssert(
+            pack.handles.size() < frame, "Frame={} > registered frames count",
+            binding
+        );
+        return *pack.handles[frame];
+    }
+}
+
 void DescriptorSet::AssertDescriptorCount() const {
     for (const auto& [binding, pack] : packs) {
         if (!pack.isSingle && pack.handles.size() != framesCount) {
@@ -171,28 +208,15 @@ void DescriptorSet::AssertDescriptorCount() const {
     }
 }
 
-void DescriptorContext::Add(LayoutType layout, DescriptorSetU&& set) {
-    auto [added_set, success] = sets.emplace(layout, std::move(set));
-    if (!success) {
-        log::FatalExitInternal("Cant add set with layout={}", layout);
-    }
-}
-
-DescriptorBase& DescriptorContext::GetDescriptor(
-    DescriptorContext::LayoutType layout,
-    DescriptorContext::BindingType binding,
-    DescriptorContext::FrameType frame
-) {
-    return GetSet(layout).Get(frame, binding);
-}
-
-DescriptorSet& DescriptorContext::GetSet(DescriptorContext::LayoutType layout) {
-    if (!sets.contains(layout)) {
-        log::FatalExit(
-            "Wrong layout={} for getting descriptor from descriptor context",
-            layout
+void DescriptorSet::AssertArrayBinding(BindingType binding) const {
+    for (auto& [registered_binding, _] : packs) {
+        log::FatalAssert(
+            registered_binding >= binding,
+            "Cant register new descriptor as array caz some already registred "
+            "binding={} >= input binding={}",
+            registered_binding, binding
         );
     }
-    return *sets[layout];
 }
+
 } // namespace nj::ren
