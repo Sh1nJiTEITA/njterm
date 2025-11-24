@@ -1,11 +1,11 @@
 
 #pragma once
-#include <atomic>
-#include <fmt/color.h>
 #ifndef NJ_LOG_SCOPE_H
 #define NJ_LOG_SCOPE_H
 
 #include "njlog.h"
+#include <atomic>
+#include <fmt/color.h>
 
 namespace nj {
 namespace log {

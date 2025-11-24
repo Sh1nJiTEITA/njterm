@@ -50,6 +50,16 @@ void DescriptorContext::Update(DeviceH device) {
 }
 // clang-format on
 
+std::vector<vk::DescriptorSetLayout> DescriptorContext::AllLayouts() {
+    std::vector<vk::DescriptorSetLayout> l;
+    l.reserve(100); // WARN Literal
+    for (auto& [layout, set] : sets) {
+        l.push_back(set->LayoutHandle());
+    }
+    std::reverse(l.begin(), l.end());
+    return l;
+}
+
 void DescriptorContext::Bind(
     LayoutType layout,
     FrameType frame,
@@ -60,16 +70,6 @@ void DescriptorContext::Bind(
         vk::PipelineBindPoint::eGraphics, pipeline_layout,
         static_cast<uint32_t>(layout), std::vector{sets[layout]->Set(frame)}, {}
     );
-}
-
-std::vector<vk::DescriptorSetLayout> DescriptorContext::AllLayouts() {
-    std::vector<vk::DescriptorSetLayout> l;
-    l.reserve(100); // WARN Literal
-    for (auto& [layout, set] : sets) {
-        l.push_back(set->LayoutHandle());
-    }
-    std::reverse(l.begin(), l.end());
-    return l;
 }
 
 void DescriptorContext::Add(LayoutType layout, DescriptorSetU&& set) {

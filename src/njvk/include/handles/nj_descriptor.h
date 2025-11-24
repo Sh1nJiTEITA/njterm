@@ -48,9 +48,11 @@ struct DescriptorStatic : public DescriptorBase {
         vk::DescriptorType desc_type
     );
 
+    void SomeTestFunc();
     virtual void Initialize(DeviceH device, AllocatorH allocator) override;
     virtual auto GenBufferInfo() const -> vk::DescriptorBufferInfo;
     virtual auto GenImageInfo() const -> vk::DescriptorImageInfo;
+
     virtual void FillWriteWithResourcesInfo(
         vk::WriteDescriptorSet& write,
         std::vector<vk::DescriptorBufferInfo>& buffer_infos,

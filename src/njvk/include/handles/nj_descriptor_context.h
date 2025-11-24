@@ -53,6 +53,7 @@ public:
 private:
     std::unordered_map<LayoutType, DescriptorSetU> sets;
 };
+
 // clang-format on
 
 } // namespace nj::ren
